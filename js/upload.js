@@ -235,11 +235,11 @@ function generateUploadBlock(key, config) {
             <div class="upload-options">
                 <label class="radio-label">
                     <input type="radio" name="mode-${key}" value="full" checked>
-                    <span>全量</span>
+                    <span>更新全部</span>
                 </label>
                 <label class="radio-label">
                     <input type="radio" name="mode-${key}" value="incremental">
-                    <span>增量</span>
+                    <span>补充上传</span>
                 </label>
             </div>
             
