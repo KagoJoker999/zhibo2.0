@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="直播辅助工具 - 数据上传、排品管理、新品处理">
+    <title>直播辅助工具</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- 侧边导航 -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">📡 直播助手</h1>
+                <button class="menu-toggle" id="menuToggle" aria-label="切换菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#upload" class="nav-link active" data-section="upload">
+                        <span class="nav-icon">📤</span>
+                        <span class="nav-text">上传功能</span>
+                    </a>
+                    <ul class="nav-submenu">
+                        <li><a href="#upload-ranking" data-page="upload-ranking">排名数据上传</a></li>
+                        <li><a href="#upload-product-id" data-page="upload-product-id">商品 ID 上传</a></li>
+                        <li><a href="#upload-inventory" data-page="upload-inventory">库存数据上传</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#arrangement" class="nav-link" data-section="arrangement">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-text">排品功能</span>
+                    </a>
+                    <ul class="nav-submenu">
+                        <li><a href="#arrangement-upload" data-page="arrangement-upload">基础数据上传</a></li>
+                        <li><a href="#arrangement-main" data-page="arrangement-main">排品功能</a></li>
+                        <li><a href="#arrangement-settings" data-page="arrangement-settings">排品设置</a></li>
+                        <li><a href="#arrangement-mapping" data-page="arrangement-mapping">对照表生成</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#new-product" class="nav-link" data-section="new-product">
+                        <span class="nav-icon">🆕</span>
+                        <span class="nav-text">新品处理</span>
+                    </a>
+                    <ul class="nav-submenu">
+                        <li><a href="#new-product-upload" data-page="new-product-upload">数据上传</a></li>
+                        <li><a href="#new-product-process" data-page="new-product-process">数据处理</a></li>
+                        <li><a href="#new-product-download" data-page="new-product-download">数据下载</a></li>
+                        <li><a href="#new-product-settings" data-page="new-product-settings">处理设置</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#coupon" class="nav-link" data-section="coupon">
+                        <span class="nav-icon">🎟️</span>
+                        <span class="nav-text">发券品处理</span>
+                    </a>
+                    <ul class="nav-submenu">
+                        <li><a href="#coupon-upload" data-page="coupon-upload">数据上传</a></li>
+                        <li><a href="#coupon-process" data-page="coupon-process">数据处理</a></li>
+                        <li><a href="#coupon-download" data-page="coupon-download">数据下载</a></li>
+                        <li><a href="#coupon-settings" data-page="coupon-settings">处理设置</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#mapping" class="nav-link" data-section="mapping">
+                        <span class="nav-icon">🔗</span>
+                        <span class="nav-text">排品对照功能</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <header class="content-header">
+                <h2 class="page-title" id="pageTitle">欢迎使用</h2>
+                <div class="header-actions">
+                    <span class="status-indicator" id="statusIndicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">就绪</span>
+                    </span>
+                </div>
+            </header>
+
+            <div class="content-body" id="contentBody">
+                <!-- 欢迎页面 -->
+                <section class="welcome-section" id="welcomeSection">
+                    <div class="welcome-card">
+                        <div class="welcome-icon">🚀</div>
+                        <h3>直播辅助工具</h3>
+                        <p>选择左侧菜单开始使用各项功能</p>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <span class="feature-icon">📤</span>
+                                <span class="feature-name">数据上传</span>
+                                <span class="feature-desc">排名、商品ID、库存</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">📋</span>
+                                <span class="feature-name">排品功能</span>
+                                <span class="feature-desc">智能排品与设置</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🆕</span>
+                                <span class="feature-name">新品处理</span>
+                                <span class="feature-desc">新品数据管理</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🎟️</span>
+                                <span class="feature-name">发券品处理</span>
+                                <span class="feature-desc">优惠券商品管理</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 功能页面容器（后续功能会动态加载到这里） -->
+                <section class="page-container" id="pageContainer" style="display: none;">
+                    <div class="placeholder-content">
+                        <div class="placeholder-icon">🔧</div>
+                        <h3>功能开发中</h3>
+                        <p>此功能正在开发中，敬请期待...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- 全局提示组件 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 加载状态遮罩 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">处理中...</p>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
