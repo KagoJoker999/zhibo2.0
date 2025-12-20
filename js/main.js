@@ -54,6 +54,9 @@ const PageConfig = {
 // 初始化
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // 初始化 Supabase 客户端
+    initSupabaseClient();
+
     initNavigation();
     initMobileMenu();
     handleHashChange();
@@ -63,6 +66,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('📡 直播辅助工具已启动');
 });
+
+// 初始化 Supabase
+function initSupabaseClient() {
+    if (typeof supabase !== 'undefined' && window.SupabaseClient) {
+        window.supabaseClient = supabase.createClient(
+            'https://ugadhdhwixrejzfcwugj.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54'
+        );
+        console.log('✅ Supabase 客户端已初始化');
+    } else {
+        console.warn('⚠️ Supabase SDK 尚未加载');
+    }
+}
 
 // ========================================
 // 导航功能
@@ -141,8 +157,19 @@ function loadPage(page) {
         DOM.welcomeSection.style.display = 'none';
         DOM.pageContainer.style.display = 'block';
 
-        // 这里后续会加载具体功能页面
-        // 目前显示占位内容
+        // 检查是否有上传页面加载器
+        if (window.loadUploadPage && page.startsWith('upload-')) {
+            const uploadPage = window.loadUploadPage(page);
+            if (uploadPage) {
+                DOM.pageContainer.innerHTML = uploadPage.html;
+                // 延迟初始化，确保 DOM 已渲染
+                setTimeout(() => uploadPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 其他页面显示占位内容
         DOM.pageContainer.innerHTML = `
             <div class="placeholder-content">
                 <div class="placeholder-icon">${config.icon}</div>

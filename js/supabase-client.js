@@ -13,8 +13,8 @@
 // Supabase 配置（请替换为你的实际值）
 // ========================================
 const SUPABASE_CONFIG = {
-    url: 'YOUR_SUPABASE_URL',           // 例如: https://xxxxx.supabase.co
-    anonKey: 'YOUR_SUPABASE_ANON_KEY'   // 在 Settings > API 中获取
+    url: 'https://ugadhdhwixrejzfcwugj.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54'
 };
 
 // ========================================

@@ -1,0 +1,1006 @@
+商品数据管理系统 - 完整开发需求规格说明
+用途说明：本文档是一份完整的项目需求规格说明。将本文档作为提示词提供给AI，即可从零创建一个功能完整的Web应用程序。
+
+一、项目概述
+1.1 系统名称
+商品数据管理系统（Product Data Management System）
+
+1.2 系统目标
+创建一个Web应用程序，用于管理商品相关数据。系统支持从Excel/CSV文件导入数据，对数据进行清洗转换，存储到数据库，并支持数据导出功能。
+
+1.3 核心功能列表
+文件上传与数据导入：支持Excel(.xlsx, .xls)和CSV文件上传
+数据预处理：自动清洗和转换数据
+数据存储：将处理后的数据存储到数据库
+数据管理：支持数据的查看、清空操作
+数据导出：支持将数据库数据导出为Excel文件
+二、技术架构
+2.1 推荐技术栈
+前端：Next.js 14 + React + TypeScript + Tailwind CSS
+后端：Next.js API Routes
+数据库：PostgreSQL（推荐）或 SQLite（开发环境）
+ORM：Prisma
+文件处理：xlsx 库（前端Excel解析）
+UI组件：shadcn/ui
+2.2 项目结构
+project/
+├── app/
+│   ├── page.tsx                    # 首页
+│   ├── layout.tsx                  # 布局
+│   ├── globals.css                 # 全局样式
+│   ├── ranking/                    # 排名模块页面
+│   │   └── page.tsx
+│   ├── inventory/                  # 库存模块页面
+│   │   └── page.tsx
+│   ├── product-id/                 # ID模块页面
+│   │   └── page.tsx
+│   ├── new-product/                # 新品模块页面
+│   │   └── page.tsx
+│   ├── coupon/                     # 发券模块页面
+│   │   └── page.tsx
+│   └── api/
+│       ├── ranking/
+│       │   ├── route.ts            # GET获取数据, POST上传数据, DELETE清空
+│       │   └── export/route.ts     # 导出功能
+│       ├── inventory/
+│       │   ├── route.ts
+│       │   └── export/route.ts
+│       ├── product-id/
+│       │   ├── route.ts
+│       │   └── export/route.ts
+│       ├── new-product/
+│       │   ├── route.ts
+│       │   ├── export-rename/route.ts    # 导出重命名表
+│       │   └── export-link/route.ts      # 导出上链接表
+│       └── coupon/
+│           ├── route.ts
+│           └── export-ids/route.ts       # 导出商品ID
+├── components/
+│   ├── ui/                         # shadcn/ui 组件
+│   ├── FileUploader.tsx            # 文件上传组件
+│   ├── DataPreview.tsx             # 数据预览表格
+│   ├── ModuleLayout.tsx            # 模块通用布局
+│   └── ProcessingRules.tsx         # 处理规则说明组件
+├── lib/
+│   ├── db.ts                       # 数据库连接
+│   ├── processors/                 # 数据处理器
+│   │   ├── ranking.ts
+│   │   ├── inventory.ts
+│   │   ├── productId.ts
+│   │   ├── newProduct.ts
+│   │   └── coupon.ts
+│   └── utils/
+│       ├── parseExcel.ts           # Excel解析
+│       ├── parseNumber.ts          # 数值解析
+│       └── parseAmount.ts          # 金额解析
+├── prisma/
+│   └── schema.prisma               # 数据库模型
+└── package.json
+三、数据库设计
+3.1 Prisma Schema 定义
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// 排名数据表 - 存储商品销售排名数据
+model RankingData {
+  id              Int       @id @default(autoincrement())
+  productName     String    @map("product_name")        // 商品名称
+  lectureCount    Int       @default(0) @map("lecture_count")    // 讲解次数
+  salesAmount     Float     @default(0) @map("sales_amount")     // 成交金额（用户支付金额）
+  exposureRate    Float     @default(0) @map("exposure_rate")    // 曝光点击率（小数形式，如0.053表示5.3%）
+  conversionRate  Float     @default(0) @map("conversion_rate")  // 点击成交率（小数形式）
+  deleteMarker    String?   @map("delete_marker")       // 删除标记（"待删除"表示可删除）
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  @@map("ranking_data")
+}
+// 库存数据表 - 存储商品库存信息
+model InventoryData {
+  id              Int       @id @default(autoincrement())
+  productName     String    @map("product_name")        // 商品名称（合并key）
+  imageUrl        String?   @map("image_url")           // 图片地址
+  productTag      String?   @map("product_tag")         // 商品标签（逗号分隔，去重合并）
+  virtualCategory String?   @map("virtual_category")    // 虚拟分类（逗号分隔，去重合并）
+  productCode     String?   @map("product_code")        // 商品编码（逗号分隔，去重合并）
+  warehouse       String?   @map("warehouse")           // 仓位（逗号分隔，去重合并）
+  availableQty    Int       @default(0) @map("available_qty")    // 可用数（相加）
+  actualStock     Int       @default(0) @map("actual_stock")     // 实际库存数（相加）
+  productCategory String?   @map("product_category")    // 商品分类（逗号分隔，去重合并）
+  deleteMarker    String?   @map("delete_marker")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  @@map("inventory_data")
+}
+// ID数据表 - 存储商品ID信息
+model ProductIdData {
+  id              Int       @id @default(autoincrement())
+  productName     String    @map("product_name")        // 商品名称（去重key）
+  productId       String?   @map("product_id")          // 商品ID
+  productPrice    Float     @default(0) @map("product_price")    // 商品价格
+  storeCategory   String?   @map("store_category")      // 抖店分类
+  unshelveMarker  String?   @map("unshelve_marker")     // 需下架分类
+  deleteMarker    String?   @map("delete_marker")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  @@map("product_id_data")
+}
+// 新品数据表 - 存储新品信息
+model NewProductData {
+  id              Int       @id @default(autoincrement())
+  initialName     String    @map("initial_name")        // 初始名称（即原商品名称）
+  finalName       String?   @map("final_name")          // 最终命名（商品名称字段）
+  imageUrl        String?   @map("image_url")           // 图片链接
+  virtualCategory String?   @map("virtual_category")    // 虚拟分类
+  productCode     String?   @map("product_code")        // 商品编码
+  category        String?   @map("category")            // 分类
+  colorSpec       String?   @map("color_spec")          // 颜色及规格
+  basePrice       Float     @default(0) @map("base_price")       // 基本售价
+  warehouse       String?   @map("warehouse")           // 仓位
+  productTag      String?   @map("product_tag")         // 商品标签
+  sampleNumber    String?   @map("sample_number")       // 样品序号（如A01, A03等）
+  listingCategory String?   @map("listing_category")    // 上架分类
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  @@map("new_product_data")
+}
+// 发券数据表 - 存储发券商品信息
+model CouponData {
+  id              Int       @id @default(autoincrement())
+  inputProductCode String   @map("input_product_code")  // 录入商品编码（即商品名称）
+  productId       String?   @map("product_id")          // 商品ID
+  imageUrl        String?   @map("image_url")           // 图片链接
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  @@map("coupon_data")
+}
+四、五大功能模块详细规格
+4.1 排名模块 (ranking)
+4.1.1 模块说明
+用于处理商品销售排名数据，从抖店后台导出的销售数据Excel中读取数据。
+
+4.1.2 数据处理规则
+显示在页面上的处理规则说明：
+
+📊 排名数据处理规则:
+• 商品名称: 保留「字符及其后内容
+• 讲解次数: 转数值，无效值记0
+• 成交金额: 来自"用户支付金额"列，去除¥和,后转数值
+• 点击率: 去%后除以100转小数
+• 过滤条件: 用户支付金额<100元的记录将被过滤
+4.1.3 源文件字段与处理逻辑
+源Excel列索引	源字段名	目标数据库字段	处理逻辑
+1	商品名称	productName	extractShortName(value) - 保留「字符及其后内容
+2	讲解次数	lectureCount	parseNumber(value) - 转整数，无效记0
+6	用户支付金额	salesAmount	parseAmount(value) - 去除¥和逗号转数值，这个值写入成交金额字段
+9	曝光点击率	exposureRate	parsePercentage(value) - 去%除以100
+10	点击成交率	conversionRate	parsePercentage(value) - 去%除以100
+过滤规则：用户支付金额 < 100 的记录不导入
+
+4.1.4 处理函数实现
+// lib/processors/ranking.ts
+interface RankingRecord {
+  productName: string;
+  lectureCount: number;
+  salesAmount: number;
+  exposureRate: number;
+  conversionRate: number;
+}
+/**
+ * 提取商品简称 - 保留「字符及其后的内容
+ * 例如: "【店铺】商品A「简称B」" -> "「简称B」"
+ */
+function extractShortName(fullName: string): string {
+  if (!fullName) return '';
+  const trimmed = fullName.trim();
+  if (trimmed.includes('「')) {
+    const parts = trimmed.split('「');
+    if (parts.length > 1) {
+      return '「' + parts[parts.length - 1];
+    }
+  }
+  return trimmed;
+}
+/**
+ * 解析数值 - 处理各种格式的数值字符串
+ */
+function parseNumber(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'number') {
+    return isFinite(value) ? value : 0;
+  }
+  const str = String(value).trim();
+  if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'none') {
+    return 0;
+  }
+  // 移除非数字字符（保留小数点和负号）
+  const cleaned = str.replace(/[^\d.\-]/g, '');
+  const num = parseFloat(cleaned);
+  return isFinite(num) ? num : 0;
+}
+/**
+ * 解析金额 - 去除¥符号和逗号
+ */
+function parseAmount(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  const str = String(value).trim();
+  const cleaned = str.replace(/[¥￥,，]/g, '');
+  return parseNumber(cleaned);
+}
+/**
+ * 解析百分比 - 去除%并转换为小数
+ * 例如: "5.3%" -> 0.053
+ */
+function parsePercentage(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  const str = String(value).trim();
+  if (str.includes('%')) {
+    const cleaned = str.replace('%', '');
+    const num = parseNumber(cleaned);
+    return num / 100;
+  }
+  return parseNumber(value);
+}
+/**
+ * 处理排名数据
+ * @param rows - Excel解析后的二维数组，第一行为表头
+ */
+export function processRankingData(rows: unknown[][]): RankingRecord[] {
+  const records: RankingRecord[] = [];
+  
+  // 跳过表头，从第2行开始处理
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    
+    // 获取商品名称
+    const rawProductName = String(row[1] ?? '').trim();
+    if (!rawProductName || rawProductName === 'nan') continue;
+    
+    // 提取商品简称
+    const productName = extractShortName(rawProductName);
+    
+    // 获取用户支付金额（列索引6）用于过滤和写入
+    const userPayment = parseAmount(row[6]);
+    
+    // 过滤条件：用户支付金额 < 100 的记录不导入
+    if (userPayment < 100) continue;
+    
+    const record: RankingRecord = {
+      productName,
+      lectureCount: Math.round(parseNumber(row[2])),
+      salesAmount: userPayment,  // 用户支付金额写入成交金额字段
+      exposureRate: parsePercentage(row[9]),
+      conversionRate: parsePercentage(row[10]),
+    };
+    
+    records.push(record);
+  }
+  
+  return records;
+}
+4.1.5 页面功能按钮
+上传数据 - 读取文件，处理后追加到数据库
+清空数据 - 删除数据库中 deleteMarker = '待删除' 的记录
+清空后上传 - 先执行清空，再执行上传
+4.2 库存模块 (inventory)
+4.2.1 模块说明
+用于处理商品库存数据，核心特点是同名商品自动合并。
+
+4.2.2 数据处理规则
+📦 库存数据处理规则:
+• 同名商品自动合并
+• 数值字段(可用数/库存数): 相加
+• 文本字段(标签/分类等): 去重合并
+• 字段映射: 图片→图片地址, 主仓位→仓位
+4.2.3 源文件字段与处理逻辑
+源Excel列索引	源字段名	目标数据库字段	处理逻辑
+1	商品名称	productName	作为合并key
+0	图片	imageUrl	取第一个非空值
+1	商品标签	productTag	去重后用逗号合并
+3	虚拟分类	virtualCategory	去重后用逗号合并
+8	商品编码	productCode	去重后用逗号合并
+9	主仓位	warehouse	去重后用逗号合并
+10	可用数	availableQty	数值相加
+10	实际库存数	actualStock	数值相加
+28	分类	productCategory	去重后用逗号合并
+4.2.4 处理函数实现
+// lib/processors/inventory.ts
+interface InventoryRecord {
+  productName: string;
+  imageUrl: string;
+  productTag: string;
+  virtualCategory: string;
+  productCode: string;
+  warehouse: string;
+  availableQty: number;
+  actualStock: number;
+  productCategory: string;
+}
+/**
+ * 处理库存数据 - 核心是同名商品合并
+ */
+export function processInventoryData(rows: unknown[][]): InventoryRecord[] {
+  // 用于存储按商品名称分组的数据
+  const productMap = new Map<string, {
+    imageUrl: string;
+    productTag: Set<string>;
+    virtualCategory: Set<string>;
+    productCode: Set<string>;
+    warehouse: Set<string>;
+    availableQty: number;
+    actualStock: number;
+    productCategory: Set<string>;
+  }>();
+  
+  // 跳过表头
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    
+    const productName = String(row[1] ?? '').trim();
+    if (!productName || productName === 'nan') continue;
+    
+    // 获取或创建该商品的数据对象
+    if (!productMap.has(productName)) {
+      productMap.set(productName, {
+        imageUrl: '',
+        productTag: new Set(),
+        virtualCategory: new Set(),
+        productCode: new Set(),
+        warehouse: new Set(),
+        availableQty: 0,
+        actualStock: 0,
+        productCategory: new Set(),
+      });
+    }
+    
+    const data = productMap.get(productName)!;
+    
+    // 图片地址：只取第一个非空值
+    if (!data.imageUrl) {
+      const img = String(row[0] ?? '').trim();
+      if (img && img !== 'nan') data.imageUrl = img;
+    }
+    
+    // 文本字段：去重合并（添加到Set）
+    const addToSet = (set: Set<string>, value: unknown) => {
+      const str = String(value ?? '').trim();
+      if (str && str !== 'nan') set.add(str);
+    };
+    
+    addToSet(data.productTag, row[1]);
+    addToSet(data.virtualCategory, row[3]);
+    addToSet(data.productCode, row[8]);
+    addToSet(data.warehouse, row[9]);
+    addToSet(data.productCategory, row[28]);
+    
+    // 数值字段：相加
+    data.availableQty += parseNumber(row[10]);
+    data.actualStock += parseNumber(row[10]);
+  }
+  
+  // 转换为最终记录格式
+  const records: InventoryRecord[] = [];
+  productMap.forEach((data, productName) => {
+    records.push({
+      productName,
+      imageUrl: data.imageUrl,
+      productTag: Array.from(data.productTag).filter(Boolean).join(','),
+      virtualCategory: Array.from(data.virtualCategory).filter(Boolean).join(','),
+      productCode: Array.from(data.productCode).filter(Boolean).join(','),
+      warehouse: Array.from(data.warehouse).filter(Boolean).join(','),
+      availableQty: Math.round(data.availableQty),
+      actualStock: Math.round(data.actualStock),
+      productCategory: Array.from(data.productCategory).filter(Boolean).join(','),
+    });
+  });
+  
+  return records;
+}
+4.2.5 页面功能按钮
+与排名模块相同：上传数据、清空数据、清空后上传
+
+4.3 ID模块 (product-id)
+4.3.1 模块说明
+用于处理商品ID数据，支持Excel和CSV两种格式。
+
+4.3.2 数据处理规则
+🆔 ID数据处理规则:
+• 支持Excel和CSV格式
+• CSV需包含'商品名称'和'商品ID'表头
+• 商品名称保留「后部分
+• 商品ID去除'ID:'前缀
+• 按商品名称去重，直接上传不清空
+4.3.3 源文件字段与处理逻辑
+源字段/列索引	目标数据库字段	处理逻辑
+商品名称 (列1)	productName	extractShortName(value) + 按此字段去重，只保留首条
+商品ID (列0)	productId	去除 ID: 前缀
+商品价格 (列13)	productPrice	转数值（仅Excel有）
+三级分类 (列4)	storeCategory	原样保留（仅Excel有）
+4.3.4 处理函数实现
+// lib/processors/productId.ts
+interface ProductIdRecord {
+  productName: string;
+  productId: string;
+  productPrice?: number;
+  storeCategory?: string;
+}
+/**
+ * 处理ID数据 - 按商品名称去重
+ */
+export function processProductIdData(rows: unknown[][]): ProductIdRecord[] {
+  const seenProducts = new Set<string>();
+  const records: ProductIdRecord[] = [];
+  
+  // 跳过表头
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    
+    // 获取并处理商品名称
+    const rawProductName = String(row[1] ?? '').trim();
+    if (!rawProductName || rawProductName === 'nan') continue;
+    
+    const productName = extractShortName(rawProductName);
+    
+    // 去重：按商品名称去重，仅保留首条
+    if (seenProducts.has(productName)) continue;
+    seenProducts.add(productName);
+    
+    // 处理商品ID：去除 'ID:' 前缀
+    let productId = String(row[0] ?? '').trim();
+    if (productId.startsWith('ID:')) {
+      productId = productId.substring(3).trim();
+    }
+    
+    const record: ProductIdRecord = {
+      productName,
+      productId,
+    };
+    
+    // 商品价格（仅Excel，列索引13）
+    if (row.length > 13) {
+      record.productPrice = parseNumber(row[13]);
+    }
+    
+    // 三级分类（仅Excel，列索引4）
+    if (row.length > 4) {
+      const category = String(row[4] ?? '').trim();
+      if (category && category !== 'nan') {
+        record.storeCategory = category;
+      }
+    }
+    
+    records.push(record);
+  }
+  
+  return records;
+}
+4.3.5 页面功能按钮
+与其他模块相同
+
+4.4 新品模块 (new-product)
+4.4.1 模块说明
+用于处理新品数据，最复杂的模块。包含样品序号自动生成逻辑。
+
+4.4.2 数据处理规则
+✨ 新品数据处理规则:
+• 字段映射: 商品名称→初始名称
+• 图片→图片链接, 颜色及规格→颜色及规格
+• 基本售价→基本售价(数值处理)
+• 完全清空模式(删除所有记录)
+• 支持重命名表格和上链接表格下载功能
+• 样品序号自动生成（福利商品不分配）
+4.4.3 源文件字段与处理逻辑
+源Excel列索引	源字段名	目标数据库字段	处理逻辑
+1	商品名称	initialName	原样保留
+0	图片	imageUrl	原样保留
+3	虚拟分类	virtualCategory	原样保留
+2	商品编码	productCode	原样保留
+4	分类	category	原样保留
+6	颜色及规格	colorSpec	原样保留
+15	基本售价	basePrice	转数值
+7	主仓位	warehouse	原样保留
+16	商品标签	productTag	原样保留
+-	-	sampleNumber	自动生成样品序号
+4.4.4 样品序号生成算法（核心业务逻辑）
+/**
+ * 样品序号生成规则：
+ * 1. 按商品编码排序
+ * 2. 按商品名称（初始名称）去重，只保留首次出现的
+ * 3. 过滤掉商品标签包含"福利"的商品（不分配序号）
+ * 4. 前20个商品: A01, A03, A05, A07, ..., A39（奇数编号）
+ * 5. 第21个商品开始: A41, A42, A43, ...（连续编号）
+ */
+function generateSampleNumbers(records: NewProductRecord[]): Map<string, string> {
+  // 1. 按商品编码排序
+  const sorted = [...records].sort((a, b) => 
+    (a.productCode ?? '').localeCompare(b.productCode ?? '')
+  );
+  
+  // 2. 按初始名称去重
+  const seenNames = new Set<string>();
+  const unique: NewProductRecord[] = [];
+  for (const record of sorted) {
+    const name = record.initialName;
+    if (!seenNames.has(name)) {
+      seenNames.add(name);
+      unique.push(record);
+    }
+  }
+  
+  // 3. 过滤掉商品标签包含"福利"的
+  const filtered = unique.filter(r => {
+    const tag = r.productTag ?? '';
+    return !tag.includes('福利');
+  });
+  
+  // 4. 分配序号
+  const mapping = new Map<string, string>();
+  filtered.forEach((record, index) => {
+    let sampleNumber: string;
+    if (index < 20) {
+      // 前20个: 奇数序号 A01, A03, A05, ..., A39
+      const num = index * 2 + 1;
+      sampleNumber = `A${num.toString().padStart(2, '0')}`;
+    } else {
+      // 第21个开始: A41, A42, A43, ...
+      const num = index + 21;
+      sampleNumber = `A${num.toString().padStart(2, '0')}`;
+    }
+    mapping.set(record.initialName, sampleNumber);
+  });
+  
+  return mapping;
+}
+4.4.5 处理函数实现
+// lib/processors/newProduct.ts
+interface NewProductRecord {
+  initialName: string;
+  imageUrl: string;
+  virtualCategory: string;
+  productCode: string;
+  category: string;
+  colorSpec: string;
+  basePrice: number;
+  warehouse: string;
+  productTag: string;
+  sampleNumber: string;
+}
+export function processNewProductData(rows: unknown[][]): NewProductRecord[] {
+  // 第一遍：收集所有记录
+  const tempRecords: NewProductRecord[] = [];
+  
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    
+    const productName = String(row[1] ?? '').trim();
+    if (!productName || productName === 'nan') {
+      console.warn('警告: 跳过空的商品名称行');
+      continue;
+    }
+    
+    tempRecords.push({
+      initialName: productName,
+      imageUrl: String(row[0] ?? ''),
+      virtualCategory: String(row[3] ?? ''),
+      productCode: String(row[2] ?? ''),
+      category: String(row[4] ?? ''),
+      colorSpec: String(row[6] ?? ''),
+      basePrice: parseNumber(row[15]),
+      warehouse: String(row[7] ?? ''),
+      productTag: String(row[16] ?? ''),
+      sampleNumber: '', // 稍后填充
+    });
+  }
+  
+  // 生成样品序号映射
+  const sampleMapping = generateSampleNumbers(tempRecords);
+  
+  // 第二遍：填充样品序号
+  const records: NewProductRecord[] = [];
+  for (const record of tempRecords) {
+    const productTag = record.productTag;
+    
+    // 如果商品标签包含"福利"，则不分配样品序号
+    if (productTag.includes('福利')) {
+      record.sampleNumber = '';
+    } else {
+      record.sampleNumber = sampleMapping.get(record.initialName) ?? '';
+    }
+    
+    records.push(record);
+  }
+  
+  return records;
+}
+4.4.6 页面功能按钮
+上传数据 - 处理并追加数据
+清空数据 - 完全清空（删除所有记录，不是删除标记的）
+清空后上传 - 完全清空后再上传
+下载重命名表格 - 导出Excel（特殊功能）
+下载上链接表格 - 导出Excel（特殊功能）
+4.4.7 下载重命名表格导出规格
+从数据库读取数据，导出Excel，包含以下列：
+
+导出列名	数据来源
+商品编码	productCode
+商品名称	finalName (如果为空则用 initialName)
+商品简称	initialName
+4.4.8 下载上链接表格导出规格
+导出Excel，包含以下列，并进行多SKU处理：
+
+导出列名	数据来源
+商品名称	finalName 或 initialName
+商品编码	productCode
+上架分类	listingCategory
+虚拟分类	virtualCategory
+基本售价	basePrice
+颜色及规格	colorSpec
+SKU数量	计算字段（同名商品数量）
+商品编码2, 颜色及规格2, ...	多SKU时的额外字段
+多SKU处理逻辑：
+
+按商品名称分组
+统计每个商品名称出现的次数作为SKU数量
+第一条记录作为基础记录
+如果SKU数量>1，添加 商品编码2, 颜色及规格2, 商品编码3, 颜色及规格3... 等字段
+按商品编码排序后导出
+4.5 发券模块 (coupon)
+4.5.1 模块说明
+用于处理发券商品数据，支持智能匹配商品名称列。
+
+4.5.2 数据处理规则
+🎫 发券数据处理规则:
+• 智能匹配商品名称列(多别名支持)
+• 录入商品编码字段写入
+• 支持商品ID导出功能
+• 导出后提示券上传流程
+4.5.3 源文件字段与处理逻辑
+源字段	目标数据库字段	处理逻辑
+商品名称 (智能匹配)	inputProductCode	尝试多种列名匹配
+图片 (列0)	imageUrl	原样保留
+智能列匹配顺序：商品名称 → 商品 → 名称 → 产品名称 → 产品
+
+4.5.4 处理函数实现
+// lib/processors/coupon.ts
+interface CouponRecord {
+  inputProductCode: string;
+  imageUrl: string;
+}
+/**
+ * 查找商品名称列的索引
+ */
+function findProductNameColumn(headers: string[]): number {
+  const aliases = ['商品名称', '商品', '名称', '产品名称', '产品'];
+  
+  for (const alias of aliases) {
+    const index = headers.findIndex(h => 
+      h && h.toString().includes(alias)
+    );
+    if (index !== -1) return index;
+  }
+  
+  // 默认返回列索引1
+  return 1;
+}
+export function processCouponData(rows: unknown[][]): CouponRecord[] {
+  const records: CouponRecord[] = [];
+  
+  // 获取表头
+  const headers = (rows[0] ?? []).map(h => String(h ?? ''));
+  
+  // 智能查找商品名称列
+  const productNameCol = findProductNameColumn(headers);
+  const imageCol = 0; // 图片固定在A列
+  
+  // 跳过表头
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.every(cell => cell === null || cell === undefined)) continue;
+    
+    const productName = String(row[productNameCol] ?? '').trim();
+    if (!productName || productName === 'nan') continue;
+    
+    const imageUrl = String(row[imageCol] ?? '').trim();
+    
+    records.push({
+      inputProductCode: productName,
+      imageUrl: imageUrl !== 'nan' ? imageUrl : '',
+    });
+  }
+  
+  return records;
+}
+4.5.5 页面功能按钮
+上传数据
+清空数据 - 删除标记为待删除的
+清空后上传
+导出商品ID - 导出Excel并返回缺失ID的商品名称列表
+4.5.6 导出商品ID规格
+从数据库读取数据，导出Excel：
+
+导出列名	数据来源
+商品id	productId
+额外返回信息：
+
+成功导出的记录数
+缺失商品ID的商品名称列表（inputProductCode 有值但 productId 为空的记录）
+导出完成后显示提示信息：
+
+📋 重要提示:
+券需上传更新至：
+  • 新人券
+  • 会员买赠
+  • 入会礼包
+而后读取至直播间
+五、通用工具函数
+5.1 Excel/CSV 文件解析
+// lib/utils/parseExcel.ts
+import * as XLSX from 'xlsx';
+/**
+ * 解析Excel或CSV文件
+ * @returns 二维数组，第一行为表头
+ */
+export async function parseFile(file: File): Promise<unknown[][]> {
+  const buffer = await file.arrayBuffer();
+  
+  // 使用xlsx库解析
+  const workbook = XLSX.read(buffer, { type: 'array' });
+  
+  // 获取第一个工作表
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  
+  // 转换为JSON数组
+  const data = XLSX.utils.sheet_to_json(sheet, { 
+    header: 1,  // 返回二维数组
+    defval: '', // 默认值为空字符串
+  });
+  
+  // 清理数据：删除完全为空的行
+  const cleaned = (data as unknown[][]).filter(row => 
+    row.some(cell => cell !== null && cell !== undefined && cell !== '')
+  );
+  
+  return cleaned;
+}
+5.2 数值解析函数集
+// lib/utils/parseNumber.ts
+/**
+ * 解析数值
+ */
+export function parseNumber(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'number') {
+    return isFinite(value) ? value : 0;
+  }
+  const str = String(value).trim();
+  if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'none') {
+    return 0;
+  }
+  const cleaned = str.replace(/[^\d.\-]/g, '');
+  const num = parseFloat(cleaned);
+  return isFinite(num) ? num : 0;
+}
+/**
+ * 解析金额（去除¥和逗号）
+ */
+export function parseAmount(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  const str = String(value).trim();
+  const cleaned = str.replace(/[¥￥,，]/g, '');
+  return parseNumber(cleaned);
+}
+/**
+ * 解析百分比（去除%并转换为小数）
+ */
+export function parsePercentage(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  const str = String(value).trim();
+  if (str.includes('%')) {
+    const cleaned = str.replace('%', '');
+    const num = parseNumber(cleaned);
+    return num / 100;
+  }
+  return parseNumber(value);
+}
+/**
+ * 提取商品简称（保留「字符及其后内容）
+ */
+export function extractShortName(fullName: string): string {
+  if (!fullName) return '';
+  const trimmed = fullName.trim();
+  if (trimmed.includes('「')) {
+    const parts = trimmed.split('「');
+    if (parts.length > 1) {
+      return '「' + parts[parts.length - 1];
+    }
+  }
+  return trimmed;
+}
+六、UI 设计规格
+6.1 整体布局
+┌──────────────────────────────────────────────────────────────┐
+│  🚀 商品数据管理系统                                           │
+├──────────────────────────────────────────────────────────────┤
+│  [排名] [库存] [ID] [新品] [发券]  ← 模块切换Tab              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ 📊 排名数据处理规则:                                   │   │
+│  │ • 商品名称: 保留「字符及其后内容                        │   │
+│  │ • 讲解次数: 转数值，无效值记0                          │   │
+│  │ • 成交金额: 来自用户支付金额，去除¥和,后转数值           │   │
+│  │ • 点击率: 去%后除以100转小数                           │   │
+│  │ • 过滤条件: 用户支付金额<100元的记录将被过滤             │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │                                                      │   │
+│  │     📁 拖拽Excel/CSV文件到此处，或点击选择             │   │
+│  │         支持 .xlsx .xls .csv 格式                    │   │
+│  │                                                      │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ 数据预览 (前5条)                                      │   │
+│  │ ┌────────┬────────┬────────┬────────┬────────┐       │   │
+│  │ │商品名称 │讲解次数│成交金额│曝光点击率│点击成交率│       │   │
+│  │ ├────────┼────────┼────────┼────────┼────────┤       │   │
+│  │ │「商品A」│ 5      │ 1500.00│ 0.053  │ 0.012  │       │   │
+│  │ │「商品B」│ 3      │ 800.00 │ 0.041  │ 0.008  │       │   │
+│  │ └────────┴────────┴────────┴────────┴────────┘       │   │
+│  │                              共处理 156 条有效记录     │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌────────────┐ ┌────────────┐ ┌─────────────────┐          │
+│  │  上传数据   │ │  清空数据   │ │  清空后上传      │          │
+│  └────────────┘ └────────────┘ └─────────────────┘          │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+6.2 配色方案
+使用现代深色主题：
+
+:root {
+  --bg-primary: #0f0f0f;        /* 主背景 */
+  --bg-secondary: #1a1a1a;      /* 卡片背景 */
+  --bg-tertiary: #252525;       /* 输入框/表格背景 */
+  --text-primary: #ffffff;      /* 主文字 */
+  --text-secondary: #a0a0a0;    /* 次要文字 */
+  --accent-blue: #3b82f6;       /* 主强调色 */
+  --accent-green: #22c55e;      /* 成功 */
+  --accent-red: #ef4444;        /* 危险/错误 */
+  --accent-yellow: #eab308;     /* 警告 */
+  --border-color: #333333;      /* 边框 */
+}
+6.3 模块Tab颜色
+每个模块Tab使用不同的强调色：
+
+模块	颜色	色值
+排名	红色	#ef4444
+库存	绿色	#22c55e
+ID	蓝色	#3b82f6
+新品	黄色	#eab308
+发券	紫色	#a855f7
+6.4 交互反馈
+文件上传中：显示加载动画和进度
+处理成功：显示绿色成功提示 + 记录数
+处理失败：显示红色错误提示 + 错误详情
+清空确认：弹出确认对话框，显示警告信息
+导出完成：自动触发文件下载
+七、API 接口规格
+7.1 通用接口
+每个模块都有以下三个基础接口：
+
+// GET /api/{module} - 获取数据列表
+interface GetDataResponse {
+  success: boolean;
+  data: Record[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+// POST /api/{module} - 上传并存储数据
+interface UploadRequest {
+  records: Record[];
+  clearBeforeUpload?: boolean;  // 是否先清空
+}
+interface UploadResponse {
+  success: boolean;
+  message: string;
+  insertedCount: number;
+  deletedCount?: number;  // clearBeforeUpload=true时有值
+}
+// DELETE /api/{module} - 清空数据
+interface DeleteRequest {
+  mode: 'marked' | 'all';  // marked=删除标记的, all=全部
+}
+interface DeleteResponse {
+  success: boolean;
+  message: string;
+  deletedCount: number;
+}
+7.2 模块特殊接口
+// 新品模块 - 下载重命名表格
+// GET /api/new-product/export-rename
+// 返回: Excel文件流
+// 新品模块 - 下载上链接表格
+// GET /api/new-product/export-link
+// 返回: Excel文件流
+// 发券模块 - 导出商品ID
+// GET /api/coupon/export-ids
+interface ExportIdsResponse {
+  success: boolean;
+  fileUrl: string;        // Excel下载URL
+  exportedCount: number;  // 成功导出数
+  missingNames: string[]; // 缺失ID的商品名称列表
+}
+八、开发检查清单
+创建项目时请确保实现以下所有功能点：
+
+8.1 基础功能
+ 项目初始化（Next.js + TypeScript + Tailwind + Prisma）
+ 数据库表创建（5张表）
+ 文件上传组件（支持拖拽）
+ Excel/CSV解析功能
+ 数据预览表格
+8.2 排名模块
+ 数据处理规则显示
+ 商品名称提取（保留「后内容）
+ 金额/百分比解析
+ 用户支付金额<100过滤
+ 上传/清空/清空后上传功能
+8.3 库存模块
+ 数据处理规则显示
+ 同名商品合并逻辑
+ 数值字段相加
+ 文本字段去重合并
+ 上传/清空/清空后上传功能
+8.4 ID模块
+ 数据处理规则显示
+ 商品名称去重
+ 商品ID前缀去除（ID:）
+ 上传/清空/清空后上传功能
+8.5 新品模块
+ 数据处理规则显示
+ 样品序号生成算法（A01-A39奇数，A41+连续）
+ 福利商品不分配序号
+ 完全清空模式
+ 下载重命名表格功能
+ 下载上链接表格功能（含多SKU处理）
+ 上传/清空/清空后上传功能
+8.6 发券模块
+ 数据处理规则显示
+ 智能商品名称列匹配
+ 导出商品ID功能
+ 缺失ID商品名称返回
+ 导出后提示信息显示
+ 上传/清空/清空后上传功能
+8.7 UI/UX
+ 深色主题实现
+ 模块Tab切换
+ 加载状态显示
+ 成功/错误提示
+ 确认对话框
+ 响应式布局
+九、注意事项
+数据清空模式：
+
+排名、库存、ID、发券模块：mode='marked'（删除 deleteMarker='待删除' 的记录）
+新品模块：mode='all'（完全清空所有记录）
+数值校验：上传前需要处理 NaN、Infinity 等非法数值，替换为0
+
+批量操作：建议分批次写入数据库（每批500条），避免超时
+
+编码处理：CSV文件可能使用 GBK/GB2312 编码，需要正确检测和转换
+
+图片链接：存储为纯文本URL即可，不需要特殊处理
+
+以上是完整的项目需求规格说明，提供给AI即可创建功能完整的Web应用程序。
