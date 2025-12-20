@@ -312,7 +312,9 @@ function initUploadBlock(key, config) {
 
     uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
-        const isFullMode = document.querySelector(`input[name="mode-${key}"]:checked`).value === 'full';
+        const modeInput = document.querySelector(`input[name="mode-${key}"]:checked`);
+        const isFullMode = modeInput?.value === 'full';
+        console.log(`📋 上传模式: ${modeInput?.value}, isFullMode: ${isFullMode}`);
         try {
             statusDiv.style.display = 'block';
             uploadBtn.disabled = true;
@@ -323,8 +325,10 @@ function initUploadBlock(key, config) {
             updateStatus(`已处理 ${records.length} 条`, 50);
             if (records.length === 0) throw new Error('无有效数据');
             if (isFullMode) {
+                console.log(`🗑️ 开始清空表 ${config.tableName}...`);
                 updateStatus('清空旧数据...', 60);
                 await clearTable(config.tableName);
+                console.log(`✅ 表 ${config.tableName} 已清空`);
             }
             updateStatus('上传中...', 70);
             await uploadData(config.tableName, records);
