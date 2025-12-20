@@ -1,16 +1,14 @@
 /**
  * 上传功能模块
  * ========================================
- * 包含：排名上传、库存上传、ID上传
+ * 三个上传功能合并在一个页面：排名上传、库存上传、ID上传
+ * 字段映射参考：数据对照表
  */
 
 // ========================================
-// 数据处理器
+// 数据处理器 - 通用函数
 // ========================================
 
-/**
- * 提取商品简称 - 保留「字符及其后的内容
- */
 function extractShortName(fullName) {
     if (!fullName) return '';
     const trimmed = String(fullName).trim();
@@ -21,26 +19,16 @@ function extractShortName(fullName) {
     return trimmed;
 }
 
-/**
- * 解析数值
- */
 function parseNumber(value) {
     if (value === null || value === undefined) return 0;
-    if (typeof value === 'number') {
-        return isFinite(value) ? value : 0;
-    }
+    if (typeof value === 'number') return isFinite(value) ? value : 0;
     const str = String(value).trim();
-    if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'none') {
-        return 0;
-    }
+    if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'none') return 0;
     const cleaned = str.replace(/[^\d.\-]/g, '');
     const num = parseFloat(cleaned);
     return isFinite(num) ? num : 0;
 }
 
-/**
- * 解析金额 - 去除¥符号和逗号
- */
 function parseAmount(value) {
     if (value === null || value === undefined) return 0;
     const str = String(value).trim();
@@ -48,16 +36,12 @@ function parseAmount(value) {
     return parseNumber(cleaned);
 }
 
-/**
- * 解析百分比 - 去除%并转换为小数
- */
 function parsePercentage(value) {
     if (value === null || value === undefined) return 0;
     const str = String(value).trim();
     if (str.includes('%')) {
         const cleaned = str.replace('%', '');
-        const num = parseNumber(cleaned);
-        return num / 100;
+        return parseNumber(cleaned) / 100;
     }
     return parseNumber(value);
 }
@@ -65,294 +49,290 @@ function parsePercentage(value) {
 // ========================================
 // 排名数据处理器
 // ========================================
-function processPaimingData(rows) {
+function processRankingData(rows) {
     const records = [];
-
-    // 跳过表头
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
-
-        // 获取商品名称（列索引根据实际Excel调整）
         const rawProductName = String(row[1] ?? '').trim();
         if (!rawProductName || rawProductName === 'nan') continue;
-
         const productName = extractShortName(rawProductName);
-
-        // 成交金额（用户支付金额）
         const salesAmount = parseAmount(row[6]);
-
-        // 过滤条件：金额 < 100 不导入
         if (salesAmount < 100) continue;
-
         records.push({
-            shangpin_mingcheng: productName,
-            jiangjie_cishu: Math.round(parseNumber(row[2])),
-            chengjiao_jine: salesAmount,
-            dianji_lv: parsePercentage(row[9])
+            product_name: productName,
+            lecture_count: Math.round(parseNumber(row[2])),
+            sales_amount: salesAmount,
+            exposure_rate: parsePercentage(row[9]),
+            conversion_rate: parsePercentage(row[10])
         });
     }
-
     return records;
 }
 
 // ========================================
 // 库存数据处理器
 // ========================================
-function processKucunData(rows) {
-    // 用于存储按商品名称分组的数据
+function processInventoryData(rows) {
     const productMap = new Map();
-
-    // 跳过表头
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
-
         const productName = String(row[1] ?? '').trim();
         if (!productName || productName === 'nan') continue;
-
         if (!productMap.has(productName)) {
             productMap.set(productName, {
-                tupian_dizhi: '',
-                cangwei: new Set(),
-                keyong_shu: 0,
-                kucun_shu: 0,
-                biaoqian: new Set(),
-                fenlei: new Set()
+                image_url: '', product_tag: new Set(), virtual_category: new Set(),
+                product_code: new Set(), warehouse: new Set(),
+                available_qty: 0, actual_stock: 0, product_category: new Set()
             });
         }
-
         const data = productMap.get(productName);
-
-        // 图片地址：只取第一个非空值
-        if (!data.tupian_dizhi) {
+        if (!data.image_url) {
             const img = String(row[0] ?? '').trim();
-            if (img && img !== 'nan') data.tupian_dizhi = img;
+            if (img && img !== 'nan') data.image_url = img;
         }
-
-        // 文本字段去重合并
         const addToSet = (set, value) => {
             const str = String(value ?? '').trim();
             if (str && str !== 'nan') set.add(str);
         };
-
-        addToSet(data.cangwei, row[9]);   // 主仓位
-        addToSet(data.biaoqian, row[1]);  // 商品标签
-        addToSet(data.fenlei, row[28]);   // 分类
-
-        // 数值字段相加
-        data.keyong_shu += Math.round(parseNumber(row[10]));
-        data.kucun_shu += Math.round(parseNumber(row[10]));
+        addToSet(data.product_tag, row[1]);
+        addToSet(data.virtual_category, row[3]);
+        addToSet(data.product_code, row[8]);
+        addToSet(data.warehouse, row[9]);
+        addToSet(data.product_category, row[28]);
+        data.available_qty += Math.round(parseNumber(row[10]));
+        data.actual_stock += Math.round(parseNumber(row[10]));
     }
-
-    // 转换为最终记录格式
     const records = [];
     productMap.forEach((data, productName) => {
         records.push({
-            shangpin_mingcheng: productName,
-            tupian_dizhi: data.tupian_dizhi,
-            cangwei: Array.from(data.cangwei).filter(Boolean).join(','),
-            keyong_shu: data.keyong_shu,
-            kucun_shu: data.kucun_shu,
-            biaoqian: Array.from(data.biaoqian).filter(Boolean).join(','),
-            fenlei: Array.from(data.fenlei).filter(Boolean).join(',')
+            product_name: productName,
+            image_url: data.image_url,
+            product_tag: Array.from(data.product_tag).filter(Boolean).join(','),
+            virtual_category: Array.from(data.virtual_category).filter(Boolean).join(','),
+            product_code: Array.from(data.product_code).filter(Boolean).join(','),
+            warehouse: Array.from(data.warehouse).filter(Boolean).join(','),
+            available_qty: data.available_qty,
+            actual_stock: data.actual_stock,
+            product_category: Array.from(data.product_category).filter(Boolean).join(',')
         });
     });
-
     return records;
 }
 
 // ========================================
 // ID数据处理器
 // ========================================
-function processIdData(rows) {
+function processProductIdData(rows) {
     const seenProducts = new Set();
     const records = [];
-
-    // 跳过表头
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
-
         const rawProductName = String(row[1] ?? '').trim();
         if (!rawProductName || rawProductName === 'nan') continue;
-
         const productName = extractShortName(rawProductName);
-
-        // 去重
         if (seenProducts.has(productName)) continue;
         seenProducts.add(productName);
-
-        // 处理商品ID：去除 'ID:' 前缀
         let productId = String(row[0] ?? '').trim();
-        if (productId.startsWith('ID:')) {
-            productId = productId.substring(3).trim();
+        if (productId.startsWith('ID:')) productId = productId.substring(3).trim();
+        const record = { product_name: productName, product_id: productId };
+        if (row.length > 13) record.product_price = parseNumber(row[13]);
+        if (row.length > 4) {
+            const category = String(row[4] ?? '').trim();
+            if (category && category !== 'nan') record.store_category = category;
         }
-
-        records.push({
-            shangpin_mingcheng: productName,
-            shangpin_id: productId
-        });
+        records.push(record);
     }
-
     return records;
 }
 
 // ========================================
-// 上传页面生成器
+// 上传配置
 // ========================================
-function generateUploadPage(type, title, icon, rules) {
+const UploadConfigs = {
+    ranking: {
+        title: '📊 排名数据上传',
+        tableName: 'ranking_data',
+        processor: processRankingData,
+        rules: [
+            '商品名称：保留「字符及其后内容',
+            '讲解次数：转整数，无效值记0',
+            '成交金额：去除¥和逗号转数值',
+            '曝光/点击成交率：去%后÷100转小数',
+            '过滤：支付金额<100不导入'
+        ],
+        mapping: [
+            { source: '列1 商品名称', target: 'product_name' },
+            { source: '列2 讲解次数', target: 'lecture_count' },
+            { source: '列6 用户支付金额', target: 'sales_amount' },
+            { source: '列9 曝光点击率', target: 'exposure_rate' },
+            { source: '列10 点击成交率', target: 'conversion_rate' }
+        ]
+    },
+    inventory: {
+        title: '📦 库存数据上传',
+        tableName: 'inventory_data',
+        processor: processInventoryData,
+        rules: [
+            '同名商品自动合并',
+            '数值字段：相加',
+            '文本字段：去重合并'
+        ],
+        mapping: [
+            { source: '列0 图片', target: 'image_url' },
+            { source: '列1 商品名称', target: 'product_name' },
+            { source: '列3 虚拟分类', target: 'virtual_category' },
+            { source: '列8 商品编码', target: 'product_code' },
+            { source: '列9 主仓位', target: 'warehouse' },
+            { source: '列10 可用数', target: 'available_qty' },
+            { source: '列28 分类', target: 'product_category' }
+        ]
+    },
+    productId: {
+        title: '🆔 商品ID上传',
+        tableName: 'product_id_data',
+        processor: processProductIdData,
+        rules: [
+            '商品名称：保留「字符后部分',
+            '商品ID：去除"ID:"前缀',
+            '按商品名称去重，保留首条'
+        ],
+        mapping: [
+            { source: '列0 商品ID', target: 'product_id' },
+            { source: '列1 商品名称', target: 'product_name' },
+            { source: '列4 三级分类', target: 'store_category' },
+            { source: '列13 商品价格', target: 'product_price' }
+        ]
+    }
+};
+
+// ========================================
+// 生成单个上传区块
+// ========================================
+function generateUploadBlock(key, config) {
+    const mappingRows = config.mapping.map(m =>
+        `<tr><td>${m.source}</td><td>→</td><td>${m.target}</td></tr>`
+    ).join('');
+
     return `
-        <div class="upload-page">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">${icon} ${title}</h3>
-                </div>
-                
-                <div class="upload-zone" id="uploadZone-${type}">
-                    <div class="upload-zone-icon">📁</div>
-                    <p>拖拽文件到此处，或点击选择文件</p>
-                    <p class="upload-hint">支持 .xlsx, .xls, .csv 格式</p>
-                    <input type="file" id="fileInput-${type}" accept=".xlsx,.xls,.csv" style="display:none">
-                </div>
-                
-                <div class="upload-options">
-                    <label class="upload-mode-label">上传模式：</label>
-                    <label class="radio-label">
-                        <input type="radio" name="uploadMode-${type}" value="full" checked>
-                        <span>全量（清空后上传）</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="uploadMode-${type}" value="incremental">
-                        <span>增量（追加）</span>
-                    </label>
-                </div>
-                
-                <div class="rules-box">
-                    <h4>📊 处理规则</h4>
-                    <ul>
-                        ${rules.map(r => `<li>${r}</li>`).join('')}
-                    </ul>
-                </div>
-                
-                <div class="upload-status" id="status-${type}" style="display:none">
-                    <div class="status-header">
-                        <span class="status-label">处理状态：</span>
-                        <span class="status-text" id="statusText-${type}">准备中...</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-${type}" style="width:0%"></div>
-                    </div>
-                    <div class="status-detail" id="statusDetail-${type}"></div>
-                </div>
-                
-                <div class="upload-actions">
-                    <button class="btn btn-primary" id="uploadBtn-${type}" disabled>
-                        开始上传
-                    </button>
-                </div>
+        <div class="upload-block" id="block-${key}">
+            <div class="upload-block-header">
+                <h3>${config.title}</h3>
             </div>
+            
+            <div class="upload-zone" id="uploadZone-${key}">
+                <div class="upload-zone-icon">📁</div>
+                <p>拖拽文件到此处，或点击选择</p>
+                <p class="upload-hint">.xlsx, .xls, .csv</p>
+                <input type="file" id="fileInput-${key}" accept=".xlsx,.xls,.csv" style="display:none">
+            </div>
+            
+            <div class="upload-options">
+                <label class="radio-label">
+                    <input type="radio" name="mode-${key}" value="full" checked>
+                    <span>全量</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="mode-${key}" value="incremental">
+                    <span>增量</span>
+                </label>
+            </div>
+            
+            <details class="rules-details">
+                <summary>📋 处理规则</summary>
+                <ul>${config.rules.map(r => `<li>${r}</li>`).join('')}</ul>
+            </details>
+            
+            <details class="mapping-details">
+                <summary>🔗 字段映射</summary>
+                <table class="mapping-table">
+                    <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
+                    <tbody>${mappingRows}</tbody>
+                </table>
+            </details>
+            
+            <div class="upload-status" id="status-${key}" style="display:none">
+                <div class="status-text" id="statusText-${key}">准备中...</div>
+                <div class="progress-bar"><div class="progress-fill" id="progress-${key}"></div></div>
+                <div class="status-detail" id="statusDetail-${key}"></div>
+            </div>
+            
+            <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
         </div>
     `;
 }
 
 // ========================================
-// 初始化上传页面
+// 生成完整上传页面（三合一）
 // ========================================
-function initUploadPage(type, tableName, processor) {
-    const uploadZone = document.getElementById(`uploadZone-${type}`);
-    const fileInput = document.getElementById(`fileInput-${type}`);
-    const uploadBtn = document.getElementById(`uploadBtn-${type}`);
-    const statusDiv = document.getElementById(`status-${type}`);
-    const statusText = document.getElementById(`statusText-${type}`);
-    const progressBar = document.getElementById(`progress-${type}`);
-    const statusDetail = document.getElementById(`statusDetail-${type}`);
+function generateCombinedUploadPage() {
+    const blocks = Object.entries(UploadConfigs)
+        .map(([key, config]) => generateUploadBlock(key, config))
+        .join('');
+
+    return `<div class="upload-page-combined"><div class="upload-blocks-grid">${blocks}</div></div>`;
+}
+
+// ========================================
+// 初始化上传区块
+// ========================================
+function initUploadBlock(key, config) {
+    const uploadZone = document.getElementById(`uploadZone-${key}`);
+    const fileInput = document.getElementById(`fileInput-${key}`);
+    const uploadBtn = document.getElementById(`uploadBtn-${key}`);
+    const statusDiv = document.getElementById(`status-${key}`);
+    const statusText = document.getElementById(`statusText-${key}`);
+    const progressBar = document.getElementById(`progress-${key}`);
+    const statusDetail = document.getElementById(`statusDetail-${key}`);
 
     let selectedFile = null;
 
-    // 点击上传区域
     uploadZone.addEventListener('click', () => fileInput.click());
-
-    // 拖拽事件
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-    });
-
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-    });
-
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
     uploadZone.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadZone.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
-        }
+        if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0]);
     });
-
-    // 文件选择
     fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFileSelect(e.target.files[0]);
-        }
+        if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
     });
 
     function handleFileSelect(file) {
         selectedFile = file;
-        uploadZone.innerHTML = `
-            <div class="upload-zone-icon">✅</div>
-            <p><strong>${file.name}</strong></p>
-            <p class="upload-hint">${formatFileSize(file.size)}</p>
-        `;
+        uploadZone.innerHTML = `<div class="upload-zone-icon">✅</div><p><strong>${file.name}</strong></p>`;
         uploadBtn.disabled = false;
     }
 
-    // 上传按钮
     uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
-
-        const isFullMode = document.querySelector(`input[name="uploadMode-${type}"]:checked`).value === 'full';
-
+        const isFullMode = document.querySelector(`input[name="mode-${key}"]:checked`).value === 'full';
         try {
             statusDiv.style.display = 'block';
             uploadBtn.disabled = true;
-
-            // 1. 读取文件
-            updateStatus('正在读取文件...', 10);
+            updateStatus('读取文件...', 10);
             const data = await readExcelFile(selectedFile);
-
-            // 2. 处理数据
-            updateStatus('正在处理数据...', 30);
-            const records = processor(data);
-            updateStatus(`已处理 ${records.length} 条记录`, 50);
-
-            if (records.length === 0) {
-                throw new Error('没有有效数据可上传');
-            }
-
-            // 3. 全量模式先清空
+            updateStatus('处理数据...', 30);
+            const records = config.processor(data);
+            updateStatus(`已处理 ${records.length} 条`, 50);
+            if (records.length === 0) throw new Error('无有效数据');
             if (isFullMode) {
-                updateStatus('正在清空旧数据...', 60);
-                await clearTable(tableName);
+                updateStatus('清空旧数据...', 60);
+                await clearTable(config.tableName);
             }
-
-            // 4. 上传数据
-            updateStatus('正在上传数据...', 70);
-            await uploadData(tableName, records);
-
-            // 5. 完成
-            updateStatus('上传完成！', 100);
-            statusDetail.innerHTML = `<span class="success">✅ 成功上传 ${records.length} 条记录</span>`;
-
-            window.AppUtils.showToast(`成功上传 ${records.length} 条记录`, 'success');
-
+            updateStatus('上传中...', 70);
+            await uploadData(config.tableName, records);
+            updateStatus('完成！', 100);
+            statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
+            window.AppUtils?.showToast?.(`${config.title} 成功上传 ${records.length} 条`, 'success');
         } catch (error) {
             console.error('上传失败:', error);
             statusText.textContent = '上传失败';
             statusDetail.innerHTML = `<span class="error">❌ ${error.message}</span>`;
-            window.AppUtils.showToast('上传失败: ' + error.message, 'error');
+            window.AppUtils?.showToast?.('上传失败: ' + error.message, 'error');
         } finally {
             uploadBtn.disabled = false;
         }
@@ -365,7 +345,7 @@ function initUploadPage(type, tableName, processor) {
 }
 
 // ========================================
-// 文件读取
+// 文件读取与数据库操作
 // ========================================
 async function readExcelFile(file) {
     return new Promise((resolve, reject) => {
@@ -374,116 +354,42 @@ async function readExcelFile(file) {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-                resolve(rows);
-            } catch (error) {
-                reject(new Error('文件解析失败: ' + error.message));
-            }
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                resolve(XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }));
+            } catch (err) { reject(new Error('解析失败: ' + err.message)); }
         };
-        reader.onerror = () => reject(new Error('文件读取失败'));
+        reader.onerror = () => reject(new Error('读取失败'));
         reader.readAsArrayBuffer(file);
     });
 }
 
-// ========================================
-// 数据库操作
-// ========================================
 async function clearTable(tableName) {
-    const { error } = await window.supabaseClient
-        .from(tableName)
-        .delete()
-        .neq('id', 0);
-
-    if (error) throw new Error('清空数据失败: ' + error.message);
+    const { error } = await window.supabaseClient.from(tableName).delete().neq('id', 0);
+    if (error) throw new Error('清空失败: ' + error.message);
 }
 
 async function uploadData(tableName, records) {
-    // 分批上传，每批 100 条
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
-        const batch = records.slice(i, i + batchSize);
-        const { error } = await window.supabaseClient
-            .from(tableName)
-            .insert(batch);
-
-        if (error) throw new Error('上传数据失败: ' + error.message);
+        const { error } = await window.supabaseClient.from(tableName).insert(records.slice(i, i + batchSize));
+        if (error) throw new Error('上传失败: ' + error.message);
     }
 }
-
-// ========================================
-// 工具函数
-// ========================================
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-// ========================================
-// 页面配置
-// ========================================
-const UploadPages = {
-    'upload-ranking': {
-        title: '排名数据上传',
-        icon: '📊',
-        tableName: 'paiming',
-        processor: processPaimingData,
-        rules: [
-            '商品名称：保留「字符及其后内容',
-            '讲解次数：转数值，无效值记0',
-            '成交金额：去除¥和逗号后转数值',
-            '点击率：去%后除以100转小数',
-            '过滤：成交金额<100的记录不导入'
-        ]
-    },
-    'upload-inventory': {
-        title: '库存数据上传',
-        icon: '📦',
-        tableName: 'kucun',
-        processor: processKucunData,
-        rules: [
-            '同名商品自动合并',
-            '数值字段（可用数/库存数）：相加',
-            '文本字段（标签/分类等）：去重合并',
-            '字段映射：图片→图片地址，主仓位→仓位'
-        ]
-    },
-    'upload-product-id': {
-        title: '商品ID上传',
-        icon: '🆔',
-        tableName: 'shangpin_id',
-        processor: processIdData,
-        rules: [
-            '支持Excel和CSV格式',
-            '商品名称：保留「字符后部分',
-            '商品ID：去除"ID:"前缀',
-            '按商品名称去重，保留首条'
-        ]
-    }
-};
 
 // ========================================
 // 导出加载函数
 // ========================================
 window.loadUploadPage = function (pageId) {
-    const config = UploadPages[pageId];
-    if (!config) return null;
-
-    // 生成页面 HTML
-    const html = generateUploadPage(
-        pageId,
-        config.title,
-        config.icon,
-        config.rules
-    );
-
-    // 返回 HTML 和初始化回调
-    return {
-        html: html,
-        init: () => initUploadPage(pageId, config.tableName, config.processor)
-    };
+    // 对于 "upload" 主页面或任何 upload-* 子页面，都返回合并页面
+    if (pageId === 'upload' || pageId.startsWith('upload-')) {
+        return {
+            html: generateCombinedUploadPage(),
+            init: () => {
+                Object.entries(UploadConfigs).forEach(([key, config]) => {
+                    initUploadBlock(key, config);
+                });
+            }
+        };
+    }
+    return null;
 };

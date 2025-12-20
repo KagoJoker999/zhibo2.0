@@ -158,7 +158,7 @@ function loadPage(page) {
         DOM.pageContainer.style.display = 'block';
 
         // 检查是否有上传页面加载器
-        if (window.loadUploadPage && page.startsWith('upload-')) {
+        if (window.loadUploadPage && (page === 'upload' || page.startsWith('upload-'))) {
             const uploadPage = window.loadUploadPage(page);
             if (uploadPage) {
                 DOM.pageContainer.innerHTML = uploadPage.html;

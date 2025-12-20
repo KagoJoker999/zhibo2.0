@@ -791,3 +791,158 @@ body {
         padding: 0 0.5rem;
     }
 }
+
+/* ========================================
+   三合一上传页面样式
+   ======================================== */
+.upload-page-combined {
+    padding: 0;
+}
+
+.upload-blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.upload-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.upload-block-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.upload-block .upload-zone {
+    padding: 1.5rem;
+    min-height: 120px;
+}
+
+.upload-block .upload-zone-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-block .upload-options {
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+}
+
+.upload-block .radio-label {
+    font-size: 0.875rem;
+}
+
+/* 折叠面板 */
+.rules-details,
+.mapping-details {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+.rules-details summary,
+.mapping-details summary {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.rules-details summary:hover,
+.mapping-details summary:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.rules-details ul {
+    list-style: none;
+    padding: 0.75rem 1rem;
+    margin: 0;
+}
+
+.rules-details li {
+    padding: 0.25rem 0;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.rules-details li::before {
+    content: '•';
+    color: var(--primary-color);
+    margin-right: 0.5rem;
+}
+
+/* 映射表格 */
+.mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.mapping-table th,
+.mapping-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mapping-table th {
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.mapping-table td:nth-child(2) {
+    text-align: center;
+    color: var(--primary-color);
+}
+
+/* 上传按钮 */
+.btn-upload {
+    width: 100%;
+    margin-top: auto;
+}
+
+/* 状态显示 */
+.upload-block .upload-status {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    margin: 0;
+}
+
+.upload-block .status-text {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-block .progress-bar {
+    height: 6px;
+}
+
+.upload-block .status-detail {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .upload-blocks-grid {
+        grid-template-columns: 1fr;
+    }
+}
