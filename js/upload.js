@@ -48,23 +48,26 @@ function parsePercentage(value) {
 
 // ========================================
 // 排名数据处理器
+// 列映射: B=商品名称, C=讲解次数, F=用户支付金额, J=曝光点击率, K=点击成交率
 // ========================================
 function processRankingData(rows) {
     const records = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
+        // B列(索引1): 商品名称
         const rawProductName = String(row[1] ?? '').trim();
         if (!rawProductName || rawProductName === 'nan') continue;
         const productName = extractShortName(rawProductName);
-        const salesAmount = parseAmount(row[6]);
+        // F列(索引5): 用户支付金额
+        const salesAmount = parseAmount(row[5]);
         if (salesAmount < 100) continue;
         records.push({
             product_name: productName,
-            lecture_count: Math.round(parseNumber(row[2])),
-            sales_amount: salesAmount,
-            exposure_rate: parsePercentage(row[9]),
-            conversion_rate: parsePercentage(row[10])
+            lecture_count: Math.round(parseNumber(row[2])),    // C列(索引2): 讲解次数
+            sales_amount: salesAmount,                          // F列(索引5): 用户支付金额
+            exposure_rate: parsePercentage(row[9]),             // J列(索引9): 商品曝光-点击率
+            conversion_rate: parsePercentage(row[10])           // K列(索引10): 商品点击-成交转化率
         });
     }
     return records;
@@ -164,11 +167,11 @@ const UploadConfigs = {
             '过滤：支付金额<100不导入'
         ],
         mapping: [
-            { source: '列1 商品名称', target: 'product_name' },
-            { source: '列2 讲解次数', target: 'lecture_count' },
-            { source: '列6 用户支付金额', target: 'sales_amount' },
-            { source: '列9 曝光点击率', target: 'exposure_rate' },
-            { source: '列10 点击成交率', target: 'conversion_rate' }
+            { source: 'B列 商品名称', target: 'product_name' },
+            { source: 'C列 讲解次数', target: 'lecture_count' },
+            { source: 'F列 用户支付金额', target: 'sales_amount' },
+            { source: 'J列 商品曝光-点击率', target: 'exposure_rate' },
+            { source: 'K列 商品点击-成交转化率', target: 'conversion_rate' }
         ]
     },
     inventory: {
