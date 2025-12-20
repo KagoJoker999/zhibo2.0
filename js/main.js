@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 初始化 Supabase
 function initSupabaseClient() {
-    if (typeof supabase !== 'undefined' && window.SupabaseClient) {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
         window.supabaseClient = supabase.createClient(
             'https://ugadhdhwixrejzfcwugj.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54'
