@@ -367,8 +367,16 @@ async function readExcelFile(file) {
 }
 
 async function clearTable(tableName) {
-    const { error } = await window.supabaseClient.from(tableName).delete().neq('id', 0);
-    if (error) throw new Error('清空失败: ' + error.message);
+    // 使用 gte('id', 0) 确保删除所有记录
+    const { error } = await window.supabaseClient
+        .from(tableName)
+        .delete()
+        .gte('id', 0);
+    if (error) {
+        console.error('清空表失败:', error);
+        throw new Error('清空失败: ' + error.message);
+    }
+    console.log(`✅ 已清空表 ${tableName}`);
 }
 
 async function uploadData(tableName, records) {
