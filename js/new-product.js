@@ -247,11 +247,6 @@ function generateNewProductPage() {
                     <div id="result-content" class="result-content">
                         <p class="text-muted">上传数据后显示处理结果</p>
                     </div>
-                    
-                    <div class="download-actions" id="downloadActions" style="display:none">
-                        <button class="btn btn-secondary" id="downloadRenameBtn">📥 重命名表格下载</button>
-                        <button class="btn btn-secondary" id="downloadListingBtn">📥 上链接表格下载</button>
-                    </div>
                 </div>
             </div>
             
@@ -259,7 +254,12 @@ function generateNewProductPage() {
             <div class="data-table-section">
                 <div class="data-table-header">
                     <h3>📋 数据库新品列表 <span id="lastRefreshTime" class="refresh-time"></span></h3>
-                    <button class="btn btn-secondary btn-sm" id="refreshDataBtn">🔄 刷新</button>
+                    <div class="data-table-actions" id="downloadActions" style="display:none">
+                        <button class="btn btn-secondary btn-sm" id="downloadRenameBtn">📥 重命名表格</button>
+                        <button class="btn btn-secondary btn-sm" id="downloadListingBtn">📥 上链接表格</button>
+                        <button class="btn btn-secondary btn-sm" id="refreshDataBtn">🔄 刷新</button>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="refreshDataBtnOnly" style="display:none">🔄 刷新</button>
                 </div>
                 <div id="dataTableContainer" class="data-table-container">
                     <p class="text-muted">点击刷新加载数据</p>
@@ -427,14 +427,16 @@ function initNewProductUpload() {
 
     // 刷新按钮
     const refreshBtn = document.getElementById('refreshDataBtn');
-    refreshBtn.addEventListener('click', loadDataTable);
+    const refreshBtnOnly = document.getElementById('refreshDataBtnOnly');
+    refreshBtn?.addEventListener('click', loadDataTable);
+    refreshBtnOnly?.addEventListener('click', loadDataTable);
 
     // 下载按钮
     const downloadRenameBtn = document.getElementById('downloadRenameBtn');
     const downloadListingBtn = document.getElementById('downloadListingBtn');
 
-    downloadRenameBtn.addEventListener('click', () => downloadExcel('rename'));
-    downloadListingBtn.addEventListener('click', () => downloadExcel('listing'));
+    downloadRenameBtn?.addEventListener('click', () => downloadExcel('rename'));
+    downloadListingBtn?.addEventListener('click', () => downloadExcel('listing'));
 
     // 加载数据表格
     async function loadDataTable() {
@@ -490,117 +492,121 @@ function initNewProductUpload() {
                 <p class="table-info">显示最近 ${data.length} 条记录</p>
             `;
 
-            // 有数据时显示下载按钮
+            // 有数据时显示完整按钮组（含下载），隐藏单独刷新按钮
             document.getElementById('downloadActions').style.display = 'flex';
+            document.getElementById('refreshDataBtnOnly').style.display = 'none';
         } catch (error) {
             container.innerHTML = `<p class="error">加载失败: ${error.message}</p>`;
+            // 出错时只显示刷新按钮
+            document.getElementById('downloadActions').style.display = 'none';
+            document.getElementById('refreshDataBtnOnly').style.display = 'block';
         }
     }
-
-    function truncate(str, len) {
-        if (!str) return '-';
-        return str.length > len ? str.substring(0, len) + '...' : str;
-    }
-
-    // 下载 Excel
-    async function downloadExcel(type) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('new_product_data')
-                .select('*');
-
-            if (error) throw error;
-            if (!data || data.length === 0) {
-                window.AppUtils?.showToast?.('暂无数据可下载', 'warning');
-                return;
-            }
-
-            let rows, filename;
-            if (type === 'rename') {
-                // 重命名表格：商品编码, 商品名称(新名), 商品简称(原名)
-                rows = [['商品编码', '商品名称', '商品简称']];
-                data.forEach(item => {
-                    rows.push([
-                        item.product_code || '',
-                        item.product_name || '',
-                        item.original_name || ''
-                    ]);
-                });
-                // 文件名带时间戳
-                const now = new Date();
-                const ts = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-                filename = `重命名表格_${ts}.xlsx`;
-            } else {
-                // 上链接表格：多SKU合并处理
-                // 1. 按商品编码排序
-                data.sort((a, b) => (a.product_code || '').localeCompare(b.product_code || ''));
-
-                // 2. 按商品名称分组
-                const groups = new Map();
-                data.forEach(item => {
-                    const name = item.product_name || '';
-                    if (!groups.has(name)) {
-                        groups.set(name, []);
-                    }
-                    groups.get(name).push(item);
-                });
-
-                // 3. 确定最大SKU数量
-                let maxSkuCount = 1;
-                groups.forEach(items => {
-                    if (items.length > maxSkuCount) maxSkuCount = items.length;
-                });
-
-                // 4. 构建表头
-                const headers = ['商品名称', '商品编码', '上架分类', '虚拟分类', '基本售价', '颜色及规格', 'SKU数量'];
-                for (let i = 2; i <= maxSkuCount; i++) {
-                    headers.push(`商品编码${i}`, `颜色及规格${i}`);
-                }
-                rows = [headers];
-
-                // 5. 构建数据行
-                groups.forEach((items, name) => {
-                    const first = items[0];
-                    const row = [
-                        name,
-                        first.product_code || '',
-                        first.listing_category || '',
-                        first.virtual_category || '',
-                        first.base_price || 0,
-                        first.color_spec || '',
-                        items.length
-                    ];
-
-                    // 添加额外SKU
-                    for (let i = 1; i < maxSkuCount; i++) {
-                        if (i < items.length) {
-                            row.push(items[i].product_code || '', items[i].color_spec || '');
-                        } else {
-                            row.push('', '');
-                        }
-                    }
-                    rows.push(row);
-                });
-
-                const now2 = new Date();
-                const ts2 = `${now2.getFullYear()}${(now2.getMonth() + 1).toString().padStart(2, '0')}${now2.getDate().toString().padStart(2, '0')}_${now2.getHours().toString().padStart(2, '0')}${now2.getMinutes().toString().padStart(2, '0')}${now2.getSeconds().toString().padStart(2, '0')}`;
-                filename = `上链接表_${ts2}.xlsx`;
-            }
-
-            const ws = XLSX.utils.aoa_to_sheet(rows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            XLSX.writeFile(wb, filename);
-
-            window.AppUtils?.showToast?.('下载成功', 'success');
-        } catch (error) {
-            window.AppUtils?.showToast?.('下载失败: ' + error.message, 'error');
-        }
-    }
-
-    // 初始加载
-    loadDataTable();
 }
+
+function truncate(str, len) {
+    if (!str) return '-';
+    return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+// 下载 Excel
+async function downloadExcel(type) {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('new_product_data')
+            .select('*');
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            window.AppUtils?.showToast?.('暂无数据可下载', 'warning');
+            return;
+        }
+
+        let rows, filename;
+        if (type === 'rename') {
+            // 重命名表格：商品编码, 商品名称(新名), 商品简称(原名)
+            rows = [['商品编码', '商品名称', '商品简称']];
+            data.forEach(item => {
+                rows.push([
+                    item.product_code || '',
+                    item.product_name || '',
+                    item.original_name || ''
+                ]);
+            });
+            // 文件名带时间戳
+            const now = new Date();
+            const ts = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+            filename = `重命名表格_${ts}.xlsx`;
+        } else {
+            // 上链接表格：多SKU合并处理
+            // 1. 按商品编码排序
+            data.sort((a, b) => (a.product_code || '').localeCompare(b.product_code || ''));
+
+            // 2. 按商品名称分组
+            const groups = new Map();
+            data.forEach(item => {
+                const name = item.product_name || '';
+                if (!groups.has(name)) {
+                    groups.set(name, []);
+                }
+                groups.get(name).push(item);
+            });
+
+            // 3. 确定最大SKU数量
+            let maxSkuCount = 1;
+            groups.forEach(items => {
+                if (items.length > maxSkuCount) maxSkuCount = items.length;
+            });
+
+            // 4. 构建表头
+            const headers = ['商品名称', '商品编码', '上架分类', '虚拟分类', '基本售价', '颜色及规格', 'SKU数量'];
+            for (let i = 2; i <= maxSkuCount; i++) {
+                headers.push(`商品编码${i}`, `颜色及规格${i}`);
+            }
+            rows = [headers];
+
+            // 5. 构建数据行
+            groups.forEach((items, name) => {
+                const first = items[0];
+                const row = [
+                    name,
+                    first.product_code || '',
+                    first.listing_category || '',
+                    first.virtual_category || '',
+                    first.base_price || 0,
+                    first.color_spec || '',
+                    items.length
+                ];
+
+                // 添加额外SKU
+                for (let i = 1; i < maxSkuCount; i++) {
+                    if (i < items.length) {
+                        row.push(items[i].product_code || '', items[i].color_spec || '');
+                    } else {
+                        row.push('', '');
+                    }
+                }
+                rows.push(row);
+            });
+
+            const now2 = new Date();
+            const ts2 = `${now2.getFullYear()}${(now2.getMonth() + 1).toString().padStart(2, '0')}${now2.getDate().toString().padStart(2, '0')}_${now2.getHours().toString().padStart(2, '0')}${now2.getMinutes().toString().padStart(2, '0')}${now2.getSeconds().toString().padStart(2, '0')}`;
+            filename = `上链接表_${ts2}.xlsx`;
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+        XLSX.writeFile(wb, filename);
+
+        window.AppUtils?.showToast?.('下载成功', 'success');
+    } catch (error) {
+        window.AppUtils?.showToast?.('下载失败: ' + error.message, 'error');
+    }
+}
+
+// 初始加载
+loadDataTable();
 
 // ========================================
 // 初始化设置页面

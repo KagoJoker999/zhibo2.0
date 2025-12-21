@@ -1212,6 +1212,16 @@ body {
     margin-bottom: 1rem;
 }
 
+.data-table-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+align-items: center;
+margin-bottom: 1rem;
+}
+
 .data-table-header h3 {
     margin: 0;
     font-size: 1.125rem;
