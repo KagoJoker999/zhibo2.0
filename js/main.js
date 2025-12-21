@@ -65,11 +65,46 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     handleHashChange();
 
+    // 更新数据库空间显示
+    updateDbUsage();
+
     // 监听 hash 变化
     window.addEventListener('hashchange', handleHashChange);
 
     console.log('📡 直播辅助工具已启动');
 });
+
+// 查询数据库空间使用情况
+async function updateDbUsage() {
+    const dbUsageText = document.getElementById('dbUsageText');
+    if (!dbUsageText || !window.supabaseClient) return;
+
+    try {
+        // 统计各表的记录数来估算空间（实际数据库大小难以直接获取）
+        const tables = ['inventory_data', 'product_id', 'new_product_data'];
+        let totalRecords = 0;
+
+        for (const table of tables) {
+            const { count } = await window.supabaseClient
+                .from(table)
+                .select('*', { count: 'exact', head: true });
+            totalRecords += count || 0;
+        }
+
+        // 估算：每条记录约 0.5KB，计算使用量
+        const usedKB = totalRecords * 0.5;
+        const totalMB = 500;
+        const usedMB = (usedKB / 1024).toFixed(1);
+        const remainMB = (totalMB - usedMB).toFixed(0);
+
+        dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
+    } catch (e) {
+        dbUsageText.textContent = '-- / 500MB';
+    }
+}
+
+// 暴露给全局，方便其他模块调用刷新
+window.updateDbUsage = updateDbUsage;
 
 // 初始化 Supabase
 function initSupabaseClient() {
