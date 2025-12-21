@@ -263,7 +263,7 @@ function generateNewProductPage() {
             <!-- 数据库数据表格 -->
             <div class="data-table-section">
                 <div class="data-table-header">
-                    <h3>📋 数据库新品列表</h3>
+                    <h3>📋 数据库新品列表 <span id="lastRefreshTime" class="refresh-time"></span></h3>
                     <button class="btn btn-secondary btn-sm" id="refreshDataBtn">🔄 刷新</button>
                 </div>
                 <div id="dataTableContainer" class="data-table-container">
@@ -444,6 +444,7 @@ function initNewProductUpload() {
     // 加载数据表格
     async function loadDataTable() {
         const container = document.getElementById('dataTableContainer');
+        const timeSpan = document.getElementById('lastRefreshTime');
         container.innerHTML = '<p class="text-muted">加载中...</p>';
 
         try {
@@ -454,6 +455,10 @@ function initNewProductUpload() {
                 .limit(100);
 
             if (error) throw error;
+
+            // 更新刷新时间
+            const now = new Date();
+            timeSpan.textContent = `(${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} 刷新)`;
 
             if (!data || data.length === 0) {
                 container.innerHTML = '<p class="text-muted">暂无数据</p>';
