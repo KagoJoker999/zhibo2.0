@@ -948,112 +948,130 @@ body {
 }
 
 /* ========================================
-   评分设置页面样式
+   设置页面样式
    ======================================== */
-.scoring-settings-page {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.card-desc {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
-}
-
-.config-loading {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-muted);
-}
-
-.config-section {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.config-section:last-of-type {
-    border-bottom: none;
-}
-
-.config-section h4 {
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    color: var(--text-primary);
-}
-
-.config-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.config-item {
+.settings-page {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 2rem;
 }
 
-.config-item label {
-    font-size: 0.875rem;
+.settings-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+}
+
+.settings-section h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+}
+
+.settings-section h4 {
+    margin: 1.5rem 0 0.75rem;
+    font-size: 1rem;
     color: var(--text-secondary);
 }
 
-.config-item input {
-    padding: 0.625rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
+.settings-hint {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
 }
 
-.config-item input:focus {
+.settings-group {
+    margin-bottom: 1rem;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.settings-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.settings-input:focus {
     outline: none;
     border-color: var(--primary-color);
 }
 
-.config-actions {
+.mapping-container {
     display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-.config-status {
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
+.mapping-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mapping-row input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
     font-size: 0.875rem;
 }
 
-.config-status.success {
-    background: rgba(34, 197, 94, 0.1);
-    color: var(--success-color);
+.mapping-row input:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
-.config-status.error {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--error-color);
+.mapping-row span {
+    color: var(--primary-color);
 }
 
-.config-status.info {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--info-color);
-}
-
-/* 计算按钮样式 */
-.btn-calculate {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+.btn-remove {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--error-color);
+    border: none;
+    border-radius: 50%;
     color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
 }
 
-.btn-calculate:hover {
-    background: linear-gradient(135deg, #d97706, #b45309);
+.btn-remove:hover {
+    opacity: 0.8;
 }
 
-.upload-buttons {
+.settings-actions {
     display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.result-content {
+    min-height: 100px;
+}
+
+.result-summary {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+}
+
+.result-summary p {
+    margin: 0.25rem 0;
 }

@@ -36,7 +36,6 @@ const PageConfig = {
     'upload-ranking': { title: '排名数据上传', icon: '📤' },
     'upload-product-id': { title: '商品 ID 上传', icon: '📤' },
     'upload-inventory': { title: '库存数据上传', icon: '📤' },
-    'scoring-settings': { title: '评分设置', icon: '⚙️' },
     'arrangement': { title: '排品功能', icon: '📋' },
     'arrangement-upload': { title: '基础数据上传', icon: '📋' },
     'arrangement-main': { title: '排品功能', icon: '📋' },
@@ -191,12 +190,12 @@ function loadPage(page) {
             }
         }
 
-        // 评分设置页面
-        if (window.loadScoringSettingsPage && page === 'scoring-settings') {
-            const settingsPage = window.loadScoringSettingsPage();
-            if (settingsPage) {
-                DOM.pageContainer.innerHTML = settingsPage.html;
-                setTimeout(() => settingsPage.init(), 50);
+        // 检查是否有新品处理页面加载器
+        if (window.loadNewProductPage && (page === 'new-product' || page.startsWith('new-product-'))) {
+            const newProductPage = window.loadNewProductPage(page);
+            if (newProductPage) {
+                DOM.pageContainer.innerHTML = newProductPage.html;
+                setTimeout(() => newProductPage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }

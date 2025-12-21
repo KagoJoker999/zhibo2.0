@@ -287,10 +287,7 @@ function generateUploadBlock(key, config) {
                 <div class="status-detail" id="statusDetail-${key}"></div>
             </div>
             
-            <div class="upload-buttons">
-                <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
-                ${key === 'ranking' ? '<button class="btn btn-calculate" id="calculateBtn" style="display:none">🧮 计算评分</button>' : ''}
-            </div>
+            <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
         </div>
     `;
 }
@@ -363,14 +360,6 @@ function initUploadBlock(key, config) {
             updateStatus('完成！', 100);
             statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
             window.AppUtils?.showToast?.(`${config.title} 成功上传 ${records.length} 条`, 'success');
-
-            // 排名上传成功后显示计算按钮
-            if (key === 'ranking') {
-                const calculateBtn = document.getElementById('calculateBtn');
-                if (calculateBtn) {
-                    calculateBtn.style.display = 'inline-block';
-                }
-            }
         } catch (error) {
             console.error('上传失败:', error);
             statusText.textContent = '上传失败';
@@ -380,47 +369,6 @@ function initUploadBlock(key, config) {
             uploadBtn.disabled = false;
         }
     });
-
-    // 排名模块的计算按钮事件
-    if (key === 'ranking') {
-        const calculateBtn = document.getElementById('calculateBtn');
-        if (calculateBtn) {
-            calculateBtn.addEventListener('click', async () => {
-                try {
-                    calculateBtn.disabled = true;
-                    calculateBtn.textContent = '计算中...';
-
-                    // 1. 加载配置
-                    const scoringConfig = await window.ScoringModule.loadScoringConfig();
-
-                    // 2. 从数据库加载排名数据
-                    const { data: rankingData, error } = await window.supabaseClient
-                        .from('ranking_data')
-                        .select('*');
-
-                    if (error) throw error;
-                    if (!rankingData || rankingData.length === 0) {
-                        throw new Error('没有排名数据可计算');
-                    }
-
-                    // 3. 计算评分
-                    const scores = window.ScoringModule.calculateScores(rankingData, scoringConfig);
-
-                    // 4. 更新数据库
-                    await window.ScoringModule.updateRankingScores(scores);
-
-                    window.AppUtils?.showToast?.(`成功计算 ${scores.length} 条评分`, 'success');
-                    calculateBtn.textContent = '✅ 计算完成';
-                } catch (error) {
-                    console.error('计算失败:', error);
-                    window.AppUtils?.showToast?.('计算失败: ' + error.message, 'error');
-                    calculateBtn.textContent = '🧮 计算评分';
-                } finally {
-                    calculateBtn.disabled = false;
-                }
-            });
-        }
-    }
 
     function updateStatus(text, progress) {
         statusText.textContent = text;
