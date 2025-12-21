@@ -75,44 +75,55 @@ function processRankingData(rows) {
 
 // ========================================
 // 库存数据处理器
+// 列映射: A=图片, B=商品名称, C=商品编码, D=虚拟分类, E=分类, H=主仓位, I=可用数, J=实际库存
 // ========================================
 function processInventoryData(rows) {
     const productMap = new Map();
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
+        // B列(索引1): 商品名称
         const productName = String(row[1] ?? '').trim();
         if (!productName || productName === 'nan') continue;
+
         if (!productMap.has(productName)) {
             productMap.set(productName, {
-                image_url: '', product_tag: new Set(), virtual_category: new Set(),
-                product_code: new Set(), warehouse: new Set(),
-                available_qty: 0, actual_stock: 0, product_category: new Set()
+                image_url: '',
+                virtual_category: new Set(),
+                product_code: new Set(),
+                warehouse: new Set(),
+                available_qty: 0,
+                actual_stock: 0,
+                product_category: new Set()
             });
         }
         const data = productMap.get(productName);
+
+        // A列(索引0): 图片 - 取第一个非空值
         if (!data.image_url) {
             const img = String(row[0] ?? '').trim();
             if (img && img !== 'nan') data.image_url = img;
         }
+
         const addToSet = (set, value) => {
             const str = String(value ?? '').trim();
             if (str && str !== 'nan') set.add(str);
         };
-        addToSet(data.product_tag, row[1]);
-        addToSet(data.virtual_category, row[3]);
-        addToSet(data.product_code, row[8]);
-        addToSet(data.warehouse, row[9]);
-        addToSet(data.product_category, row[28]);
-        data.available_qty += Math.round(parseNumber(row[10]));
-        data.actual_stock += Math.round(parseNumber(row[10]));
+
+        addToSet(data.virtual_category, row[3]);  // D列(索引3): 虚拟分类
+        addToSet(data.product_code, row[2]);       // C列(索引2): 商品编码
+        addToSet(data.warehouse, row[7]);          // H列(索引7): 主仓位
+        addToSet(data.product_category, row[4]);   // E列(索引4): 分类
+
+        data.available_qty += Math.round(parseNumber(row[8]));  // I列(索引8): 可用数
+        data.actual_stock += Math.round(parseNumber(row[9]));   // J列(索引9): 实际库存
     }
+
     const records = [];
     productMap.forEach((data, productName) => {
         records.push({
             product_name: productName,
             image_url: data.image_url,
-            product_tag: Array.from(data.product_tag).filter(Boolean).join(','),
             virtual_category: Array.from(data.virtual_category).filter(Boolean).join(','),
             product_code: Array.from(data.product_code).filter(Boolean).join(','),
             warehouse: Array.from(data.warehouse).filter(Boolean).join(','),
@@ -184,13 +195,14 @@ const UploadConfigs = {
             '文本字段：去重合并'
         ],
         mapping: [
-            { source: '列0 图片', target: 'image_url' },
-            { source: '列1 商品名称', target: 'product_name' },
-            { source: '列3 虚拟分类', target: 'virtual_category' },
-            { source: '列8 商品编码', target: 'product_code' },
-            { source: '列9 主仓位', target: 'warehouse' },
-            { source: '列10 可用数', target: 'available_qty' },
-            { source: '列28 分类', target: 'product_category' }
+            { source: 'A列 图片', target: 'image_url' },
+            { source: 'B列 商品名称', target: 'product_name' },
+            { source: 'C列 商品编码', target: 'product_code' },
+            { source: 'D列 虚拟分类', target: 'virtual_category' },
+            { source: 'E列 分类', target: 'product_category' },
+            { source: 'H列 主仓位', target: 'warehouse' },
+            { source: 'I列 可用数', target: 'available_qty' },
+            { source: 'J列 实际库存', target: 'actual_stock' }
         ]
     },
     productId: {
