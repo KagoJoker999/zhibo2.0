@@ -145,14 +145,57 @@ async function loadListingCategoryMapping() {
 // 设置保存函数
 // ========================================
 async function saveNameFormulaSettings(originWord, hotWord) {
-    // 先删除旧设置
-    await window.supabaseClient.from('name_formula_settings').delete().gte('id', 0);
+    try {
+        // 1. 查询现有记录
+        const { data: existing, error: fetchError } = await window.supabaseClient
+            .from('name_formula_settings')
+            .select('id')
+            .order('id', { ascending: true });
 
-    const { error } = await window.supabaseClient
-        .from('name_formula_settings')
-        .insert({ origin_word: originWord, hot_word: hotWord });
+        if (fetchError) throw fetchError;
 
-    if (error) throw new Error('保存失败: ' + error.message);
+        if (existing && existing.length > 0) {
+            // 2. 如果存在，更新第一条记录
+            const targetId = existing[0].id;
+            const { error: updateError } = await window.supabaseClient
+                .from('name_formula_settings')
+                .update({
+                    origin_word: originWord,
+                    hot_word: hotWord,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', targetId);
+
+            if (updateError) throw updateError;
+
+            // 3. 清理多余的重复记录（如果有）
+            if (existing.length > 1) {
+                const idsToDelete = existing.slice(1).map(r => r.id);
+                try {
+                    await window.supabaseClient
+                        .from('name_formula_settings')
+                        .delete()
+                        .in('id', idsToDelete);
+                    console.log('已清理重复设置记录:', idsToDelete);
+                } catch (e) {
+                    console.warn('清理重复记录失败 (非致命错误):', e);
+                }
+            }
+        } else {
+            // 4. 如果不存在，插入新记录
+            const { error: insertError } = await window.supabaseClient
+                .from('name_formula_settings')
+                .insert({
+                    origin_word: originWord,
+                    hot_word: hotWord
+                });
+
+            if (insertError) throw insertError;
+        }
+    } catch (error) {
+        console.error('保存设置失败:', error);
+        throw new Error('保存失败: ' + error.message);
+    }
 }
 
 async function saveCategoryWords(items) {
