@@ -275,9 +275,9 @@ function generateNewProductSettingsPage() {
                     <input type="text" id="hotWord" placeholder="如：热卖" class="settings-input" readonly>
                 </div>
                 
-                <h4>分类词汇映射 <span class="hint">(每行一条：分类→词汇)</span></h4>
+                <h4>分类词汇映射</h4>
                 <div id="categoryWordsDisplay" class="mapping-display"></div>
-                <textarea id="categoryWordsTextarea" class="mapping-textarea" style="display:none" placeholder="每行一条，格式：分类→词汇&#10;例如：&#10;护肤→水乳精华&#10;彩妆→口红眼影"></textarea>
+                <textarea id="categoryWordsTextarea" class="mapping-textarea" style="display:none" placeholder="每行一条，用逗号分隔&#10;分类,词汇&#10;&#10;例如:&#10;护肤,水乳精华&#10;彩妆,口红眼影"></textarea>
                 
                 <div class="settings-actions" id="nameSettingsActions" style="display:none">
                     <button class="btn btn-primary" id="saveNameSettings">💾 保存</button>
@@ -290,9 +290,8 @@ function generateNewProductSettingsPage() {
                     <h3>📋 上下架分类对照</h3>
                     <button class="btn btn-secondary btn-sm" id="editListingSettings">✏️ 修改</button>
                 </div>
-                <p class="settings-hint">每行一条：原分类→上架分类</p>
                 <div id="listingCategoryDisplay" class="mapping-display"></div>
-                <textarea id="listingCategoryTextarea" class="mapping-textarea" style="display:none" placeholder="每行一条，格式：原分类→上架分类&#10;例如：&#10;护肤品→护肤商品&#10;彩妆品→彩妆商品"></textarea>
+                <textarea id="listingCategoryTextarea" class="mapping-textarea" style="display:none" placeholder="每行一条，用逗号分隔&#10;原分类,上架分类&#10;&#10;例如:&#10;护肤品,护肤商品&#10;彩妆品,彩妆商品"></textarea>
                 
                 <div class="settings-actions" id="listingSettingsActions" style="display:none">
                     <button class="btn btn-primary" id="saveListingSettings">💾 保存</button>
@@ -442,17 +441,17 @@ async function initNewProductSettings() {
         originWordInput.value = settings.origin_word || '';
         hotWordInput.value = settings.hot_word || '';
 
-        // 加载分类词汇 -> 转为文本
+        // 加载分类词汇 -> 转为文本（逗号分隔）
         const categoryWords = await loadCategoryWords();
         originalCategoryText = Object.entries(categoryWords)
-            .map(([k, v]) => `${k}→${v}`)
+            .map(([k, v]) => `${k},${v}`)
             .join('\n');
         renderCategoryDisplay(originalCategoryText);
 
-        // 加载分类对照 -> 转为文本
+        // 加载分类对照 -> 转为文本（逗号分隔）
         const { data: listingData } = await window.supabaseClient.from('listing_category_mapping').select('*');
         originalListingText = (listingData || [])
-            .map(item => `${item.source_category}→${item.listing_category}`)
+            .map(item => `${item.source_category},${item.listing_category}`)
             .join('\n');
         renderListingDisplay(originalListingText);
     }
@@ -461,8 +460,8 @@ async function initNewProductSettings() {
         if (!text.trim()) {
             categoryDisplay.innerHTML = '<p class="text-muted">暂无数据，点击修改添加</p>';
         } else {
-            categoryDisplay.innerHTML = text.split('\n').map(line => {
-                const [k, v] = line.split('→');
+            categoryDisplay.innerHTML = text.split('\n').filter(l => l.trim()).map(line => {
+                const [k, v] = parseLine(line);
                 return k ? `<div class="mapping-line"><span class="key">${k}</span><span class="arrow">→</span><span class="value">${v || ''}</span></div>` : '';
             }).join('');
         }
@@ -472,19 +471,28 @@ async function initNewProductSettings() {
         if (!text.trim()) {
             listingDisplay.innerHTML = '<p class="text-muted">暂无数据，点击修改添加</p>';
         } else {
-            listingDisplay.innerHTML = text.split('\n').map(line => {
-                const [k, v] = line.split('→');
+            listingDisplay.innerHTML = text.split('\n').filter(l => l.trim()).map(line => {
+                const [k, v] = parseLine(line);
                 return k ? `<div class="mapping-line"><span class="key">${k}</span><span class="arrow">→</span><span class="value">${v || ''}</span></div>` : '';
             }).join('');
         }
     }
 
+    // 解析单行，支持逗号、箭头、空格分隔
+    function parseLine(line) {
+        line = line.trim();
+        if (line.includes(',')) return line.split(',').map(s => s.trim());
+        if (line.includes('→')) return line.split('→').map(s => s.trim());
+        if (line.includes('->')) return line.split('->').map(s => s.trim());
+        return line.split(/\s+/, 2);  // 空格分隔
+    }
+
     function parseTextToItems(text, keyName, valueName) {
         return text.split('\n')
             .map(line => line.trim())
-            .filter(line => line.includes('→'))
+            .filter(line => line.length > 0)
             .map(line => {
-                const [k, v] = line.split('→').map(s => s.trim());
+                const [k, v] = parseLine(line);
                 return { [keyName]: k, [valueName]: v || '' };
             })
             .filter(item => item[keyName]);
