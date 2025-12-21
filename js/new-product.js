@@ -319,44 +319,56 @@ function generateNewProductPage() {
 function generateNewProductSettingsPage() {
     return `
         <div class="settings-page">
-            <div class="settings-section">
-                <div class="settings-header">
-                    <h3>📝 商品名称公式设置</h3>
-                    <button class="btn btn-secondary btn-sm" id="editNameSettings">✏️ 修改</button>
+            <div class="settings-grid">
+                <!-- 商品名称公式设置卡片 -->
+                <div class="settings-section card">
+                    <div class="card-header">
+                        <h3>📝 商品名称公式设置</h3>
+                        <button class="btn btn-secondary btn-sm" id="editNameSettings">✏️ 修改</button>
+                    </div>
+                    <div class="card-body">
+                        <p class="settings-hint">公式：初始名称 + 分类词汇 + 产地词 + 热卖词</p>
+                        
+                        <div class="settings-group">
+                            <label>产地词</label>
+                            <input type="text" id="originWord" placeholder="如：韩国" class="settings-input" readonly>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <label>热卖词</label>
+                            <input type="text" id="hotWord" placeholder="如：热卖" class="settings-input" readonly>
+                        </div>
+                        
+                        <h4 class="settings-subtitle">分类词汇映射</h4>
+                        <div id="categoryWordsDisplay" class="mapping-display"></div>
+                        <div class="edit-area" id="categoryWordsEditArea" style="display:none">
+                            <textarea id="categoryWordsTextarea" class="mapping-textarea" placeholder="每行一条，格式：分类,词汇&#10;例：&#10;护肤,水乳精华&#10;彩妆,口红眼影"></textarea>
+                        </div>
+                        
+                        <div class="settings-actions" id="nameSettingsActions" style="display:none">
+                            <button class="btn btn-primary" id="saveNameSettings">💾 保存</button>
+                            <button class="btn btn-secondary" id="cancelNameSettings">取消</button>
+                        </div>
+                    </div>
                 </div>
-                <p class="settings-hint">公式：初始名称 + 分类词汇 + 产地词 + 热卖词</p>
                 
-                <div class="settings-group">
-                    <label>产地词</label>
-                    <input type="text" id="originWord" placeholder="如：韩国" class="settings-input" readonly>
-                </div>
-                
-                <div class="settings-group">
-                    <label>热卖词</label>
-                    <input type="text" id="hotWord" placeholder="如：热卖" class="settings-input" readonly>
-                </div>
-                
-                <h4>分类词汇映射</h4>
-                <div id="categoryWordsDisplay" class="mapping-display"></div>
-                <textarea id="categoryWordsTextarea" class="mapping-textarea" style="display:none" placeholder="每行一条，用逗号分隔&#10;分类,词汇&#10;&#10;例如:&#10;护肤,水乳精华&#10;彩妆,口红眼影"></textarea>
-                
-                <div class="settings-actions" id="nameSettingsActions" style="display:none">
-                    <button class="btn btn-primary" id="saveNameSettings">💾 保存</button>
-                    <button class="btn btn-secondary" id="cancelNameSettings">取消</button>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <div class="settings-header">
-                    <h3>📋 上下架分类对照</h3>
-                    <button class="btn btn-secondary btn-sm" id="editListingSettings">✏️ 修改</button>
-                </div>
-                <div id="listingCategoryDisplay" class="mapping-display"></div>
-                <textarea id="listingCategoryTextarea" class="mapping-textarea" style="display:none" placeholder="每行一条，用逗号分隔&#10;原分类,上架分类&#10;&#10;例如:&#10;护肤品,护肤商品&#10;彩妆品,彩妆商品"></textarea>
-                
-                <div class="settings-actions" id="listingSettingsActions" style="display:none">
-                    <button class="btn btn-primary" id="saveListingSettings">💾 保存</button>
-                    <button class="btn btn-secondary" id="cancelListingSettings">取消</button>
+                <!-- 上下架分类对照卡片 -->
+                <div class="settings-section card">
+                    <div class="card-header">
+                        <h3>📋 上下架分类对照</h3>
+                        <button class="btn btn-secondary btn-sm" id="editListingSettings">✏️ 修改</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="listingCategoryDisplay" class="mapping-display"></div>
+                        <div class="edit-area" id="listingCategoryEditArea" style="display:none">
+                            <textarea id="listingCategoryTextarea" class="mapping-textarea" placeholder="每行一条，格式：原分类,上架分类&#10;例：&#10;护肤品,护肤商品&#10;彩妆品,彩妆商品"></textarea>
+                        </div>
+                        
+                        <div class="settings-actions" id="listingSettingsActions" style="display:none">
+                            <button class="btn btn-primary" id="saveListingSettings">💾 保存</button>
+                            <button class="btn btn-secondary" id="cancelListingSettings">取消</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -664,8 +676,11 @@ async function initNewProductSettings() {
     const originWordInput = document.getElementById('originWord');
     const hotWordInput = document.getElementById('hotWord');
     const categoryDisplay = document.getElementById('categoryWordsDisplay');
+    const categoryEditArea = document.getElementById('categoryWordsEditArea');
     const categoryTextarea = document.getElementById('categoryWordsTextarea');
+
     const listingDisplay = document.getElementById('listingCategoryDisplay');
+    const listingEditArea = document.getElementById('listingCategoryEditArea');
     const listingTextarea = document.getElementById('listingCategoryTextarea');
 
     // 名称设置区域
@@ -712,23 +727,37 @@ async function initNewProductSettings() {
 
     function renderCategoryDisplay(text) {
         if (!text.trim()) {
-            categoryDisplay.innerHTML = '<p class="text-muted">暂无数据，点击修改添加</p>';
+            categoryDisplay.innerHTML = '<div class="empty-state">暂无配置</div>';
         } else {
-            categoryDisplay.innerHTML = text.split('\n').filter(l => l.trim()).map(line => {
+            const html = text.split('\n').filter(l => l.trim()).map(line => {
                 const [k, v] = parseLine(line);
-                return k ? `<div class="mapping-line"><span class="key">${k}</span><span class="arrow">→</span><span class="value">${v || ''}</span></div>` : '';
+                if (!k) return '';
+                return `
+                    <div class="mapping-item">
+                        <span class="mapping-tag source">${k}</span>
+                        <span class="arrow-icon">→</span>
+                        <span class="mapping-tag target">${v || '未设置'}</span>
+                    </div>`;
             }).join('');
+            categoryDisplay.innerHTML = `<div class="mapping-list">${html}</div>`;
         }
     }
 
     function renderListingDisplay(text) {
         if (!text.trim()) {
-            listingDisplay.innerHTML = '<p class="text-muted">暂无数据，点击修改添加</p>';
+            listingDisplay.innerHTML = '<div class="empty-state">暂无配置</div>';
         } else {
-            listingDisplay.innerHTML = text.split('\n').filter(l => l.trim()).map(line => {
+            const html = text.split('\n').filter(l => l.trim()).map(line => {
                 const [k, v] = parseLine(line);
-                return k ? `<div class="mapping-line"><span class="key">${k}</span><span class="arrow">→</span><span class="value">${v || ''}</span></div>` : '';
+                if (!k) return '';
+                return `
+                    <div class="mapping-item">
+                        <span class="mapping-tag source">${k}</span>
+                        <span class="arrow-icon">→</span>
+                        <span class="mapping-tag target">${v || '未设置'}</span>
+                    </div>`;
             }).join('');
+            listingDisplay.innerHTML = `<div class="mapping-list">${html}</div>`;
         }
     }
 
@@ -757,7 +786,7 @@ async function initNewProductSettings() {
         originWordInput.removeAttribute('readonly');
         hotWordInput.removeAttribute('readonly');
         categoryDisplay.style.display = 'none';
-        categoryTextarea.style.display = 'block';
+        categoryEditArea.style.display = 'block';
         categoryTextarea.value = originalCategoryText;
         nameActionsDiv.style.display = 'flex';
         editNameBtn.style.display = 'none';
@@ -769,7 +798,7 @@ async function initNewProductSettings() {
         hotWordInput.value = originalNameSettings.hot_word || '';
         originWordInput.setAttribute('readonly', true);
         hotWordInput.setAttribute('readonly', true);
-        categoryTextarea.style.display = 'none';
+        categoryEditArea.style.display = 'none';
         categoryDisplay.style.display = 'block';
         nameActionsDiv.style.display = 'none';
         editNameBtn.style.display = 'block';
@@ -788,9 +817,10 @@ async function initNewProductSettings() {
             originalCategoryText = categoryTextarea.value;
 
             // 恢复只读状态
+            // 恢复只读状态
             originWordInput.setAttribute('readonly', true);
             hotWordInput.setAttribute('readonly', true);
-            categoryTextarea.style.display = 'none';
+            categoryEditArea.style.display = 'none';
             categoryDisplay.style.display = 'block';
             renderCategoryDisplay(originalCategoryText);
             nameActionsDiv.style.display = 'none';
@@ -805,7 +835,7 @@ async function initNewProductSettings() {
     // 分类对照 - 修改按钮
     editListingBtn.addEventListener('click', () => {
         listingDisplay.style.display = 'none';
-        listingTextarea.style.display = 'block';
+        listingEditArea.style.display = 'block';
         listingTextarea.value = originalListingText;
         listingActionsDiv.style.display = 'flex';
         editListingBtn.style.display = 'none';
@@ -813,7 +843,7 @@ async function initNewProductSettings() {
 
     // 分类对照 - 取消按钮
     cancelListingBtn.addEventListener('click', () => {
-        listingTextarea.style.display = 'none';
+        listingEditArea.style.display = 'none';
         listingDisplay.style.display = 'block';
         listingActionsDiv.style.display = 'none';
         editListingBtn.style.display = 'block';
