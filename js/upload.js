@@ -137,6 +137,7 @@ function processInventoryData(rows) {
 
 // ========================================
 // ID数据处理器
+// 列映射: A=商品ID, B=商品名称, E=三级分类, N=商品价格
 // ========================================
 function processProductIdData(rows) {
     const seenProducts = new Set();
@@ -215,10 +216,10 @@ const UploadConfigs = {
             '按商品名称去重，保留首条'
         ],
         mapping: [
-            { source: '列0 商品ID', target: 'product_id' },
-            { source: '列1 商品名称', target: 'product_name' },
-            { source: '列4 三级分类', target: 'store_category' },
-            { source: '列13 商品价格', target: 'product_price' }
+            { source: 'A列 商品ID', target: 'product_id' },
+            { source: 'B列 商品名称', target: 'product_name' },
+            { source: 'E列 三级分类', target: 'store_category' },
+            { source: 'N列 商品价格', target: 'product_price' }
         ]
     }
 };
