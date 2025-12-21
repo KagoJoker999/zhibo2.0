@@ -89,6 +89,24 @@ function initNavigation() {
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             const page = link.dataset.page || link.dataset.section;
+
+            // 如果是有子菜单的主菜单项，切换展开状态
+            const navItem = link.closest('.nav-item');
+            const submenu = navItem?.querySelector('.nav-submenu');
+            if (submenu && link.classList.contains('nav-link')) {
+                e.preventDefault();
+                // 关闭其他展开的菜单
+                document.querySelectorAll('.nav-item.expanded').forEach(item => {
+                    if (item !== navItem) item.classList.remove('expanded');
+                });
+                navItem.classList.toggle('expanded');
+                // 如果有 data-page，同时也加载页面
+                if (page) {
+                    navigateTo(page);
+                }
+                return;
+            }
+
             if (page) {
                 e.preventDefault();
                 navigateTo(page);
@@ -114,7 +132,7 @@ function navigateTo(page) {
 }
 
 function handleHashChange() {
-    const hash = window.location.hash.slice(1) || 'welcome';
+    const hash = window.location.hash.slice(1) || 'upload';  // 默认显示上传功能
     updateNavState(hash);
     loadPage(hash);
 }

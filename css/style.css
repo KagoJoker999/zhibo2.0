@@ -179,8 +179,8 @@ body {
     transition: max-height var(--transition-normal);
 }
 
-.nav-item:has(.nav-link.active) .nav-submenu,
-.nav-item:hover .nav-submenu {
+/* 点击展开子菜单 */
+.nav-item.expanded .nav-submenu {
     max-height: 300px;
 }
 
