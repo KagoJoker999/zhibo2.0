@@ -494,6 +494,9 @@ function initNewProductUpload() {
                 </div>
                 <p class="table-info">显示最近 ${data.length} 条记录</p>
             `;
+
+            // 有数据时显示下载按钮
+            document.getElementById('downloadActions').style.display = 'flex';
         } catch (error) {
             container.innerHTML = `<p class="error">加载失败: ${error.message}</p>`;
         }
