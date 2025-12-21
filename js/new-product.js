@@ -255,7 +255,7 @@ function generateNewProductPage() {
                     
                     <div class="download-actions" id="downloadActions" style="display:none">
                         <button class="btn btn-secondary" id="downloadRenameBtn">📥 重命名表格下载</button>
-                        <button class="btn btn-secondary" id="downloadListingBtn">📥 上架表格下载</button>
+                        <button class="btn btn-secondary" id="downloadListingBtn">📥 上链接表格下载</button>
                     </div>
                 </div>
             </div>
@@ -536,18 +536,60 @@ function initNewProductUpload() {
                 const ts = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
                 filename = `重命名表格_${ts}.xlsx`;
             } else {
-                // 上架表格：新名称, 分类, 上架分类, 编码, 售价
-                rows = [['商品名称', '分类', '上架分类', '商品编码', '售价']];
+                // 上链接表格：多SKU合并处理
+                // 1. 按商品编码排序
+                data.sort((a, b) => (a.product_code || '').localeCompare(b.product_code || ''));
+
+                // 2. 按商品名称分组
+                const groups = new Map();
                 data.forEach(item => {
-                    rows.push([
-                        item.product_name,
-                        item.category || '',
-                        item.listing_category || '',
-                        item.product_code || '',
-                        item.base_price || 0
-                    ]);
+                    const name = item.product_name || '';
+                    if (!groups.has(name)) {
+                        groups.set(name, []);
+                    }
+                    groups.get(name).push(item);
                 });
-                filename = '新品上架表格.xlsx';
+
+                // 3. 确定最大SKU数量
+                let maxSkuCount = 1;
+                groups.forEach(items => {
+                    if (items.length > maxSkuCount) maxSkuCount = items.length;
+                });
+
+                // 4. 构建表头
+                const headers = ['商品名称', '商品编码', '上架分类', '虚拟分类', '基本售价', '颜色及规格', 'SKU数量'];
+                for (let i = 2; i <= maxSkuCount; i++) {
+                    headers.push(`商品编码${i}`, `颜色及规格${i}`);
+                }
+                rows = [headers];
+
+                // 5. 构建数据行
+                groups.forEach((items, name) => {
+                    const first = items[0];
+                    const row = [
+                        name,
+                        first.product_code || '',
+                        first.listing_category || '',
+                        first.virtual_category || '',
+                        first.base_price || 0,
+                        first.color_spec || '',
+                        items.length
+                    ];
+
+                    // 添加额外SKU
+                    for (let i = 1; i < maxSkuCount; i++) {
+                        if (i < items.length) {
+                            row.push(items[i].product_code || '', items[i].color_spec || '');
+                        } else {
+                            row.push('', '');
+                        }
+                    }
+                    rows.push(row);
+                });
+
+                const now2 = new Date();
+                const ts2 = `${now2.getFullYear()}${(now2.getMonth() + 1).toString().padStart(2, '0')}${now2.getDate().toString().padStart(2, '0')}_${now2.getHours().toString().padStart(2, '0')}${now2.getMinutes().toString().padStart(2, '0')}${now2.getSeconds().toString().padStart(2, '0')}`;
+                filename = `上链接表_${ts2}.xlsx`;
             }
 
             const ws = XLSX.utils.aoa_to_sheet(rows);
