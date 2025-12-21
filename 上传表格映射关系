@@ -15,3 +15,4 @@
     3.列B 商品名称	→	product_name text
     4.列E 三级分类	→	store_category text
     5.列N 商品价格	→	product_price  int
+

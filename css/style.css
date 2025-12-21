@@ -946,3 +946,114 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ========================================
+   评分设置页面样式
+   ======================================== */
+.scoring-settings-page {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.config-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.config-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.config-section:last-of-type {
+    border-bottom: none;
+}
+
+.config-section h4 {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.config-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.config-item input {
+    padding: 0.625rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+}
+
+.config-item input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.config-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.config-status {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
+}
+
+.config-status.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success-color);
+}
+
+.config-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+}
+
+.config-status.info {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info-color);
+}
+
+/* 计算按钮样式 */
+.btn-calculate {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.btn-calculate:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+.upload-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
