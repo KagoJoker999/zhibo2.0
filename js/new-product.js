@@ -318,57 +318,50 @@ function generateNewProductPage() {
 // ========================================
 function generateNewProductSettingsPage() {
     return `
-        <div class="settings-page">
-            <div class="settings-grid">
-                <!-- 商品名称公式设置卡片 -->
-                <div class="settings-section card">
-                    <div class="card-header">
-                        <h3>📝 商品名称公式设置</h3>
-                        <button class="btn btn-secondary btn-sm" id="editNameSettings">✏️ 修改</button>
-                    </div>
-                    <div class="card-body">
-                        <p class="settings-hint">公式：初始名称 + 分类词汇 + 产地词 + 热卖词</p>
-                        
-                        <div class="settings-group">
-                            <label>产地词</label>
-                            <input type="text" id="originWord" placeholder="如：韩国" class="settings-input" readonly>
-                        </div>
-                        
-                        <div class="settings-group">
-                            <label>热卖词</label>
-                            <input type="text" id="hotWord" placeholder="如：热卖" class="settings-input" readonly>
-                        </div>
-                        
-                        <h4 class="settings-subtitle">分类词汇映射</h4>
-                        <div id="categoryWordsDisplay" class="mapping-display"></div>
-                        <div class="edit-area" id="categoryWordsEditArea" style="display:none">
-                            <textarea id="categoryWordsTextarea" class="mapping-textarea" placeholder="每行一条，格式：分类,词汇&#10;例：&#10;护肤,水乳精华&#10;彩妆,口红眼影"></textarea>
-                        </div>
-                        
-                        <div class="settings-actions" id="nameSettingsActions" style="display:none">
-                            <button class="btn btn-primary" id="saveNameSettings">💾 保存</button>
-                            <button class="btn btn-secondary" id="cancelNameSettings">取消</button>
-                        </div>
+        <div class="settings-page settings-grid-3">
+            <!-- 第1列：名称公式设置 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>📝 名称公式设置</h3>
+                </div>
+                <p class="settings-hint">公式：初始名称 + 分类词汇 + 产地词 + 热卖词</p>
+                
+                <div class="settings-group">
+                    <label>产地词</label>
+                    <div class="inline-edit-field">
+                        <input type="text" id="originWord" placeholder="如：韩国" class="settings-input">
+                        <button class="btn-icon save-inline" id="saveOriginWord" title="保存">✓</button>
                     </div>
                 </div>
                 
-                <!-- 上下架分类对照卡片 -->
-                <div class="settings-section card">
-                    <div class="card-header">
-                        <h3>📋 上下架分类对照</h3>
-                        <button class="btn btn-secondary btn-sm" id="editListingSettings">✏️ 修改</button>
+                <div class="settings-group">
+                    <label>热卖词</label>
+                    <div class="inline-edit-field">
+                        <input type="text" id="hotWord" placeholder="如：26新年百搭" class="settings-input">
+                        <button class="btn-icon save-inline" id="saveHotWord" title="保存">✓</button>
                     </div>
-                    <div class="card-body">
-                        <div id="listingCategoryDisplay" class="mapping-display"></div>
-                        <div class="edit-area" id="listingCategoryEditArea" style="display:none">
-                            <textarea id="listingCategoryTextarea" class="mapping-textarea" placeholder="每行一条，格式：原分类,上架分类&#10;例：&#10;护肤品,护肤商品&#10;彩妆品,彩妆商品"></textarea>
-                        </div>
-                        
-                        <div class="settings-actions" id="listingSettingsActions" style="display:none">
-                            <button class="btn btn-primary" id="saveListingSettings">💾 保存</button>
-                            <button class="btn btn-secondary" id="cancelListingSettings">取消</button>
-                        </div>
-                    </div>
+                </div>
+            </div>
+            
+            <!-- 第2列：分类词汇映射 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>🏷️ 分类词汇映射</h3>
+                    <button class="btn btn-primary btn-sm" id="addCategoryWord">+ 添加</button>
+                </div>
+                <div id="categoryWordsTable" class="mapping-table-container">
+                    <!-- 表格由 JS 渲染 -->
+                </div>
+            </div>
+            
+            <!-- 第3列：上架分类映射 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>📋 上架分类映射</h3>
+                    <button class="btn btn-primary btn-sm" id="addListingCategory">+ 添加</button>
+                </div>
+                <div id="listingCategoryTable" class="mapping-table-container">
+                    <!-- 表格由 JS 渲染 -->
                 </div>
             </div>
         </div>
@@ -670,35 +663,21 @@ function initNewProductUpload() {
 }
 
 // ========================================
-// 初始化设置页面
+// 初始化设置页面 (可编辑表格版)
 // ========================================
 async function initNewProductSettings() {
     const originWordInput = document.getElementById('originWord');
     const hotWordInput = document.getElementById('hotWord');
-    const categoryDisplay = document.getElementById('categoryWordsDisplay');
-    const categoryEditArea = document.getElementById('categoryWordsEditArea');
-    const categoryTextarea = document.getElementById('categoryWordsTextarea');
+    const categoryTable = document.getElementById('categoryWordsTable');
+    const listingTable = document.getElementById('listingCategoryTable');
+    const addCategoryBtn = document.getElementById('addCategoryWord');
+    const addListingBtn = document.getElementById('addListingCategory');
+    const saveOriginBtn = document.getElementById('saveOriginWord');
+    const saveHotBtn = document.getElementById('saveHotWord');
 
-    const listingDisplay = document.getElementById('listingCategoryDisplay');
-    const listingEditArea = document.getElementById('listingCategoryEditArea');
-    const listingTextarea = document.getElementById('listingCategoryTextarea');
-
-    // 名称设置区域
-    const editNameBtn = document.getElementById('editNameSettings');
-    const nameActionsDiv = document.getElementById('nameSettingsActions');
-    const saveNameBtn = document.getElementById('saveNameSettings');
-    const cancelNameBtn = document.getElementById('cancelNameSettings');
-
-    // 分类对照区域
-    const editListingBtn = document.getElementById('editListingSettings');
-    const listingActionsDiv = document.getElementById('listingSettingsActions');
-    const saveListingBtn = document.getElementById('saveListingSettings');
-    const cancelListingBtn = document.getElementById('cancelListingSettings');
-
-    // 存储原始数据
-    let originalNameSettings = {};
-    let originalCategoryText = '';
-    let originalListingText = '';
+    // 数据存储
+    let categoryWordsData = [];
+    let listingCategoryData = [];
 
     // 加载数据
     await loadAllData();
@@ -706,165 +685,163 @@ async function initNewProductSettings() {
     async function loadAllData() {
         // 加载名称公式设置
         const settings = await loadNameFormulaSettings();
-        originalNameSettings = { ...settings };
         originWordInput.value = settings.origin_word || '';
         hotWordInput.value = settings.hot_word || '';
 
-        // 加载分类词汇 -> 转为文本（逗号分隔）
+        // 加载分类词汇
         const categoryWords = await loadCategoryWords();
-        originalCategoryText = Object.entries(categoryWords)
-            .map(([k, v]) => `${k},${v}`)
-            .join('\n');
-        renderCategoryDisplay(originalCategoryText);
+        categoryWordsData = Object.entries(categoryWords).map(([k, v], idx) => ({
+            id: idx, category: k, category_word: v
+        }));
+        renderCategoryTable();
 
-        // 加载分类对照 -> 转为文本（逗号分隔）
+        // 加载分类对照
         const { data: listingData } = await window.supabaseClient.from('listing_category_mapping').select('*');
-        originalListingText = (listingData || [])
-            .map(item => `${item.source_category},${item.listing_category}`)
-            .join('\n');
-        renderListingDisplay(originalListingText);
+        listingCategoryData = (listingData || []).map((item, idx) => ({
+            id: item.id || idx, source_category: item.source_category, listing_category: item.listing_category
+        }));
+        renderListingTable();
     }
 
-    function renderCategoryDisplay(text) {
-        if (!text.trim()) {
-            categoryDisplay.innerHTML = '<div class="empty-state">暂无配置</div>';
-        } else {
-            const html = text.split('\n').filter(l => l.trim()).map(line => {
-                const [k, v] = parseLine(line);
-                if (!k) return '';
-                return `
-                    <div class="mapping-item">
-                        <span class="mapping-tag source">${k}</span>
-                        <span class="arrow-icon">→</span>
-                        <span class="mapping-tag target">${v || '未设置'}</span>
-                    </div>`;
-            }).join('');
-            categoryDisplay.innerHTML = `<div class="mapping-list">${html}</div>`;
+    // 渲染分类词汇表格
+    function renderCategoryTable() {
+        if (categoryWordsData.length === 0) {
+            categoryTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
+            return;
+        }
+        categoryTable.innerHTML = `
+            <table class="editable-table">
+                <thead><tr><th>分类</th><th>词汇</th><th>操作</th></tr></thead>
+                <tbody>
+                    ${categoryWordsData.map((item, idx) => `
+                        <tr data-idx="${idx}">
+                            <td><input type="text" class="table-input" value="${item.category || ''}" data-field="category"></td>
+                            <td><input type="text" class="table-input" value="${item.category_word || ''}" data-field="category_word"></td>
+                            <td class="actions-cell">
+                                <button class="btn-icon btn-delete" data-idx="${idx}" title="删除">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <button class="btn btn-secondary btn-sm save-table-btn" id="saveCategoryTable">💾 保存全部</button>
+        `;
+        // 绑定删除事件
+        categoryTable.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.idx);
+                categoryWordsData.splice(idx, 1);
+                renderCategoryTable();
+            });
+        });
+        // 绑定保存事件
+        document.getElementById('saveCategoryTable')?.addEventListener('click', saveCategoryTableData);
+    }
+
+    // 渲染分类对照表格
+    function renderListingTable() {
+        if (listingCategoryData.length === 0) {
+            listingTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
+            return;
+        }
+        listingTable.innerHTML = `
+            <table class="editable-table">
+                <thead><tr><th>原分类</th><th>上架分类</th><th>操作</th></tr></thead>
+                <tbody>
+                    ${listingCategoryData.map((item, idx) => `
+                        <tr data-idx="${idx}">
+                            <td><input type="text" class="table-input" value="${item.source_category || ''}" data-field="source_category"></td>
+                            <td><input type="text" class="table-input" value="${item.listing_category || ''}" data-field="listing_category"></td>
+                            <td class="actions-cell">
+                                <button class="btn-icon btn-delete" data-idx="${idx}" title="删除">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <button class="btn btn-secondary btn-sm save-table-btn" id="saveListingTable">💾 保存全部</button>
+        `;
+        // 绑定删除事件
+        listingTable.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.idx);
+                listingCategoryData.splice(idx, 1);
+                renderListingTable();
+            });
+        });
+        // 绑定保存事件
+        document.getElementById('saveListingTable')?.addEventListener('click', saveListingTableData);
+    }
+
+    // 保存分类词汇表格
+    async function saveCategoryTableData() {
+        try {
+            // 从表格中读取最新数据
+            const rows = categoryTable.querySelectorAll('tbody tr');
+            const items = [];
+            rows.forEach(row => {
+                const category = row.querySelector('[data-field="category"]').value.trim();
+                const word = row.querySelector('[data-field="category_word"]').value.trim();
+                if (category) items.push({ category, category_word: word });
+            });
+            await saveCategoryWords(items);
+            categoryWordsData = items.map((item, idx) => ({ id: idx, ...item }));
+            window.AppUtils?.showToast?.('分类词汇已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         }
     }
 
-    function renderListingDisplay(text) {
-        if (!text.trim()) {
-            listingDisplay.innerHTML = '<div class="empty-state">暂无配置</div>';
-        } else {
-            const html = text.split('\n').filter(l => l.trim()).map(line => {
-                const [k, v] = parseLine(line);
-                if (!k) return '';
-                return `
-                    <div class="mapping-item">
-                        <span class="mapping-tag source">${k}</span>
-                        <span class="arrow-icon">→</span>
-                        <span class="mapping-tag target">${v || '未设置'}</span>
-                    </div>`;
-            }).join('');
-            listingDisplay.innerHTML = `<div class="mapping-list">${html}</div>`;
+    // 保存分类对照表格
+    async function saveListingTableData() {
+        try {
+            const rows = listingTable.querySelectorAll('tbody tr');
+            const items = [];
+            rows.forEach(row => {
+                const source = row.querySelector('[data-field="source_category"]').value.trim();
+                const listing = row.querySelector('[data-field="listing_category"]').value.trim();
+                if (source) items.push({ source_category: source, listing_category: listing });
+            });
+            await saveListingCategoryMapping(items);
+            listingCategoryData = items.map((item, idx) => ({ id: idx, ...item }));
+            window.AppUtils?.showToast?.('分类对照已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         }
     }
 
-    // 解析单行，支持逗号、箭头、空格分隔
-    function parseLine(line) {
-        line = line.trim();
-        if (line.includes(',')) return line.split(',').map(s => s.trim());
-        if (line.includes('→')) return line.split('→').map(s => s.trim());
-        if (line.includes('->')) return line.split('->').map(s => s.trim());
-        return line.split(/\s+/, 2);  // 空格分隔
-    }
-
-    function parseTextToItems(text, keyName, valueName) {
-        return text.split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0)
-            .map(line => {
-                const [k, v] = parseLine(line);
-                return { [keyName]: k, [valueName]: v || '' };
-            })
-            .filter(item => item[keyName]);
-    }
-
-    // 名称设置 - 修改按钮
-    editNameBtn.addEventListener('click', () => {
-        originWordInput.removeAttribute('readonly');
-        hotWordInput.removeAttribute('readonly');
-        categoryDisplay.style.display = 'none';
-        categoryEditArea.style.display = 'block';
-        categoryTextarea.value = originalCategoryText;
-        nameActionsDiv.style.display = 'flex';
-        editNameBtn.style.display = 'none';
+    // 添加新行事件
+    addCategoryBtn?.addEventListener('click', () => {
+        categoryWordsData.push({ id: Date.now(), category: '', category_word: '' });
+        renderCategoryTable();
+        // 聚焦到新行
+        const lastInput = categoryTable.querySelector('tbody tr:last-child input');
+        lastInput?.focus();
     });
 
-    // 名称设置 - 取消按钮
-    cancelNameBtn.addEventListener('click', () => {
-        originWordInput.value = originalNameSettings.origin_word || '';
-        hotWordInput.value = originalNameSettings.hot_word || '';
-        originWordInput.setAttribute('readonly', true);
-        hotWordInput.setAttribute('readonly', true);
-        categoryEditArea.style.display = 'none';
-        categoryDisplay.style.display = 'block';
-        nameActionsDiv.style.display = 'none';
-        editNameBtn.style.display = 'block';
+    addListingBtn?.addEventListener('click', () => {
+        listingCategoryData.push({ id: Date.now(), source_category: '', listing_category: '' });
+        renderListingTable();
+        const lastInput = listingTable.querySelector('tbody tr:last-child input');
+        lastInput?.focus();
     });
 
-    // 名称设置 - 保存按钮
-    saveNameBtn.addEventListener('click', async () => {
+    // 保存产地词/热卖词
+    saveOriginBtn?.addEventListener('click', async () => {
         try {
             await saveNameFormulaSettings(originWordInput.value, hotWordInput.value);
-
-            const categoryItems = parseTextToItems(categoryTextarea.value, 'category', 'category_word');
-            await saveCategoryWords(categoryItems);
-
-            // 更新原始数据
-            originalNameSettings = { origin_word: originWordInput.value, hot_word: hotWordInput.value };
-            originalCategoryText = categoryTextarea.value;
-
-            // 恢复只读状态
-            // 恢复只读状态
-            originWordInput.setAttribute('readonly', true);
-            hotWordInput.setAttribute('readonly', true);
-            categoryEditArea.style.display = 'none';
-            categoryDisplay.style.display = 'block';
-            renderCategoryDisplay(originalCategoryText);
-            nameActionsDiv.style.display = 'none';
-            editNameBtn.style.display = 'block';
-
-            window.AppUtils?.showToast?.('名称公式设置已保存', 'success');
-        } catch (error) {
-            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+            window.AppUtils?.showToast?.('产地词已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         }
     });
 
-    // 分类对照 - 修改按钮
-    editListingBtn.addEventListener('click', () => {
-        listingDisplay.style.display = 'none';
-        listingEditArea.style.display = 'block';
-        listingTextarea.value = originalListingText;
-        listingActionsDiv.style.display = 'flex';
-        editListingBtn.style.display = 'none';
-    });
-
-    // 分类对照 - 取消按钮
-    cancelListingBtn.addEventListener('click', () => {
-        listingEditArea.style.display = 'none';
-        listingDisplay.style.display = 'block';
-        listingActionsDiv.style.display = 'none';
-        editListingBtn.style.display = 'block';
-    });
-
-    // 分类对照 - 保存按钮
-    saveListingBtn.addEventListener('click', async () => {
+    saveHotBtn?.addEventListener('click', async () => {
         try {
-            const listingItems = parseTextToItems(listingTextarea.value, 'source_category', 'listing_category');
-            await saveListingCategoryMapping(listingItems);
-
-            originalListingText = listingTextarea.value;
-            listingTextarea.style.display = 'none';
-            listingDisplay.style.display = 'block';
-            renderListingDisplay(originalListingText);
-            listingActionsDiv.style.display = 'none';
-            editListingBtn.style.display = 'block';
-
-            window.AppUtils?.showToast?.('分类对照设置已保存', 'success');
-        } catch (error) {
-            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+            await saveNameFormulaSettings(originWordInput.value, hotWordInput.value);
+            window.AppUtils?.showToast?.('热卖词已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         }
     });
 }

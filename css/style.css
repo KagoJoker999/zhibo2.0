@@ -1019,47 +1019,207 @@ select:focus {
 /* ========================================
    设置页面样式
    ======================================== */
-/* ========================================
-   设置页面样式 (Arco 风格)
-   ======================================== */
-
-
-.settings-grid {
+.settings-page {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    align-items: start;
 }
 
-@media (max-width: 900px) {
-    .settings-grid {
+/* 三列布局 */
+.settings-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1200px) {
+    .settings-grid-3 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .settings-page,
+    .settings-grid-3 {
         grid-template-columns: 1fr;
     }
 }
 
 .settings-section {
-    /* 复用 .card 样式 */
-    height: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
 }
 
-.settings-subtitle {
-    margin: 1.5rem 0 1rem;
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.settings-header h3 {
+    margin: 0;
     font-size: 1rem;
     font-weight: 600;
+}
+
+.settings-hint {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-hover);
+    border-radius: var(--border-radius);
+}
+
+.settings-group {
+    margin-bottom: 1rem;
+}
+
+.settings-group label {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+/* 内联编辑字段 */
+.inline-edit-field {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.inline-edit-field .settings-input {
+    flex: 1;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--border-radius);
+    background: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 0.875rem;
+}
+
+.btn-icon:hover {
+    background: var(--primary-hover);
+}
+
+/* 可编辑表格 */
+.mapping-table-container {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.editable-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.editable-table th,
+.editable-table td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.editable-table th {
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+}
+
+.editable-table tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+.table-input {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.8125rem;
+    background: var(--bg-hover);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
     color: var(--text-primary);
+    transition: all var(--transition-fast);
+}
+
+.table-input:focus {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.actions-cell {
+    width: 50px;
+    text-align: center;
+}
+
+.btn-delete {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.btn-delete:hover {
+    opacity: 1;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    font-size: 0.875rem;
+}
+
+.save-table-btn {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.settings-section h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+}
+
+.settings-section h4 {
+    margin: 1.5rem 0 0.75rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
 .settings-hint {
     color: var(--text-muted);
     font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-    background: var(--bg-hover);
-    padding: 0.75rem;
-    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
 }
 
 .settings-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 
 .settings-group label {
@@ -1067,104 +1227,22 @@ select:focus {
     margin-bottom: 0.5rem;
     font-weight: 500;
     font-size: 0.875rem;
-    color: var(--text-secondary);
 }
 
 .settings-input {
     width: 100%;
-    /* 样式已由通用 input[type="text"] 接管，此处仅做微调 */
-}
-
-/* 映射列表展示 */
-.mapping-display {
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 0.5rem;
+    max-width: 300px;
+    padding: 0.75rem 1rem;
     background: var(--bg-secondary);
-}
-
-.mapping-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.mapping-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: var(--border-radius);
-    transition: background var(--transition-fast);
-}
-
-.mapping-item:hover {
-    background: var(--bg-hover);
-}
-
-.mapping-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 0 0.5rem;
-    height: 24px;
-    font-size: 12px;
-    border-radius: 2px;
-    border: 1px solid transparent;
-}
-
-.mapping-tag.source {
-    background: rgba(22, 93, 255, 0.1);
-    color: var(--primary-color);
-    border-color: rgba(22, 93, 255, 0.2);
-}
-
-.mapping-tag.target {
-    background: rgba(0, 180, 42, 0.1);
-    /* Green-1 */
-    color: var(--success-color);
-    border-color: rgba(0, 180, 42, 0.2);
-}
-
-.arrow-icon {
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.empty-state {
-    padding: 2rem;
-    text-align: center;
-    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
     font-size: 0.875rem;
 }
 
-/* 编辑区域 */
-.edit-area {
-    margin-top: 1rem;
-}
-
-.mapping-textarea {
-    width: 100%;
-    min-height: 300px;
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-    line-height: 1.5;
-    background: var(--bg-primary);
-    /* 更深的背景用于编辑 */
-}
-
-.mapping-textarea::placeholder {
-    color: var(--text-disabled);
-    font-style: italic;
-}
-
-.settings-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
+.settings-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
 .mapping-container {
