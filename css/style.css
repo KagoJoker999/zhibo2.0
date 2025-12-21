@@ -969,6 +969,22 @@ body {
     padding: 1.5rem;
 }
 
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.settings-header h3 {
+    margin: 0;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
 .settings-section h3 {
     margin: 0 0 0.5rem;
     font-size: 1.125rem;

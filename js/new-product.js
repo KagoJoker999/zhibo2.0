@@ -259,36 +259,48 @@ function generateNewProductSettingsPage() {
     return `
         <div class="settings-page">
             <div class="settings-section">
-                <h3>📝 商品名称公式设置</h3>
+                <div class="settings-header">
+                    <h3>📝 商品名称公式设置</h3>
+                    <button class="btn btn-secondary btn-sm" id="editNameSettings">✏️ 修改</button>
+                </div>
                 <p class="settings-hint">公式：初始名称 + 分类词汇 + 产地词 + 热卖词</p>
                 
                 <div class="settings-group">
                     <label>产地词</label>
-                    <input type="text" id="originWord" placeholder="如：韩国" class="settings-input">
+                    <input type="text" id="originWord" placeholder="如：韩国" class="settings-input" readonly>
                 </div>
                 
                 <div class="settings-group">
                     <label>热卖词</label>
-                    <input type="text" id="hotWord" placeholder="如：热卖" class="settings-input">
+                    <input type="text" id="hotWord" placeholder="如：热卖" class="settings-input" readonly>
                 </div>
                 
                 <h4>分类词汇映射</h4>
                 <div id="categoryWordsContainer" class="mapping-container">
                     <!-- 动态生成 -->
                 </div>
-                <button class="btn btn-secondary" id="addCategoryWord">+ 添加分类</button>
+                <button class="btn btn-secondary" id="addCategoryWord" style="display:none">+ 添加分类</button>
+                
+                <div class="settings-actions" id="nameSettingsActions" style="display:none">
+                    <button class="btn btn-primary" id="saveNameSettings">💾 保存设置</button>
+                    <button class="btn btn-secondary" id="cancelNameSettings">取消</button>
+                </div>
             </div>
             
             <div class="settings-section">
-                <h3>📋 上下架分类对照</h3>
+                <div class="settings-header">
+                    <h3>📋 上下架分类对照</h3>
+                    <button class="btn btn-secondary btn-sm" id="editListingSettings">✏️ 修改</button>
+                </div>
                 <div id="listingCategoryContainer" class="mapping-container">
                     <!-- 动态生成 -->
                 </div>
-                <button class="btn btn-secondary" id="addListingCategory">+ 添加对照</button>
-            </div>
-            
-            <div class="settings-actions">
-                <button class="btn btn-primary" id="saveSettings">💾 保存设置</button>
+                <button class="btn btn-secondary" id="addListingCategory" style="display:none">+ 添加对照</button>
+                
+                <div class="settings-actions" id="listingSettingsActions" style="display:none">
+                    <button class="btn btn-primary" id="saveListingSettings">💾 保存设置</button>
+                    <button class="btn btn-secondary" id="cancelListingSettings">取消</button>
+                </div>
             </div>
         </div>
     `;
@@ -405,43 +417,125 @@ async function initNewProductSettings() {
     const listingContainer = document.getElementById('listingCategoryContainer');
     const addCategoryBtn = document.getElementById('addCategoryWord');
     const addListingBtn = document.getElementById('addListingCategory');
-    const saveBtn = document.getElementById('saveSettings');
 
-    // 加载设置
-    const settings = await loadNameFormulaSettings();
-    originWordInput.value = settings.origin_word || '';
-    hotWordInput.value = settings.hot_word || '';
+    // 名称设置区域
+    const editNameBtn = document.getElementById('editNameSettings');
+    const nameActionsDiv = document.getElementById('nameSettingsActions');
+    const saveNameBtn = document.getElementById('saveNameSettings');
+    const cancelNameBtn = document.getElementById('cancelNameSettings');
 
-    // 加载分类词汇
-    const categoryWords = await loadCategoryWords();
-    renderCategoryWords(Object.entries(categoryWords).map(([category, word]) => ({ category, category_word: word })));
+    // 分类对照区域
+    const editListingBtn = document.getElementById('editListingSettings');
+    const listingActionsDiv = document.getElementById('listingSettingsActions');
+    const saveListingBtn = document.getElementById('saveListingSettings');
+    const cancelListingBtn = document.getElementById('cancelListingSettings');
 
-    // 加载分类对照
-    const { data: listingData } = await window.supabaseClient.from('listing_category_mapping').select('*');
-    renderListingCategories(listingData || []);
+    // 存储原始数据用于取消恢复
+    let originalNameSettings = {};
+    let originalCategoryWords = [];
+    let originalListingData = [];
 
-    function renderCategoryWords(items) {
-        categoryContainer.innerHTML = items.map((item, idx) => `
-            <div class="mapping-row" data-idx="${idx}">
-                <input type="text" class="category-input" value="${item.category || ''}" placeholder="分类">
-                <span>→</span>
-                <input type="text" class="word-input" value="${item.category_word || ''}" placeholder="词汇">
-                <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
-            </div>
-        `).join('');
+    // 加载并渲染数据
+    await loadAllData();
+
+    async function loadAllData() {
+        // 加载名称公式设置
+        const settings = await loadNameFormulaSettings();
+        originalNameSettings = { ...settings };
+        originWordInput.value = settings.origin_word || '';
+        hotWordInput.value = settings.hot_word || '';
+
+        // 加载分类词汇
+        const categoryWords = await loadCategoryWords();
+        originalCategoryWords = Object.entries(categoryWords).map(([category, word]) => ({ category, category_word: word }));
+        renderCategoryWords(originalCategoryWords, true);
+
+        // 加载分类对照
+        const { data: listingData } = await window.supabaseClient.from('listing_category_mapping').select('*');
+        originalListingData = listingData || [];
+        renderListingCategories(originalListingData, true);
     }
 
-    function renderListingCategories(items) {
-        listingContainer.innerHTML = items.map((item, idx) => `
-            <div class="mapping-row" data-idx="${idx}">
-                <input type="text" class="source-input" value="${item.source_category || ''}" placeholder="原分类">
-                <span>→</span>
-                <input type="text" class="listing-input" value="${item.listing_category || ''}" placeholder="上架分类">
-                <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
-            </div>
-        `).join('');
+    function renderCategoryWords(items, readonly = true) {
+        categoryContainer.innerHTML = items.length === 0
+            ? '<p class="text-muted">暂无数据</p>'
+            : items.map((item, idx) => `
+                <div class="mapping-row" data-idx="${idx}">
+                    <input type="text" class="category-input" value="${item.category || ''}" placeholder="分类" ${readonly ? 'readonly' : ''}>
+                    <span>→</span>
+                    <input type="text" class="word-input" value="${item.category_word || ''}" placeholder="词汇" ${readonly ? 'readonly' : ''}>
+                    ${readonly ? '' : '<button class="btn-remove" onclick="this.parentElement.remove()">×</button>'}
+                </div>
+            `).join('');
     }
 
+    function renderListingCategories(items, readonly = true) {
+        listingContainer.innerHTML = items.length === 0
+            ? '<p class="text-muted">暂无数据</p>'
+            : items.map((item, idx) => `
+                <div class="mapping-row" data-idx="${idx}">
+                    <input type="text" class="source-input" value="${item.source_category || ''}" placeholder="原分类" ${readonly ? 'readonly' : ''}>
+                    <span>→</span>
+                    <input type="text" class="listing-input" value="${item.listing_category || ''}" placeholder="上架分类" ${readonly ? 'readonly' : ''}>
+                    ${readonly ? '' : '<button class="btn-remove" onclick="this.parentElement.remove()">×</button>'}
+                </div>
+            `).join('');
+    }
+
+    // 名称设置 - 修改按钮
+    editNameBtn.addEventListener('click', () => {
+        originWordInput.removeAttribute('readonly');
+        hotWordInput.removeAttribute('readonly');
+        renderCategoryWords(originalCategoryWords, false);
+        addCategoryBtn.style.display = 'block';
+        nameActionsDiv.style.display = 'flex';
+        editNameBtn.style.display = 'none';
+    });
+
+    // 名称设置 - 取消按钮
+    cancelNameBtn.addEventListener('click', async () => {
+        originWordInput.value = originalNameSettings.origin_word || '';
+        hotWordInput.value = originalNameSettings.hot_word || '';
+        originWordInput.setAttribute('readonly', true);
+        hotWordInput.setAttribute('readonly', true);
+        renderCategoryWords(originalCategoryWords, true);
+        addCategoryBtn.style.display = 'none';
+        nameActionsDiv.style.display = 'none';
+        editNameBtn.style.display = 'block';
+    });
+
+    // 名称设置 - 保存按钮
+    saveNameBtn.addEventListener('click', async () => {
+        try {
+            await saveNameFormulaSettings(originWordInput.value, hotWordInput.value);
+
+            const categoryItems = [];
+            categoryContainer.querySelectorAll('.mapping-row').forEach(row => {
+                const category = row.querySelector('.category-input').value.trim();
+                const word = row.querySelector('.word-input').value.trim();
+                if (category) categoryItems.push({ category, category_word: word });
+            });
+            await saveCategoryWords(categoryItems);
+
+            // 更新原始数据
+            originalNameSettings = { origin_word: originWordInput.value, hot_word: hotWordInput.value };
+            originalCategoryWords = categoryItems;
+
+            // 恢复只读状态
+            originWordInput.setAttribute('readonly', true);
+            hotWordInput.setAttribute('readonly', true);
+            renderCategoryWords(originalCategoryWords, true);
+            addCategoryBtn.style.display = 'none';
+            nameActionsDiv.style.display = 'none';
+            editNameBtn.style.display = 'block';
+
+            window.AppUtils?.showToast?.('名称公式设置已保存', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
+
+    // 添加分类词汇
     addCategoryBtn.addEventListener('click', () => {
         const div = document.createElement('div');
         div.className = 'mapping-row';
@@ -454,6 +548,46 @@ async function initNewProductSettings() {
         categoryContainer.appendChild(div);
     });
 
+    // 分类对照 - 修改按钮
+    editListingBtn.addEventListener('click', () => {
+        renderListingCategories(originalListingData, false);
+        addListingBtn.style.display = 'block';
+        listingActionsDiv.style.display = 'flex';
+        editListingBtn.style.display = 'none';
+    });
+
+    // 分类对照 - 取消按钮
+    cancelListingBtn.addEventListener('click', () => {
+        renderListingCategories(originalListingData, true);
+        addListingBtn.style.display = 'none';
+        listingActionsDiv.style.display = 'none';
+        editListingBtn.style.display = 'block';
+    });
+
+    // 分类对照 - 保存按钮
+    saveListingBtn.addEventListener('click', async () => {
+        try {
+            const listingItems = [];
+            listingContainer.querySelectorAll('.mapping-row').forEach(row => {
+                const source = row.querySelector('.source-input').value.trim();
+                const listing = row.querySelector('.listing-input').value.trim();
+                if (source) listingItems.push({ source_category: source, listing_category: listing });
+            });
+            await saveListingCategoryMapping(listingItems);
+
+            originalListingData = listingItems;
+            renderListingCategories(originalListingData, true);
+            addListingBtn.style.display = 'none';
+            listingActionsDiv.style.display = 'none';
+            editListingBtn.style.display = 'block';
+
+            window.AppUtils?.showToast?.('分类对照设置已保存', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
+
+    // 添加分类对照
     addListingBtn.addEventListener('click', () => {
         const div = document.createElement('div');
         div.className = 'mapping-row';
@@ -464,35 +598,6 @@ async function initNewProductSettings() {
             <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
         `;
         listingContainer.appendChild(div);
-    });
-
-    saveBtn.addEventListener('click', async () => {
-        try {
-            // 保存基础设置
-            await saveNameFormulaSettings(originWordInput.value, hotWordInput.value);
-
-            // 保存分类词汇
-            const categoryItems = [];
-            categoryContainer.querySelectorAll('.mapping-row').forEach(row => {
-                const category = row.querySelector('.category-input').value.trim();
-                const word = row.querySelector('.word-input').value.trim();
-                if (category) categoryItems.push({ category, category_word: word });
-            });
-            await saveCategoryWords(categoryItems);
-
-            // 保存分类对照
-            const listingItems = [];
-            listingContainer.querySelectorAll('.mapping-row').forEach(row => {
-                const source = row.querySelector('.source-input').value.trim();
-                const listing = row.querySelector('.listing-input').value.trim();
-                if (source) listingItems.push({ source_category: source, listing_category: listing });
-            });
-            await saveListingCategoryMapping(listingItems);
-
-            window.AppUtils?.showToast?.('设置已保存', 'success');
-        } catch (error) {
-            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
-        }
     });
 }
 
