@@ -10,6 +10,8 @@
 // ========================================
 function processNewProductData(rows) {
     const records = [];
+    const seenNames = new Set();  // 去重
+
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
@@ -18,9 +20,13 @@ function processNewProductData(rows) {
         const originalName = String(row[1] ?? '').trim();
         if (!originalName || originalName === 'nan') continue;
 
+        // 去重：同名商品只保留第一条
+        if (seenNames.has(originalName)) continue;
+        seenNames.add(originalName);
+
         records.push({
             original_name: originalName,
-            product_name: originalName,  // 初始时与原名相同，处理后更新
+            product_name: originalName,
             image_url: String(row[0] ?? '').trim() || null,          // A列
             product_code: String(row[2] ?? '').trim() || null,       // C列
             virtual_category: String(row[3] ?? '').trim() || null,   // D列
@@ -28,7 +34,7 @@ function processNewProductData(rows) {
             product_tag: String(row[5] ?? '').trim() || null,        // F列
             base_price: parseFloat(row[6]) || 0,                      // G列
             warehouse: String(row[7] ?? '').trim() || null,          // H列
-            color_spec: row.length > 14 ? String(row[14] ?? '').trim() || null : null  // O列(索引14)
+            color_spec: row.length > 14 ? String(row[14] ?? '').trim() || null : null
         });
     }
     return records;
@@ -36,34 +42,35 @@ function processNewProductData(rows) {
 
 // ========================================
 // 名称生成器
-// 公式：初始名称 + 分类词汇 + 产地词 + 热卖词
+// 公式：「初始名称」+ 产地词 + 热卖词 + 分类词汇
+// 示例：「明星系列-许妍马尾」韩国25秋冬百搭香蕉夹
 // ========================================
 async function generateProductNames(records) {
-    // 读取设置
     const settings = await loadNameFormulaSettings();
     const categoryWords = await loadCategoryWords();
 
     return records.map(record => {
-        const parts = [record.original_name];
-
-        // 分类词汇
-        if (record.category && categoryWords[record.category]) {
-            parts.push(categoryWords[record.category]);
-        }
+        // 「初始名称」+ 产地词 + 热卖词 + 分类词汇
+        let newName = `「${record.original_name}」`;
 
         // 产地词
         if (settings.origin_word) {
-            parts.push(settings.origin_word);
+            newName += settings.origin_word;
         }
 
         // 热卖词
         if (settings.hot_word) {
-            parts.push(settings.hot_word);
+            newName += settings.hot_word;
+        }
+
+        // 分类词汇
+        if (record.category && categoryWords[record.category]) {
+            newName += categoryWords[record.category];
         }
 
         return {
             ...record,
-            product_name: parts.join('')
+            product_name: newName
         };
     });
 }
