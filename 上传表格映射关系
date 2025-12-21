@@ -1,0 +1,10 @@
+库存数据上传：
+    1.源字段		目标字段
+    2.列A 图片	→	image_url
+    3.列B 商品名称	→	product_name
+    4.列D 虚拟分类	→	virtual_category
+    5.列C 商品编码	→	product_code
+    6.列H 主仓位	→	warehouse
+    7.列I 可用数	→	available_qty
+    8.列E 分类	→	product_category
+    9.列J 实际库存数	→	actual_stock

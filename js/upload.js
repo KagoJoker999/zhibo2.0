@@ -202,7 +202,7 @@ const UploadConfigs = {
             { source: 'E列 分类', target: 'product_category' },
             { source: 'H列 主仓位', target: 'warehouse' },
             { source: 'I列 可用数', target: 'available_qty' },
-            { source: 'J列 实际库存', target: 'actual_stock' }
+            { source: 'J列 实际库存数', target: 'actual_stock' }
         ]
     },
     productId: {
