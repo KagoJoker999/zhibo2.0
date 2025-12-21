@@ -182,7 +182,6 @@ async function saveListingCategoryMapping(items) {
         if (error) throw new Error('保存失败: ' + error.message);
     }
 }
-
 // ========================================
 // 页面生成
 // ========================================
@@ -253,6 +252,22 @@ function generateNewProductPage() {
                     <div id="result-content" class="result-content">
                         <p class="text-muted">上传数据后显示处理结果</p>
                     </div>
+                    
+                    <div class="download-actions" id="downloadActions" style="display:none">
+                        <button class="btn btn-secondary" id="downloadRenameBtn">📥 重命名表格下载</button>
+                        <button class="btn btn-secondary" id="downloadListingBtn">📥 上架表格下载</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据库数据表格 -->
+            <div class="data-table-section">
+                <div class="data-table-header">
+                    <h3>📋 数据库新品列表</h3>
+                    <button class="btn btn-secondary btn-sm" id="refreshDataBtn">🔄 刷新</button>
+                </div>
+                <div id="dataTableContainer" class="data-table-container">
+                    <p class="text-muted">点击刷新加载数据</p>
                 </div>
             </div>
         </div>
@@ -392,7 +407,13 @@ function initNewProductUpload() {
                 </div>
             `;
 
+            // 显示下载按钮
+            document.getElementById('downloadActions').style.display = 'flex';
+
             window.AppUtils?.showToast?.(`成功处理 ${records.length} 条商品`, 'success');
+
+            // 自动刷新表格
+            loadDataTable();
 
         } catch (error) {
             console.error('处理失败:', error);
@@ -408,6 +429,125 @@ function initNewProductUpload() {
         statusText.textContent = text;
         progressBar.style.width = progress + '%';
     }
+
+    // 刷新按钮
+    const refreshBtn = document.getElementById('refreshDataBtn');
+    refreshBtn.addEventListener('click', loadDataTable);
+
+    // 下载按钮
+    const downloadRenameBtn = document.getElementById('downloadRenameBtn');
+    const downloadListingBtn = document.getElementById('downloadListingBtn');
+
+    downloadRenameBtn.addEventListener('click', () => downloadExcel('rename'));
+    downloadListingBtn.addEventListener('click', () => downloadExcel('listing'));
+
+    // 加载数据表格
+    async function loadDataTable() {
+        const container = document.getElementById('dataTableContainer');
+        container.innerHTML = '<p class="text-muted">加载中...</p>';
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('new_product_data')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(100);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="text-muted">暂无数据</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>原名称</th>
+                                <th>生成名称</th>
+                                <th>分类</th>
+                                <th>上架分类</th>
+                                <th>编码</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(row => `
+                                <tr>
+                                    <td>${row.id}</td>
+                                    <td title="${row.original_name || ''}">${truncate(row.original_name, 20)}</td>
+                                    <td title="${row.product_name || ''}">${truncate(row.product_name, 30)}</td>
+                                    <td>${row.category || '-'}</td>
+                                    <td>${row.listing_category || '-'}</td>
+                                    <td>${row.product_code || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="table-info">显示最近 ${data.length} 条记录</p>
+            `;
+        } catch (error) {
+            container.innerHTML = `<p class="error">加载失败: ${error.message}</p>`;
+        }
+    }
+
+    function truncate(str, len) {
+        if (!str) return '-';
+        return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    // 下载 Excel
+    async function downloadExcel(type) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('new_product_data')
+                .select('*');
+
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                window.AppUtils?.showToast?.('暂无数据可下载', 'warning');
+                return;
+            }
+
+            let rows, filename;
+            if (type === 'rename') {
+                // 重命名表格：原名称 -> 新名称
+                rows = [['原名称', '新名称']];
+                data.forEach(item => {
+                    rows.push([item.original_name, item.product_name]);
+                });
+                filename = '新品重命名表格.xlsx';
+            } else {
+                // 上架表格：新名称, 分类, 上架分类, 编码, 售价
+                rows = [['商品名称', '分类', '上架分类', '商品编码', '售价']];
+                data.forEach(item => {
+                    rows.push([
+                        item.product_name,
+                        item.category || '',
+                        item.listing_category || '',
+                        item.product_code || '',
+                        item.base_price || 0
+                    ]);
+                });
+                filename = '新品上架表格.xlsx';
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, filename);
+
+            window.AppUtils?.showToast?.('下载成功', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('下载失败: ' + error.message, 'error');
+        }
+    }
+
+    // 初始加载
+    loadDataTable();
 }
 
 // ========================================
