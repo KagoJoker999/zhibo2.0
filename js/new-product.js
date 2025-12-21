@@ -482,7 +482,7 @@ function initNewProductUpload() {
                                     <td>
                                         <div class="thumb-wrapper">
                                             ${row.image_url ?
-                    `<img src="${row.image_url}" class="product-thumb" loading="lazy" alt="商品图片">` :
+                    `<img src="${row.image_url}" class="product-thumb" loading="lazy" referrerpolicy="no-referrer" alt="商品图片">` :
                     `<span class="no-thumb">无图</span>`
                 }
                                         </div>
