@@ -522,12 +522,19 @@ function initNewProductUpload() {
 
             let rows, filename;
             if (type === 'rename') {
-                // 重命名表格：原名称 -> 新名称
-                rows = [['原名称', '新名称']];
+                // 重命名表格：商品编码, 商品名称(新名), 商品简称(原名)
+                rows = [['商品编码', '商品名称', '商品简称']];
                 data.forEach(item => {
-                    rows.push([item.original_name, item.product_name]);
+                    rows.push([
+                        item.product_code || '',
+                        item.product_name || '',
+                        item.original_name || ''
+                    ]);
                 });
-                filename = '新品重命名表格.xlsx';
+                // 文件名带时间戳
+                const now = new Date();
+                const ts = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+                filename = `重命名表格_${ts}.xlsx`;
             } else {
                 // 上架表格：新名称, 分类, 上架分类, 编码, 售价
                 rows = [['商品名称', '分类', '上架分类', '商品编码', '售价']];
