@@ -347,7 +347,10 @@ function generateNewProductSettingsPage() {
             <div class="settings-section">
                 <div class="settings-header">
                     <h3>🏷️ 分类词汇映射</h3>
-                    <button class="btn btn-primary btn-sm" id="addCategoryWord">+ 添加</button>
+                    <div class="header-buttons">
+                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveCategoryWordBtn" style="display:none">💾 保存</button>
+                        <button class="btn btn-secondary btn-sm" id="addCategoryWord">+ 添加</button>
+                    </div>
                 </div>
                 <div id="categoryWordsTable" class="mapping-table-container">
                     <!-- 表格由 JS 渲染 -->
@@ -358,7 +361,10 @@ function generateNewProductSettingsPage() {
             <div class="settings-section">
                 <div class="settings-header">
                     <h3>📋 上架分类映射</h3>
-                    <button class="btn btn-primary btn-sm" id="addListingCategory">+ 添加</button>
+                    <div class="header-buttons">
+                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveListingCategoryBtn" style="display:none">💾 保存</button>
+                        <button class="btn btn-secondary btn-sm" id="addListingCategory">+ 添加</button>
+                    </div>
                 </div>
                 <div id="listingCategoryTable" class="mapping-table-container">
                     <!-- 表格由 JS 渲染 -->
@@ -674,6 +680,8 @@ async function initNewProductSettings() {
     const addListingBtn = document.getElementById('addListingCategory');
     const saveOriginBtn = document.getElementById('saveOriginWord');
     const saveHotBtn = document.getElementById('saveHotWord');
+    const saveCategoryWordBtn = document.getElementById('saveCategoryWordBtn');
+    const saveListingCategoryBtn = document.getElementById('saveListingCategoryBtn');
 
     // 数据存储
     let categoryWordsData = [];
@@ -705,8 +713,10 @@ async function initNewProductSettings() {
 
     // 渲染分类词汇表格
     function renderCategoryTable() {
+        const saveBtn = document.getElementById('saveCategoryWordBtn');
         if (categoryWordsData.length === 0) {
             categoryTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
+            if (saveBtn) saveBtn.style.display = 'none';
             return;
         }
         categoryTable.innerHTML = `
@@ -724,24 +734,30 @@ async function initNewProductSettings() {
                     `).join('')}
                 </tbody>
             </table>
-            <button class="btn btn-secondary btn-sm save-table-btn" id="saveCategoryTable">💾 保存全部</button>
         `;
         // 绑定删除事件
         categoryTable.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.dataset.idx);
                 categoryWordsData.splice(idx, 1);
+                if (saveBtn) saveBtn.style.display = 'inline-flex';
                 renderCategoryTable();
             });
         });
-        // 绑定保存事件
-        document.getElementById('saveCategoryTable')?.addEventListener('click', saveCategoryTableData);
+        // 绑定输入事件，有修改时显示保存按钮
+        categoryTable.querySelectorAll('.table-input').forEach(input => {
+            input.addEventListener('input', () => {
+                if (saveBtn) saveBtn.style.display = 'inline-flex';
+            });
+        });
     }
 
     // 渲染分类对照表格
     function renderListingTable() {
+        const saveBtn = document.getElementById('saveListingCategoryBtn');
         if (listingCategoryData.length === 0) {
             listingTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
+            if (saveBtn) saveBtn.style.display = 'none';
             return;
         }
         listingTable.innerHTML = `
@@ -759,18 +775,22 @@ async function initNewProductSettings() {
                     `).join('')}
                 </tbody>
             </table>
-            <button class="btn btn-secondary btn-sm save-table-btn" id="saveListingTable">💾 保存全部</button>
         `;
         // 绑定删除事件
         listingTable.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.dataset.idx);
                 listingCategoryData.splice(idx, 1);
+                if (saveBtn) saveBtn.style.display = 'inline-flex';
                 renderListingTable();
             });
         });
-        // 绑定保存事件
-        document.getElementById('saveListingTable')?.addEventListener('click', saveListingTableData);
+        // 绑定输入事件，有修改时显示保存按钮
+        listingTable.querySelectorAll('.table-input').forEach(input => {
+            input.addEventListener('input', () => {
+                if (saveBtn) saveBtn.style.display = 'inline-flex';
+            });
+        });
     }
 
     // 保存分类词汇表格
@@ -786,6 +806,9 @@ async function initNewProductSettings() {
             });
             await saveCategoryWords(items);
             categoryWordsData = items.map((item, idx) => ({ id: idx, ...item }));
+            // 保存成功后隐藏保存按钮
+            const saveBtn = document.getElementById('saveCategoryWordBtn');
+            if (saveBtn) saveBtn.style.display = 'none';
             window.AppUtils?.showToast?.('分类词汇已保存', 'success');
         } catch (e) {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
@@ -804,6 +827,9 @@ async function initNewProductSettings() {
             });
             await saveListingCategoryMapping(items);
             listingCategoryData = items.map((item, idx) => ({ id: idx, ...item }));
+            // 保存成功后隐藏保存按钮
+            const saveBtn = document.getElementById('saveListingCategoryBtn');
+            if (saveBtn) saveBtn.style.display = 'none';
             window.AppUtils?.showToast?.('分类对照已保存', 'success');
         } catch (e) {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
@@ -844,6 +870,10 @@ async function initNewProductSettings() {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         }
     });
+
+    // 绑定头部保存按钮事件
+    saveCategoryWordBtn?.addEventListener('click', saveCategoryTableData);
+    saveListingCategoryBtn?.addEventListener('click', saveListingTableData);
 }
 
 // ========================================
