@@ -137,7 +137,7 @@ function processInventoryData(rows) {
 
 // ========================================
 // ID数据处理器
-// 列映射: A=商品ID, B=商品名称, E=三级分类, N=商品价格
+// 列映射: A=商品ID, B=商品名称, D=二级分类(备用), E=三级分类, N=商品价格
 // ========================================
 function processProductIdData(rows) {
     const seenProducts = new Set();
@@ -145,19 +145,31 @@ function processProductIdData(rows) {
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
+        // B列(索引1): 商品名称
         const rawProductName = String(row[1] ?? '').trim();
         if (!rawProductName || rawProductName === 'nan') continue;
         const productName = extractShortName(rawProductName);
         if (seenProducts.has(productName)) continue;
         seenProducts.add(productName);
+
+        // A列(索引0): 商品ID
         let productId = String(row[0] ?? '').trim();
         if (productId.startsWith('ID:')) productId = productId.substring(3).trim();
+
         const record = { product_name: productName, product_id: productId };
+
+        // N列(索引13): 商品价格
         if (row.length > 13) record.product_price = parseNumber(row[13]);
-        if (row.length > 4) {
-            const category = String(row[4] ?? '').trim();
-            if (category && category !== 'nan') record.store_category = category;
+
+        // E列(索引4): 三级分类，如果为空则使用 D列(索引3): 二级分类
+        let category = String(row[4] ?? '').trim();
+        if (!category || category === 'nan') {
+            category = String(row[3] ?? '').trim();  // 回退到D列二级分类
         }
+        if (category && category !== 'nan') {
+            record.store_category = category;
+        }
+
         records.push(record);
     }
     return records;
