@@ -951,9 +951,15 @@ body {
    设置页面样式
    ======================================== */
 .settings-page {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .settings-page {
+        grid-template-columns: 1fr;
+    }
 }
 
 .settings-section {
