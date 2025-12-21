@@ -1302,6 +1302,37 @@ select:focus {
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
+    vertical-align: middle;
+    /* 垂直居中 */
+}
+
+/* 商品缩略图 */
+.thumb-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius);
+    background: var(--bg-hover);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.product-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-fast);
+}
+
+.product-thumb:hover {
+    transform: scale(1.1);
+}
+
+.no-thumb {
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .table-info {

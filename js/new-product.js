@@ -468,7 +468,7 @@ function initNewProductUpload() {
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>图片</th>
                                 <th>原名称</th>
                                 <th>生成名称</th>
                                 <th>分类</th>
@@ -479,7 +479,14 @@ function initNewProductUpload() {
                         <tbody>
                             ${data.map(row => `
                                 <tr>
-                                    <td>${row.id}</td>
+                                    <td>
+                                        <div class="thumb-wrapper">
+                                            ${row.image_url ?
+                    `<img src="${row.image_url}" class="product-thumb" loading="lazy" alt="商品图片">` :
+                    `<span class="no-thumb">无图</span>`
+                }
+                                        </div>
+                                    </td>
                                     <td title="${row.original_name || ''}">${truncate(row.original_name, 20)}</td>
                                     <td title="${row.product_name || ''}">${truncate(row.product_name, 30)}</td>
                                     <td>${row.category || '-'}</td>
