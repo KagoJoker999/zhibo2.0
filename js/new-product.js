@@ -10,7 +10,6 @@
 // ========================================
 function processNewProductData(rows) {
     const records = [];
-    const seenNames = new Set();  // 去重
 
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -19,10 +18,6 @@ function processNewProductData(rows) {
         // B列(索引1): 商品名称
         const originalName = String(row[1] ?? '').trim();
         if (!originalName || originalName === 'nan') continue;
-
-        // 去重：同名商品只保留第一条
-        if (seenNames.has(originalName)) continue;
-        seenNames.add(originalName);
 
         records.push({
             original_name: originalName,
