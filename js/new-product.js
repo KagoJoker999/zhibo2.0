@@ -1277,8 +1277,8 @@ function initNumberingRulesLogic() {
 
     loadNumberingRules().then(data => {
         rules = data && data.length ? data : [
-            { range_start: 1, range_end: 40, prefix: 'A', start_num: 1, step: 2 },
-            { range_start: 41, range_end: 99999, prefix: 'A', start_num: 41, step: 1 }
+            { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
+            { range_start: 21, range_end: 99999, prefix: 'A', start_num: 41, step: 1 }
         ];
         renderRules();
     });
