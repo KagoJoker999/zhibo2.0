@@ -8,16 +8,36 @@
  */
 
 // ========================================
+// 字段映射 (配置中文 -> 数据字段英文)
+// ========================================
+const FIELD_MAPPING = {
+    "虚拟分类": "virtual_category",
+    "实际库存数": "actual_stock",
+    "评分排名": "rating_rank",
+    "是否可佩戴": "is_wearable",
+    "商品分类": "product_category",
+    "可用数": "available_qty",
+    "仓位": "warehouse",
+    "商品编码": "product_code",
+    "商品名称": "product_name",
+    "图片网址": "image_url",
+    "颜色规格": "color_spec",
+    "商品标签": "product_tag",
+    "价格": "price"
+};
+
+// ========================================
 // 数据汇总 - 从 ranking_data + inventory_data 读取并融合
 // ========================================
 async function loadCombinedProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行读取排名数据和库存表
-    const [rankingRes, inventoryRes] = await Promise.all([
+    // 并行读取排名数据、库存表和不可佩戴品列表
+    const [rankingRes, inventoryRes, nonWearableRes] = await Promise.all([
         client.from('ranking_data').select('*'),
-        client.from('inventory_data').select('*')
+        client.from('inventory_data').select('*'),
+        client.from('excluded_non_wearables').select('product_name')
     ]);
 
     if (rankingRes.error) throw new Error('读取 ranking_data 失败: ' + rankingRes.error.message);
@@ -43,10 +63,17 @@ async function loadCombinedProductData() {
         });
     });
 
-    // 步骤2：构建库存数据 Map
+    // 步骤2：构建不可佩戴品 Set
+    const nonWearableSet = new Set((nonWearableRes.data || []).map(i => i.product_name));
+
+    // 步骤3：构建库存数据 Map
     const inventoryMap = new Map();
     (inventoryRes.data || []).forEach(item => {
         if (!item.product_name) return;
+
+        // 判断是否可佩戴
+        const isWearable = !nonWearableSet.has(item.product_name);
+
         inventoryMap.set(item.product_name, {
             product_name: item.product_name,
             available_qty: item.available_qty || 0,
@@ -56,6 +83,7 @@ async function loadCombinedProductData() {
             product_code: item.product_code || '',
             image_url: item.image_url || '',
             warehouse: item.warehouse || '',
+            is_wearable: isWearable, // 注入是否可佩戴属性
             // 初始化评分相关字段
             total_score: 0,
             rating_rank: 999999,  // 默认无排名
@@ -66,7 +94,7 @@ async function loadCombinedProductData() {
         });
     });
 
-    // 步骤3：融合评分数据到库存数据
+    // 步骤4：融合评分数据到库存数据
     rankingMap.forEach((rankData, productName) => {
         const existing = inventoryMap.get(productName);
         if (existing) {
@@ -326,30 +354,30 @@ function getDefaultRankingConfig() {
         },
         筛选条件: {
             "评分品A筛选条件": {
-                "virtual_category": { "等于": ["可预售"], "启用": true },
-                "actual_stock": { "大于等于": 1, "启用": true },
-                "rating_rank": { "前几名": 10, "启用": true, "排序方式": "升序" }
+                "虚拟分类": { "等于": ["可预售"], "启用": true },
+                "实际库存数": { "大于等于": 1, "启用": true },
+                "评分排名": { "前几名": 10, "启用": true }
             },
             "佩戴品筛选条件": {
-                "is_wearable": { "排除": ["不可佩戴"], "启用": true },
-                "product_category": {
+                "是否可佩戴": { "排除": ["不可佩戴"], "启用": true },
+                "商品分类": {
                     "包含": ["发圈", "发夹 - 鸭嘴夹", "周边 - 项链", "周边 - 戒指", "周边 - 手链", "周边 - 耳钉", "周边 - 胸针"],
                     "启用": true
                 },
-                "available_qty": { "大于等于": 3, "启用": true },
+                "可用数": { "大于等于": 2, "启用": true },
                 "按子分类分别筛选": true,
-                "子分类字段": "product_category"
+                "子分类字段": "商品分类"
             },
             "周边品筛选条件": {
-                "product_category": { "包含": ["周边"], "启用": true },
-                "available_qty": { "前几名": 4, "启用": true }
+                "商品分类": { "包含": ["周边"], "启用": true },
+                "可用数": { "前几名": 4, "启用": true }
             },
             "评分品B筛选条件": {
-                "available_qty": { "大于等于": 1, "启用": true },
-                "rating_rank": { "前几名": 15, "启用": true, "排序方式": "升序" }
+                "可用数": { "大于等于": 3, "启用": true },
+                "评分排名": { "前几名": 15, "启用": true }
             },
             "库存品筛选条件": {
-                "available_qty": { "前几名": 10, "启用": true }
+                "可用数": { "前几名": 10, "启用": true }
             }
         }
     };
@@ -397,9 +425,21 @@ function calculateRanking(products, config) {
 function applyFilters(products, conditions) {
     let filtered = [...products];
 
-    for (const [field, condition] of Object.entries(conditions)) {
-        if (field === '按子分类分别筛选' || field === '子分类字段') continue;
+    for (const [key, condition] of Object.entries(conditions)) {
+        if (key === '按子分类分别筛选' || key === '子分类字段') continue;
         if (!condition.启用) continue;
+
+        // 映射字段名
+        const field = FIELD_MAPPING[key] || key;
+
+        // 特殊处理：Boolean 类型字段（如 is_wearable）
+        if (key === '是否可佩戴') {
+            if (condition.排除 && condition.排除.includes('不可佩戴')) {
+                filtered = filtered.filter(p => p[field] === true);
+            }
+            // 可以扩展其他情况
+            continue; // 处理完特殊逻辑后跳过通用逻辑
+        }
 
         if (condition.大于等于 !== undefined) {
             filtered = filtered.filter(p => (p[field] || 0) >= condition.大于等于);
@@ -426,10 +466,12 @@ function applyFilters(products, conditions) {
             });
         }
         if (condition.前几名) {
-            // 支持升序/降序排序（升序用于排名字段，越小越好）
-            const ascending = condition.排序方式 === '升序';
+            // 自动判断排序方向：评分排名越小越好（升序），其他如库存越大越好（降序）
+            // 也可以依赖配置中的 "排序方式"
+            const ascending = condition.排序方式 === '升序' || key === '评分排名';
+
             if (ascending) {
-                filtered = filtered.sort((a, b) => (a[field] || 999999) - (b[field] || 999999));
+                filtered = filtered.sort((a, b) => (a[field] ?? 999999) - (b[field] ?? 999999));
             } else {
                 filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
             }
@@ -441,7 +483,9 @@ function applyFilters(products, conditions) {
 }
 
 function filterBySubcategory(products, conditions) {
-    const subField = conditions.子分类字段 || 'product_category';
+    const subFieldKey = conditions.子分类字段 || '商品分类';
+    const subField = FIELD_MAPPING[subFieldKey] || subFieldKey;
+
     const subCategories = new Map();
 
     // 先应用基础筛选条件
@@ -456,7 +500,8 @@ function filterBySubcategory(products, conditions) {
         subCategories.get(subCat).push(p);
     });
 
-    // 每个子分类取可用数最大的一个
+    // 每个子分类取可用数 (available_qty) 最大的一个
+    // 默认我们假设用户想要库存最多的
     const result = [];
     subCategories.forEach(items => {
         items.sort((a, b) => (b.available_qty || 0) - (a.available_qty || 0));
@@ -1067,9 +1112,22 @@ async function initRankingSettings() {
 
         if (!config.筛选条件) config.筛选条件 = {};
         if (!config.筛选条件[category]) config.筛选条件[category] = {};
-        const rules = config.筛选条件[category];
+        let rules = config.筛选条件[category];
 
-        filterContainer.innerHTML = `
+        // 辅助函数：推断字段类型
+        // Numeric: 实际库存数, 评分排名, 可用数, 价格
+        // String: 虚拟分类, 商品分类, 商品编码, 商品名称, 图片网址, 颜色规格, 商品标签, 仓位
+        // Boolean: 是否可佩戴
+        function getFieldType(key) {
+            if (['实际库存数', '评分排名', '可用数', '价格'].includes(key)) return 'numeric';
+            if (key === '是否可佩戴') return 'boolean';
+            return 'string';
+        }
+
+        const fieldOptions = Object.keys(FIELD_MAPPING).map(key => `<option value="${key}">${key}</option>`).join('');
+
+        // HTML 结构构建
+        let html = `
             <div class="settings-group">
                 <label>显示名称</label>
                 <input type="text" class="input settings-input" id="inputDisplayName" value="${displayName}">
@@ -1077,66 +1135,187 @@ async function initRankingSettings() {
             
             <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
             
-            <h4>关键词筛选</h4>
+            <!-- 全局子分类设置 -->
             <div class="settings-group">
-                <label>包含关键词 (逗号分隔)</label>
-                <input type="text" class="input settings-input" data-field="包含" value="${(rules.包含 || []).join ? rules.包含.join(',') : (rules.包含 || '')}" placeholder="例如: 连衣裙,套装">
-            </div>
-             <div class="settings-group">
-                <label>排除关键词 (逗号分隔)</label>
-                <input type="text" class="input settings-input" data-field="排除" value="${(rules.排除 || []).join ? rules.排除.join(',') : (rules.排除 || '')}" placeholder="例如: 瑕疵,次品">
-            </div>
-            
-            <div class="form-row" style="display:flex; gap:1rem;">
-                <div class="settings-group" style="flex:1;">
-                    <label>排在多少名之前 (Top N)</label>
-                    <input type="number" class="input settings-input" data-field="前几名" value="${rules.前几名 || ''}" placeholder="例如: 50">
-                </div>
-                 <div class="settings-group" style="flex:1;">
-                    <label>排序方式</label>
-                    <select class="input settings-input" data-field="排序方式">
-                        <option value="降序" ${rules.排序方式 !== '升序' ? 'selected' : ''}>降序 (数值越大越靠前)</option>
-                        <option value="升序" ${rules.排序方式 === '升序' ? 'selected' : ''}>升序 (数值越小越靠前)</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
-            
-            <h4>数值范围筛选 (可选)</h4>
-            <div class="form-row" style="display:flex; gap:1rem;">
-                 <div class="settings-group" style="flex:1;">
-                    <label>大于等于 (>=)</label>
-                    <input type="number" class="input settings-input" data-field="大于等于" value="${rules.大于等于 || ''}">
-                </div>
-                 <div class="settings-group" style="flex:1;">
-                    <label>小于等于 (<=)</label>
-                    <input type="number" class="input settings-input" data-field="小于等于" value="${rules.小于等于 || ''}">
-                </div>
-            </div>
-            
-             <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
-             
-             <h4>子分类高级设置</h4>
-             <div class="settings-group">
-                 <label class="checkbox-label" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                 <label class="checkbox-label" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:500;">
                     <input type="checkbox" id="checkSubFilter" ${rules.按子分类分别筛选 ? 'checked' : ''}>
                     <span>按子分类分别筛选 (每个子分类取Top1)</span>
                  </label>
-             </div>
-             <div class="settings-group" id="subFieldGroup" style="display:${rules.按子分类分别筛选 ? 'block' : 'none'}; margin-top:0.5rem;">
-                <label>子分类字段名</label>
-                <input type="text" class="input settings-input" data-field="子分类字段" value="${rules.子分类字段 || 'product_category'}" placeholder="默认为 product_category">
+                 <div id="subFieldGroup" style="display:${rules.按子分类分别筛选 ? 'block' : 'none'}; margin-top:0.5rem; padding-left:1.5rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted);">子分类字段名</label>
+                    <input type="text" class="input settings-input" id="inputSubField" value="${rules.子分类字段 || '商品分类'}" placeholder="默认为 商品分类" style="font-size:0.9rem; padding:0.3rem;">
+                </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h4 style="margin:0;">筛选规则列表</h4>
+                <div style="display:flex; gap:0.5rem;">
+                    <select id="selectNewRuleField" class="input" style="padding:0.3rem; font-size:0.9rem;">
+                        ${fieldOptions}
+                    </select>
+                    <button id="btnAddRule" class="btn btn-primary" style="padding:0.3rem 0.8rem; font-size:0.9rem;">+ 添加规则</button>
+                </div>
+            </div>
+
+            <div id="rulesListContainer" style="display:flex; flex-direction:column; gap:1rem;">
+                <!-- 规则条目将动态插入这里 -->
             </div>
         `;
 
+        filterContainer.innerHTML = html;
+
+        const rulesContainer = document.getElementById('rulesListContainer');
+
+        // 渲染单条规则卡片
+        function renderRuleCard(fieldKey, ruleData) {
+            const type = getFieldType(fieldKey);
+            const card = document.createElement('div');
+            card.className = 'rule-card';
+            card.style.cssText = 'background:var(--bg-secondary); padding:1rem; border-radius:var(--border-radius); border:1px solid var(--border-color); position:relative;';
+            card.dataset.field = fieldKey;
+
+            // 启用状态
+            const isEnabled = ruleData.启用 !== false; // 默认为 true
+
+            let inputsHtml = '';
+
+            // 根据类型生成不同的输入区域
+            if (type === 'numeric') {
+                inputsHtml = `
+                    <div class="form-row" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:var(--text-muted);">大于等于 (>=)</label>
+                            <input type="number" class="input settings-input rule-input" data-op="大于等于" value="${ruleData.大于等于 !== undefined ? ruleData.大于等于 : ''}">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:var(--text-muted);">小于等于 (<=)</label>
+                            <input type="number" class="input settings-input rule-input" data-op="小于等于" value="${ruleData.小于等于 !== undefined ? ruleData.小于等于 : ''}">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:var(--text-muted);">前几名 (Top N)</label>
+                            <input type="number" class="input settings-input rule-input" data-op="前几名" value="${ruleData.前几名 || ''}">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:var(--text-muted);">排序方式</label>
+                            <select class="input settings-input rule-input" data-op="排序方式">
+                                <option value="降序" ${ruleData.排序方式 !== '升序' ? 'selected' : ''}>降序 (数值大优先)</option>
+                                <option value="升序" ${ruleData.排序方式 === '升序' ? 'selected' : ''}>升序 (数值小优先)</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'boolean') {
+                inputsHtml = `
+                     <div class="form-row" style="margin-top:0.5rem;">
+                        <label style="font-size:0.8rem; color:var(--text-muted);">排除值 (输入 "不可佩戴" 等)</label>
+                        <input type="text" class="input settings-input rule-input" data-op="排除" value="${(ruleData.排除 || []).join ? ruleData.排除.join(',') : (ruleData.排除 || '')}" placeholder="不可佩戴">
+                    </div>
+                `;
+            } else {
+                // String
+                inputsHtml = `
+                    <div class="form-row" style="margin-top:0.5rem;">
+                        <label style="font-size:0.8rem; color:var(--text-muted);">包含 (逗号分隔)</label>
+                        <input type="text" class="input settings-input rule-input" data-op="包含" value="${(ruleData.包含 || []).join ? ruleData.包含.join(',') : (ruleData.包含 || '')}">
+                    </div>
+                    <div class="form-row" style="margin-top:0.5rem;">
+                        <label style="font-size:0.8rem; color:var(--text-muted);">排除 (逗号分隔)</label>
+                        <input type="text" class="input settings-input rule-input" data-op="排除" value="${(ruleData.排除 || []).join ? ruleData.排除.join(',') : (ruleData.排除 || '')}">
+                    </div>
+                     <div class="form-row" style="margin-top:0.5rem;">
+                        <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配)</label>
+                        <input type="text" class="input settings-input rule-input" data-op="等于" value="${(ruleData.等于 || []).join ? ruleData.等于.join(',') : (ruleData.等于 || '')}">
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <strong style="color:var(--primary-color);">${fieldKey}</strong>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <label class="switch-label" style="display:flex; align-items:center; gap:0.3rem; font-size:0.8rem;">
+                            <input type="checkbox" class="rule-enable" ${isEnabled ? 'checked' : ''}>
+                            <span>启用</span>
+                        </label>
+                        <button class="btn-icon btn-delete-rule" title="删除规则" style="color:var(--text-muted); font-size:1rem; cursor:pointer;">&times;</button>
+                    </div>
+                </div>
+                <div>${inputsHtml}</div>
+            `;
+
+            // 绑定事件
+            // 删除
+            card.querySelector('.btn-delete-rule').addEventListener('click', () => {
+                if (confirm(`删除 "${fieldKey}" 的筛选规则？`)) {
+                    delete config.筛选条件[category][fieldKey];
+                    // 重新加载规则列表
+                    reloadRules();
+                    saveConfigQuietly();
+                }
+            });
+
+            // 启用/禁用
+            card.querySelector('.rule-enable').addEventListener('change', (e) => {
+                config.筛选条件[category][fieldKey].启用 = e.target.checked;
+                saveConfigQuietly();
+            });
+
+            // 输入框变更
+            card.querySelectorAll('.rule-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const op = input.dataset.op;
+                    let val = input.value;
+
+                    // 数值转换
+                    if (input.type === 'number') {
+                        val = val === '' ? undefined : parseFloat(val);
+                    }
+
+                    // 数组转换 (包含, 排除, 等于 - 对于 String 类型)
+                    if (['包含', '排除', '等于'].includes(op) && type !== 'numeric') { // Numeric 一般用区间
+                        if (val) {
+                            config.筛选条件[category][fieldKey][op] = val.split(/[，,]/).map(s => s.trim()).filter(s => s);
+                        } else {
+                            delete config.筛选条件[category][fieldKey][op];
+                        }
+                    } else {
+                        // 普通赋值
+                        if (val === undefined || val === '') {
+                            delete config.筛选条件[category][fieldKey][op];
+                        } else {
+                            config.筛选条件[category][fieldKey][op] = val;
+                        }
+                    }
+                    saveConfigQuietly();
+                });
+            });
+
+            return card;
+        }
+
+        function reloadRules() {
+            rulesContainer.innerHTML = '';
+            // 遍历所有规则键 (排除特殊键)
+            Object.keys(config.筛选条件[category]).forEach(key => {
+                if (key === '按子分类分别筛选' || key === '子分类字段') return;
+                // 渲染卡片
+                const card = renderRuleCard(key, config.筛选条件[category][key]);
+                rulesContainer.appendChild(card);
+            });
+        }
+
+        // 初始加载规则
+        reloadRules();
+
+        // 绑定外部控件事件
         const displayNameInput = document.getElementById('inputDisplayName');
         displayNameInput.addEventListener('change', (e) => {
             const newName = e.target.value.trim();
             if (newName) {
-                // 如果名称变了，也需要更新样品序号规则的 key?
-                // 旧逻辑是用显示名称作为 key。
-                // 如果这里改名，最好同步迁移 Key。
                 const oldName = config.结果映射[category];
                 if (oldName && oldName !== newName) {
                     if (config.样品序号规则 && config.样品序号规则[oldName]) {
@@ -1144,39 +1323,40 @@ async function initRankingSettings() {
                         delete config.样品序号规则[oldName];
                     }
                 }
-
                 config.结果映射[category] = newName;
                 renderCategories();
+                saveConfigQuietly();
             }
-        });
-
-        filterContainer.querySelectorAll('input[data-field], select[data-field]').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const field = e.target.dataset.field;
-                let val = e.target.value;
-                if (input.type === 'number') val = val === '' ? undefined : parseFloat(val);
-
-                if (field === '包含' || field === '排除') {
-                    if (val) {
-                        config.筛选条件[category][field] = val.split(/[，,]/).map(s => s.trim()).filter(s => s);
-                    } else {
-                        delete config.筛选条件[category][field];
-                    }
-                } else {
-                    if (val === '' || val === undefined) {
-                        delete config.筛选条件[category][field];
-                    } else {
-                        config.筛选条件[category][field] = val;
-                    }
-                }
-            });
         });
 
         const checkSubFilter = document.getElementById('checkSubFilter');
         const subFieldGroup = document.getElementById('subFieldGroup');
+        const inputSubField = document.getElementById('inputSubField');
+
         checkSubFilter.addEventListener('change', (e) => {
             config.筛选条件[category].按子分类分别筛选 = e.target.checked;
             subFieldGroup.style.display = e.target.checked ? 'block' : 'none';
+            saveConfigQuietly();
+        });
+
+        inputSubField.addEventListener('change', (e) => {
+            config.筛选条件[category].子分类字段 = e.target.value.trim();
+            saveConfigQuietly();
+        });
+
+        const btnAddRule = document.getElementById('btnAddRule');
+        const selectNewRuleField = document.getElementById('selectNewRuleField');
+
+        btnAddRule.addEventListener('click', () => {
+            const field = selectNewRuleField.value;
+            if (!config.筛选条件[category][field]) {
+                config.筛选条件[category][field] = { "启用": true };
+                // 重新渲染
+                reloadRules();
+                saveConfigQuietly();
+            } else {
+                alert('该字段的规则已存在，请直接在下方编辑。');
+            }
         });
     }
 
