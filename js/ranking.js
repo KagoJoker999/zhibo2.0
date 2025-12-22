@@ -23,73 +23,23 @@ async function loadCombinedProductData() {
     if (rankingViewRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingViewRes.error.message);
     if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
 
-    const rawInventory = inventoryRes.data || [];
-    const rawCount = rawInventory.length;
-
-    // ========================================
-    // 库存数据本地去重（以商品名称为主键）
-    // ========================================
+    // 直接使用库存数据（上传时已去重）
     const inventoryMap = new Map();
-
-    rawInventory.forEach(item => {
-        const name = item.product_name;
-        if (!name) return;
-
-        const existing = inventoryMap.get(name);
-        if (existing) {
-            // 数值字段：相加
-            existing.available_qty += (item.available_qty || 0);
-            existing.actual_stock += (item.actual_stock || 0);
-
-            // 图片网址：用逗号分隔
-            if (item.image_url && !existing.image_url.includes(item.image_url)) {
-                existing.image_url = existing.image_url
-                    ? `${existing.image_url}, ${item.image_url}`
-                    : item.image_url;
-            }
-
-            // 商品编码：用逗号分隔
-            if (item.product_code && !existing.product_code.includes(item.product_code)) {
-                existing.product_code = existing.product_code
-                    ? `${existing.product_code}, ${item.product_code}`
-                    : item.product_code;
-            }
-
-            // 仓位：用逗号分隔
-            if (item.warehouse && !existing.warehouse.includes(item.warehouse)) {
-                existing.warehouse = existing.warehouse
-                    ? `${existing.warehouse}, ${item.warehouse}`
-                    : item.warehouse;
-            }
-
-            // 虚拟类别：去重（只保留第一个）
-            if (!existing.virtual_category && item.virtual_category) {
-                existing.virtual_category = item.virtual_category;
-            }
-
-            // 产品类别：去重（只保留第一个）
-            if (!existing.product_category && item.product_category) {
-                existing.product_category = item.product_category;
-            }
-        } else {
-            inventoryMap.set(name, {
-                product_name: name,
-                available_qty: item.available_qty || 0,
-                actual_stock: item.actual_stock || 0,
-                virtual_category: item.virtual_category || '',
-                product_category: item.product_category || '',
-                product_code: item.product_code || '',
-                image_url: item.image_url || '',
-                warehouse: item.warehouse || ''
-            });
-        }
+    (inventoryRes.data || []).forEach(item => {
+        if (!item.product_name) return;
+        inventoryMap.set(item.product_name, {
+            product_name: item.product_name,
+            available_qty: item.available_qty || 0,
+            actual_stock: item.actual_stock || 0,
+            virtual_category: item.virtual_category || '',
+            product_category: item.product_category || '',
+            product_code: item.product_code || '',
+            image_url: item.image_url || '',
+            warehouse: item.warehouse || ''
+        });
     });
 
-    const deduplicatedCount = inventoryMap.size;
-
-    // ========================================
     // 合并评分视图数据（包含评分和排名）
-    // ========================================
     (rankingViewRes.data || []).forEach(item => {
         const existing = inventoryMap.get(item.product_name);
         if (existing) {
@@ -105,16 +55,7 @@ async function loadCombinedProductData() {
         }
     });
 
-    // 转为数组
-    const products = Array.from(inventoryMap.values());
-
-    // 返回去重统计（用于UI显示）
-    products._deduplicateStats = {
-        before: rawCount,
-        after: deduplicatedCount
-    };
-
-    return products;
+    return Array.from(inventoryMap.values());
 }
 
 // 读取新品数据（含本地去重）
@@ -527,12 +468,12 @@ function generateRankingPage() {
                 <!-- 数据加载区块 -->
                 <div class="upload-block" id="block-ranking-data">
                     <div class="upload-block-header">
-                        <h3>📦 数据汇总 <span class="db-table-tag">product_ranking_view + inventory_data</span></h3>
+                        <h3>📦 数据汇总 <span class="db-table-tag">ranking_data + inventory_data + new_product_data</span></h3>
                     </div>
                     
                     <div class="ranking-stats" id="rankingStats">
                         <div class="stat-item">
-                            <span class="stat-label">评分数据</span>
+                            <span class="stat-label">排名数据</span>
                             <span class="stat-value" id="statRanking">--</span>
                         </div>
                         <div class="stat-item">
@@ -682,25 +623,21 @@ async function initRankingPage() {
                 // 获取各表统计
                 const client = window.supabaseClient;
                 const [r1, r2, r3] = await Promise.all([
-                    client.from('product_ranking_view').select('*', { count: 'exact', head: true }),
+                    client.from('ranking_data').select('*', { count: 'exact', head: true }),
                     client.from('inventory_data').select('*', { count: 'exact', head: true }),
                     client.from('new_product_data').select('*', { count: 'exact', head: true })
                 ]);
 
                 document.getElementById('statRanking').textContent = r1.count || 0;
+                document.getElementById('statInventory').textContent = r2.count || 0;
                 document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
 
                 // 加载排除商品列表
                 cachedExcluded = await loadExcludedProducts();
                 document.getElementById('statExcluded').textContent = cachedExcluded.length;
 
-                // 汇总商品数据（库存 + 评分，包含本地去重）
+                // 汇总商品数据（库存 + 评分）
                 let allProducts = await loadCombinedProductData();
-
-                // 显示库存数据去重统计（去重后/去重前）
-                const dedupeStats = allProducts._deduplicateStats || { before: r2.count, after: allProducts.length };
-                document.getElementById('statInventory').textContent = `${dedupeStats.after}/${dedupeStats.before}`;
-
                 // 如果包含新品，将新品数据合并到排品数据中
                 if (includeNewProducts) {
                     cachedNewProducts = await loadNewProductData();
