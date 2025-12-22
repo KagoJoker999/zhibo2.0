@@ -700,77 +700,62 @@ async function saveRankingResults(results) {
 // ========================================
 function generateRankingPage() {
     return `
-        <div class="ranking-page">
-            <div class="page-intro">
+        <div class="ranking-page" style="padding: 0;">
+            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
                 <h2>📋 排品计算</h2>
                 <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
             </div>
             
-            <div class="upload-blocks-grid">
-                <!-- 数据加载区块 -->
-                <div class="upload-block" id="block-ranking-data">
-                    <div class="upload-block-header">
-                        <h3>📦 数据汇总 <span class="db-table-tag">product_ranking_view + inventory_data + new_product_data</span></h3>
+            <!-- 上部分：数据统计 + 选项 + 按钮（横向排列） -->
+            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 0; flex-wrap: wrap;">
+                <!-- 统计数据（横向排列） -->
+                <div class="ranking-stats-inline" style="display: flex; gap: 1.5rem; flex: 1;">
+                    <div class="stat-item-inline">
+                        <span class="stat-label-sm">排名数据</span>
+                        <span class="stat-value-sm" id="statRanking">--</span>
                     </div>
-                    
-                    <div class="ranking-stats" id="rankingStats" style="display:flex; flex-direction:column; gap:1.5rem;">
-                        <!-- 第一行 -->
-                        <div class="stats-row" style="display:flex; justify-content:space-around; gap:1rem;">
-                            <div class="stat-item">
-                                <span class="stat-label">排名数据</span>
-                                <span class="stat-value" id="statRanking">--</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">库存数据</span>
-                                <span class="stat-value" id="statInventory">--</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">新品数据</span>
-                                <span class="stat-value" id="statNewProduct">--</span>
-                            </div>
-                        </div>
-                        
-                        <!-- 第二行 -->
-                        <div class="stats-row" style="display:flex; justify-content:space-between; padding:0 10%; gap:1rem;">
-                            <div class="stat-item">
-                                <span class="stat-label">排除商品</span>
-                                <span class="stat-value" id="statExcluded">--</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">参与排品</span>
-                                <span class="stat-value" id="statCombined">--</span>
-                            </div>
-                        </div>
+                    <div class="stat-item-inline">
+                        <span class="stat-label-sm">库存数据</span>
+                        <span class="stat-value-sm" id="statInventory">--</span>
                     </div>
-                    
-                    <div class="ranking-options" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
-                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" id="includeNewProducts" checked>
-                            <span>包含新品数据参与排品</span>
-                        </label>
+                    <div class="stat-item-inline">
+                        <span class="stat-label-sm">新品数据</span>
+                        <span class="stat-value-sm" id="statNewProduct">--</span>
                     </div>
-                    
-                    <div class="upload-actions">
-                        <button class="btn btn-primary" id="btnLoadData">加载数据</button>
-                        <button class="btn btn-secondary" id="btnCalculate" disabled>计算排品</button>
+                    <div class="stat-item-inline">
+                        <span class="stat-label-sm">排除商品</span>
+                        <span class="stat-value-sm" id="statExcluded">--</span>
+                    </div>
+                    <div class="stat-item-inline">
+                        <span class="stat-label-sm">参与排品</span>
+                        <span class="stat-value-sm" id="statCombined">--</span>
                     </div>
                 </div>
                 
-                <!-- 结果区块 -->
-                <div class="upload-block upload-block-scrollable" id="block-ranking-result">
-                    <div class="upload-block-header">
-                        <h3>📊 排品结果 <span class="db-table-tag">→ ranking_results</span></h3>
+                <!-- 选项 -->
+                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; white-space: nowrap;">
+                    <input type="checkbox" id="includeNewProducts" checked>
+                    <span>包含新品</span>
+                </label>
+                
+                <!-- 按钮 -->
+                <button class="btn btn-primary" id="btnLoadAndCalculate">加载数据并计算</button>
+            </div>
+            
+            <!-- 下部分：排品结果（全宽） -->
+            <div class="upload-block" id="block-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 400px;">
+                <div class="upload-block-header">
+                    <h3>📊 排品结果 <span class="db-table-tag">→ ranking_results</span></h3>
+                </div>
+                
+                <div class="scrollable-content" id="rankingResultContent" style="max-height: 500px; overflow-y: auto;">
+                    <div class="placeholder-content">
+                        <p>请点击"加载数据并计算"按钮</p>
                     </div>
-                    
-                    <div class="scrollable-content" id="rankingResultContent">
-                        <div class="placeholder-content">
-                            <p>请先加载数据并计算排品</p>
-                        </div>
-                    </div>
-                    
-                    <div class="upload-actions">
-                        <button class="btn btn-primary" id="btnSaveResults" disabled>保存结果到数据库</button>
-                    </div>
+                </div>
+                
+                <div class="upload-actions">
+                    <button class="btn btn-primary" id="btnSaveResults" disabled>保存结果到数据库</button>
                 </div>
             </div>
         </div>
@@ -960,15 +945,14 @@ let cachedExcluded = [];      // 排除商品列表
 let cachedResults = [];       // 排品结果
 
 async function initRankingPage() {
-    const btnLoadData = document.getElementById('btnLoadData');
-    const btnCalculate = document.getElementById('btnCalculate');
+    const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
 
-    if (btnLoadData) {
-        btnLoadData.addEventListener('click', async () => {
+    if (btnLoadAndCalculate) {
+        btnLoadAndCalculate.addEventListener('click', async () => {
             try {
-                btnLoadData.disabled = true;
-                btnLoadData.textContent = '加载中...';
+                btnLoadAndCalculate.disabled = true;
+                btnLoadAndCalculate.textContent = '加载中...';
 
                 // 获取是否包含新品的设置
                 const includeNewProducts = document.getElementById('includeNewProducts')?.checked ?? true;
@@ -1035,26 +1019,10 @@ async function initRankingPage() {
 
                 // 参与排品的商品总数及计算逻辑显示
                 const totalCount = cachedProducts.length;
-                const formulaHtml = `<span title="库存数 + 新增数 - 实际排除数" style="font-size:0.85em; color:var(--text-muted); margin-left:0.5rem; font-weight:normal;">(${baseInventoryCount} + ${addedNewCount} - ${excludedCount})</span>`;
-                document.getElementById('statCombined').innerHTML = `${totalCount} ${formulaHtml}`;
+                document.getElementById('statCombined').textContent = totalCount;
 
-                btnCalculate.disabled = false;
-                window.AppUtils?.showToast?.(`数据加载完成：参与排品 ${totalCount} 个（排除 ${cachedExcluded.length} 个）`, 'success');
-            } catch (error) {
-                console.error('加载失败:', error);
-                window.AppUtils?.showToast?.('加载失败: ' + error.message, 'error');
-            } finally {
-                btnLoadData.disabled = false;
-                btnLoadData.textContent = '加载数据';
-            }
-        });
-    }
-
-    if (btnCalculate) {
-        btnCalculate.addEventListener('click', async () => {
-            try {
-                btnCalculate.disabled = true;
-                btnCalculate.textContent = '计算中...';
+                // === 自动执行计算 ===
+                btnLoadAndCalculate.textContent = '计算中...';
 
                 // 加载配置
                 const config = await loadRankingConfig();
@@ -1071,11 +1039,11 @@ async function initRankingPage() {
                 btnSaveResults.disabled = false;
                 window.AppUtils?.showToast?.(`排品完成，共 ${cachedResults.length} 个商品`, 'success');
             } catch (error) {
-                console.error('计算失败:', error);
-                window.AppUtils?.showToast?.('计算失败: ' + error.message, 'error');
+                console.error('加载/计算失败:', error);
+                window.AppUtils?.showToast?.('加载/计算失败: ' + error.message, 'error');
             } finally {
-                btnCalculate.disabled = false;
-                btnCalculate.textContent = '计算排品';
+                btnLoadAndCalculate.disabled = false;
+                btnLoadAndCalculate.textContent = '加载数据并计算';
             }
         });
     }

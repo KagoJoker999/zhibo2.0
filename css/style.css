@@ -1992,12 +1992,14 @@ select:focus {
     justify-content: center;
     line-height: 1;
 }
+
 /* 排品设置左右分栏布局 */
 .settings-split-container {
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 1.5rem;
-    height: calc(100vh - 140px); /* 适应屏幕高度 */
+    height: calc(100vh - 140px);
+    /* 适应屏幕高度 */
     min-height: 600px;
 }
 
@@ -2019,12 +2021,31 @@ select:focus {
     overflow-y: auto;
 }
 
-/* 选中状态 */
 .sortable-item.active .category-name-container {
     font-weight: bold;
     color: var(--primary-color);
 }
+
 .sortable-item.active {
     border-color: var(--primary-color);
     background-color: var(--bg-secondary);
+}
+
+/* 横向统计项样式（排品计算页面） */
+.stat-item-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-label-sm {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.stat-value-sm {
+    font-family: 'SF Mono', 'Roboto Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
 }
