@@ -79,16 +79,21 @@ async function loadCombinedProductData() {
     // 步骤2：构建不可佩戴品 Set
     const nonWearableSet = new Set((nonWearableRes.data || []).map(i => i.product_name));
 
-    // 步骤3：构建库存数据 Map
+    // 步骤3：构建库存数据 Map（自动排除商品标签含"福利"的商品）
     const inventoryMap = new Map();
     (inventoryRes.data || []).forEach(item => {
         if (!item.product_name) return;
+
+        // 自动排除商品标签含"福利"的商品
+        const productTag = item.product_tag || '';
+        if (productTag.includes('福利')) return;
 
         // 判断是否可佩戴
         const isWearable = !nonWearableSet.has(item.product_name);
 
         inventoryMap.set(item.product_name, {
             product_name: item.product_name,
+            product_tag: productTag,
             available_qty: item.available_qty || 0,
             actual_stock: item.actual_stock || 0,
             virtual_category: item.virtual_category || '',
