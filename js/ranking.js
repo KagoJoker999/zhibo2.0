@@ -700,14 +700,14 @@ async function saveRankingResults(results) {
 // ========================================
 function generateRankingPage() {
     return `
-        <div class="ranking-page" style="padding: 0;">
+        <div class="ranking-page">
             <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
                 <h2>📋 排品计算</h2>
                 <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
             </div>
             
             <!-- 上部分：数据统计 + 选项 + 按钮（横向排列） -->
-            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 0; flex-wrap: wrap;">
+            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 1.5rem; border-radius: var(--border-radius); flex-wrap: wrap;">
                 <!-- 统计数据（横向排列） -->
                 <div class="ranking-stats-inline" style="display: flex; gap: 1.5rem; flex: 1;">
                     <div class="stat-item-inline">

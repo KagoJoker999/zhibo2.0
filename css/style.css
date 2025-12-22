@@ -1761,7 +1761,7 @@ select:focus {
 /* ========================================
    排品功能页面样式
    ======================================== */
-.ranking-page,
+
 .ranking-settings-page {
     max-width: 1200px;
     margin: 0 auto;
