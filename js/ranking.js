@@ -723,28 +723,32 @@ function generateRankingPage() {
                     width: 48px;
                     height: 48px;
                     margin: 0 auto;
+                    cursor: zoom-in;
                 }
-                .hover-zoom-img {
+                .hover-zoom-thumb {
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
-                    transition: transform 0.2s ease, box-shadow 0.2s ease;
                     border-radius: 6px;
-                    cursor: zoom-in;
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    z-index: 1;
+                    border: 1px solid var(--border-color);
+                    display: block;
                 }
-                .hover-zoom-img:hover {
-                    width: 144px; /* 3倍大小 */
+                .hover-zoom-large {
+                    display: none;
+                    position: absolute;
+                    left: 54px;
+                    top: -48px;
+                    width: 144px;
                     height: 144px;
-                    left: 54px; /* 右侧显示 */
-                    top: -48px; /* 垂直居中调整 */
-                    transform: none;
-                    z-index: 1000;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                    object-fit: cover;
                     border-radius: 4px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                    z-index: 1000;
+                    border: 1px solid var(--border-color);
+                    background: var(--bg-primary);
+                }
+                .hover-zoom-container:hover .hover-zoom-large {
+                    display: block;
                 }
             </style>
             <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 1.5rem; border-radius: var(--border-radius); white-space: nowrap; overflow-x: auto;">
@@ -1298,9 +1302,12 @@ function renderRankingResults(results) {
             const imageUrl = item.image_url || '';
             // 处理图片URL，可能包含多个逗号分隔的URL
             const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
-            // 使用 .hover-zoom-container 和 .hover-zoom-img 实现悬浮放大
+            // 使用 .hover-zoom-container 和双图结构实现悬浮放大（避免闪烁）
             const imageHtml = firstImageUrl
-                ? `<div class="hover-zoom-container"><img src="${firstImageUrl}" class="hover-zoom-img" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'"></div>`
+                ? `<div class="hover-zoom-container">
+                       <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'">
+                       <img src="${firstImageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
+                   </div>`
                 : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
             const productCode = item.product_code || '--';
             const codeDisplay = productCode !== '--'
