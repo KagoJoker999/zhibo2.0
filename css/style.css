@@ -1494,3 +1494,13 @@ select:focus {
     color: var(--text-muted);
     margin-left: 0.5rem;
 }
+
+.record-count {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin-left: 0.75rem;
+    padding: 0.125rem 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+}

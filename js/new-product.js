@@ -298,7 +298,7 @@ function generateNewProductPage() {
             <!-- 数据库数据表格 -->
             <div class="data-table-section">
                 <div class="data-table-header">
-                    <h3>📋 数据库新品列表 <span id="lastRefreshTime" class="refresh-time"></span></h3>
+                    <h3>📋 数据库新品列表 <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
                     <div class="header-buttons">
                         <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 重命名表格下载</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
@@ -508,9 +508,11 @@ function initNewProductUpload() {
 
             if (error) throw error;
 
-            // 更新刷新时间
+            // 更新刷新时间和记录数
             const now = new Date();
             timeSpan.textContent = `(${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} 刷新)`;
+            const countSpan = document.getElementById('recordCountInfo');
+            if (countSpan) countSpan.textContent = `共 ${data.length} 条`;
 
             if (!data || data.length === 0) {
                 container.innerHTML = '<p class="text-muted">暂无数据</p>';
@@ -551,7 +553,6 @@ function initNewProductUpload() {
                         </tbody>
                     </table>
                 </div>
-                <p class="table-info">显示最近 ${data.length} 条记录</p>
             `;
 
             // 有数据时显示下载按钮
