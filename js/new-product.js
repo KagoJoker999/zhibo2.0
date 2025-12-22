@@ -285,12 +285,46 @@ function generateNewProductPage() {
                 <!-- 处理结果区块 -->
                 <div class="upload-block" id="block-result">
                     <div class="upload-block-header">
-                        <h3>📊 处理结果</h3>
+                        <h3>📊 处理说明 & 结果</h3>
                     </div>
+                    
+                    <!-- 处理流程说明 -->
+                    <div class="process-info">
+                        <div class="process-section">
+                            <h4>📋 处理流程</h4>
+                            <ol class="process-steps">
+                                <li><span class="step-num">1</span> 读取上传的 Excel 文件</li>
+                                <li><span class="step-num">2</span> 解析商品数据（名称、编码、分类等）</li>
+                                <li><span class="step-num">3</span> 应用名称公式生成新商品名</li>
+                                <li><span class="step-num">4</span> 根据分类映射生成上架分类</li>
+                                <li><span class="step-num">5</span> 上传数据到数据库</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="process-section">
+                            <h4>⚙️ 名称生成公式</h4>
+                            <div class="formula-box">
+                                <code>「原名称」+ 产地词 + 热卖词 + 分类词汇</code>
+                            </div>
+                            <p class="formula-example">示例：「明星马尾」韩国25新年百搭香蕉夹</p>
+                        </div>
+                        
+                        <div class="process-section">
+                            <h4>💡 设置提示</h4>
+                            <ul class="tips-list">
+                                <li>在 <strong>⚙️ 设置</strong> 页可配置产地词、热卖词</li>
+                                <li>可设置分类词汇映射（分类→词汇）</li>
+                                <li>可设置上架分类映射（原分类→上架分类）</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- 处理结果 -->
+                    <div class="result-divider"></div>
+                    <h4 class="result-title">📈 处理结果</h4>
                     <div id="result-content" class="result-content">
                         <p class="text-muted">上传数据后显示处理结果</p>
                     </div>
-                    
 
                 </div>
             </div>
