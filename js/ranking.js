@@ -1056,14 +1056,17 @@ async function initRankingSettings() {
 
         orderList.innerHTML = config.分类排序.map((cat, idx) => {
             const displayName = config.结果映射[cat] || cat;
-            const isActive = cat === selectedCategory ? 'active' : '';
+            const isActive = cat === selectedCategory;
+            const activeStyle = isActive
+                ? 'background:var(--primary-color); color:white; border-color:var(--primary-color);'
+                : 'background:var(--bg-tertiary); border-color:transparent;';
             return `
-                <li class="sortable-item ${isActive}" data-category="${cat}" data-index="${idx}" style="cursor:pointer; padding:0.75rem; border:1px solid transparent; border-radius:var(--border-radius-sm); margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
+                <li class="sortable-item ${isActive ? 'active' : ''}" data-category="${cat}" data-index="${idx}" style="cursor:pointer; padding:0.75rem; border:1px solid; border-radius:var(--border-radius-sm); margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.15s ease; ${activeStyle}">
                     <span class="category-name" style="font-weight:500;">${idx + 1}. ${displayName}</span>
                     <div class="category-actions" style="display:flex; gap:0.25rem;">
-                         <button class="btn-icon btn-move-up" data-index="${idx}" title="上移" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7;">↑</button>
-                         <button class="btn-icon btn-move-down" data-index="${idx}" title="下移" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7;">↓</button>
-                        <button class="btn-icon btn-delete" data-category="${cat}" title="删除" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7; margin-left:0.5rem;">✕</button>
+                         <button class="btn-icon btn-move-up" data-index="${idx}" title="上移" style="font-size:0.8rem; color:${isActive ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)'}; opacity:0.7;">↑</button>
+                         <button class="btn-icon btn-move-down" data-index="${idx}" title="下移" style="font-size:0.8rem; color:${isActive ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)'}; opacity:0.7;">↓</button>
+                        <button class="btn-icon btn-delete" data-category="${cat}" title="删除" style="font-size:0.8rem; color:${isActive ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)'}; opacity:0.7; margin-left:0.5rem;">✕</button>
                     </div>
                 </li>
             `;
@@ -1221,14 +1224,28 @@ async function initRankingSettings() {
             const operatorOpts = getOperatorOptions(fieldType);
             const currentField = condition.field || FILTERABLE_FIELDS[0];
 
-            // 判断是否是商品分类字段，如果是则显示多选下拉框
+            // 判断是否是商品分类字段，如果是则显示复选框列表
             let valueInputHtml;
             if (currentField === '商品分类' && productCategoryOptions.length > 0) {
                 const selectedValues = Array.isArray(condition.value) ? condition.value : (condition.value ? [condition.value] : []);
+                const checkboxesHtml = productCategoryOptions.map(opt => `
+                    <label style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0.5rem; cursor:pointer; border-radius:4px;" 
+                           onmouseover="this.style.background='var(--bg-tertiary)'" 
+                           onmouseout="this.style.background='transparent'">
+                        <input type="checkbox" class="category-checkbox" value="${opt}" ${selectedValues.includes(opt) ? 'checked' : ''}>
+                        <span style="font-size:0.85rem;">${opt}</span>
+                    </label>
+                `).join('');
                 valueInputHtml = `
-                    <select class="input condition-value-multi" multiple style="flex:2; min-width:150px; min-height:80px;">
-                        ${productCategoryOptions.map(opt => `<option value="${opt}" ${selectedValues.includes(opt) ? 'selected' : ''}>${opt}</option>`).join('')}
-                    </select>
+                    <div class="category-selector" style="flex:2; min-width:180px; position:relative;">
+                        <div class="category-toggle" style="padding:0.5rem; background:var(--bg-tertiary); border:1px solid var(--border-color); border-radius:var(--border-radius-sm); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                            <span class="selected-count" style="color:var(--text-muted); font-size:0.85rem;">已选 ${selectedValues.length} 项</span>
+                            <span style="font-size:0.7rem;">▼</span>
+                        </div>
+                        <div class="category-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--border-radius-sm); box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:100; margin-top:4px;">
+                            ${checkboxesHtml}
+                        </div>
+                    </div>
                 `;
             } else {
                 valueInputHtml = `<input type="text" class="input condition-value" style="flex:1; min-width:80px;" value="${Array.isArray(condition.value) ? condition.value.join(',') : (condition.value || '')}" placeholder="值">`;
@@ -1394,6 +1411,26 @@ async function initRankingSettings() {
                 }
                 return;
             }
+
+            // 商品分类下拉框切换
+            if (target.closest('.category-toggle')) {
+                const selector = target.closest('.category-selector');
+                if (selector) {
+                    const dropdown = selector.querySelector('.category-dropdown');
+                    if (dropdown) {
+                        const isVisible = dropdown.style.display !== 'none';
+                        // 先关闭所有其他下拉框
+                        filterContainer.querySelectorAll('.category-dropdown').forEach(d => d.style.display = 'none');
+                        dropdown.style.display = isVisible ? 'none' : 'block';
+                    }
+                }
+                return;
+            }
+
+            // 点击其他地方关闭下拉框
+            if (!target.closest('.category-selector')) {
+                filterContainer.querySelectorAll('.category-dropdown').forEach(d => d.style.display = 'none');
+            }
         }, { signal });
 
         // 输入变更事件委托
@@ -1460,6 +1497,17 @@ async function initRankingSettings() {
                         // 多选下拉框：获取所有选中的值
                         const selectedOptions = Array.from(target.selectedOptions).map(opt => opt.value);
                         ruleData.conditions[condIndex].value = selectedOptions;
+                    } else if (target.classList.contains('category-checkbox')) {
+                        // 复选框列表：获取所有选中的复选框
+                        const selector = target.closest('.category-selector');
+                        if (selector) {
+                            const checkboxes = selector.querySelectorAll('.category-checkbox:checked');
+                            const selectedValues = Array.from(checkboxes).map(cb => cb.value);
+                            ruleData.conditions[condIndex].value = selectedValues;
+                            // 更新显示的计数
+                            const countSpan = selector.querySelector('.selected-count');
+                            if (countSpan) countSpan.textContent = `已选 ${selectedValues.length} 项`;
+                        }
                     }
 
                     saveConfigQuietly();
