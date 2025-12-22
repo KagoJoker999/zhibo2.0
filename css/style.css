@@ -1915,3 +1915,39 @@ select:focus {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* 分类项操作按钮 */
+.sortable-item .category-actions {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.sortable-item:hover .category-actions {
+    opacity: 1;
+}
+
+.btn-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-icon.btn-delete:hover {
+    background: var(--danger-color);
+    color: white;
+}

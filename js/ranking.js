@@ -460,14 +460,18 @@ function generateRankingSettingsPage() {
             </div>
             
             <div class="settings-container">
-                <!-- 分类排序设置 -->
+                <!-- 分类设置 -->
                 <div class="card">
                     <div class="card-header">
-                        <h3>📑 分类排序</h3>
+                        <h3>📑 分类设置 <span class="db-table-tag">→ ranking_config</span></h3>
                     </div>
                     <div class="card-body">
-                        <p class="setting-hint">拖拽调整筛选分类的优先顺序（排在前面的分类先选商品）</p>
+                        <p class="setting-hint">拖拽调整筛选分类的优先顺序（排在前面的分类先选商品），点击编辑修改分类名称</p>
                         <ul class="sortable-list" id="categoryOrderList"></ul>
+                        <div class="input-group" style="margin-top: 1rem;">
+                            <input type="text" id="newCategoryInput" class="input" placeholder="输入新分类名称..." style="flex:1;">
+                            <button class="btn btn-primary" id="btnAddCategory">添加分类</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -676,20 +680,104 @@ function renderRankingResults(results) {
 }
 
 async function initRankingSettings() {
-    const config = await loadRankingConfig();
-
-    // 渲染分类排序
+    let config = await loadRankingConfig();
     const orderList = document.getElementById('categoryOrderList');
-    if (orderList) {
+
+    // ========================================
+    // 分类渲染函数
+    // ========================================
+    function renderCategories() {
+        if (!orderList) return;
         orderList.innerHTML = config.分类排序.map((cat, idx) => `
-            <li class="sortable-item" data-category="${cat}">
-                <span class="drag-handle">☰</span>
-                <span class="category-name">${config.结果映射[cat] || cat}</span>
+            <li class="sortable-item" data-category="${cat}" data-index="${idx}">
+                <span class="drag-handle" title="拖拽排序">☰</span>
+                <span class="category-name" contenteditable="false">${config.结果映射[cat] || cat}</span>
+                <div class="category-actions" style="display:flex;gap:0.25rem;">
+                    <button class="btn-icon btn-edit" data-category="${cat}" title="编辑">✎</button>
+                    <button class="btn-icon btn-delete" data-category="${cat}" title="删除">✕</button>
+                </div>
             </li>
         `).join('');
+
+        // 绑定编辑按钮事件
+        orderList.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cat = btn.dataset.category;
+                const li = btn.closest('.sortable-item');
+                const nameSpan = li.querySelector('.category-name');
+                const currentName = config.结果映射[cat] || cat;
+                const newName = prompt('修改分类名称：', currentName);
+                if (newName && newName.trim() && newName !== currentName) {
+                    config.结果映射[cat] = newName.trim();
+                    nameSpan.textContent = newName.trim();
+                    saveConfigQuietly();
+                }
+            });
+        });
+
+        // 绑定删除按钮事件
+        orderList.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cat = btn.dataset.category;
+                const displayName = config.结果映射[cat] || cat;
+                if (confirm(`确定删除分类"${displayName}"吗？`)) {
+                    config.分类排序 = config.分类排序.filter(c => c !== cat);
+                    delete config.结果映射[cat];
+                    delete config.筛选条件[cat];
+                    delete config.样品序号规则[config.结果映射[cat]];
+                    renderCategories();
+                    saveConfigQuietly();
+                }
+            });
+        });
     }
 
+    // 静默保存配置
+    async function saveConfigQuietly() {
+        try {
+            await saveRankingConfig('filter_config', config);
+        } catch (e) {
+            console.error('自动保存失败:', e);
+        }
+    }
+
+    // 初始渲染
+    renderCategories();
+
+    // ========================================
+    // 添加分类
+    // ========================================
+    const newCategoryInput = document.getElementById('newCategoryInput');
+    const btnAddCategory = document.getElementById('btnAddCategory');
+
+    if (btnAddCategory && newCategoryInput) {
+        btnAddCategory.addEventListener('click', () => {
+            const name = newCategoryInput.value.trim();
+            if (!name) {
+                window.AppUtils?.showToast?.('请输入分类名称', 'warning');
+                return;
+            }
+            // 生成唯一的分类 key
+            const catKey = `自定义${Date.now()}`;
+            config.分类排序.push(catKey);
+            config.结果映射[catKey] = name;
+            config.筛选条件[catKey] = {};  // 空筛选条件
+            config.样品序号规则[name] = { prefix: 'X', start: 1, step: 1 };  // 默认序号规则
+
+            newCategoryInput.value = '';
+            renderCategories();
+            saveConfigQuietly();
+            window.AppUtils?.showToast?.(`已添加分类"${name}"`, 'success');
+        });
+
+        newCategoryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnAddCategory.click();
+        });
+    }
+
+    // ========================================
     // 保存按钮
+    // ========================================
     const btnSave = document.getElementById('btnSaveSettings');
     if (btnSave) {
         btnSave.addEventListener('click', async () => {
@@ -697,7 +785,7 @@ async function initRankingSettings() {
                 btnSave.disabled = true;
                 btnSave.textContent = '保存中...';
 
-                // 获取当前排序
+                // 获取当前排序（从 DOM 顺序获取）
                 const newOrder = Array.from(orderList?.querySelectorAll('.sortable-item') || [])
                     .map(li => li.dataset.category);
                 config.分类排序 = newOrder;
@@ -713,7 +801,9 @@ async function initRankingSettings() {
         });
     }
 
+    // ========================================
     // 重置按钮
+    // ========================================
     const btnReset = document.getElementById('btnResetSettings');
     if (btnReset) {
         btnReset.addEventListener('click', async () => {
