@@ -1218,11 +1218,11 @@ async function loadNumberingRules() {
     try {
         const { data, error } = await window.supabaseClient
             .from('ranking_config')
-            .select('value')
-            .eq('key', 'new_product_number_rules')
+            .select('config_value')
+            .eq('config_key', 'new_product_number_rules')
             .single();
         if (error || !data) return [];
-        return data.value || [];
+        return data.config_value || [];
     } catch (e) { console.warn(e); return []; }
 }
 
@@ -1230,10 +1230,10 @@ async function saveNumberingRules(rules) {
     const { error } = await window.supabaseClient
         .from('ranking_config')
         .upsert({
-            key: 'new_product_number_rules',
-            value: rules,
+            config_key: 'new_product_number_rules',
+            config_value: rules,
             updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
+        }, { onConflict: 'config_key' });
     if (error) throw error;
 }
 
