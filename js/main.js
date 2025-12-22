@@ -94,7 +94,7 @@ async function updateDbUsage() {
             const now = Date.now();
             if (now - timestamp < CACHE_DURATION) {
                 // 缓存未过期，使用缓存值
-                const remainMB = (totalMB - usedMB).toFixed(0);
+                const remainMB = (totalMB - parseFloat(usedMB)).toFixed(0);
                 dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
                 return;
             }
@@ -103,22 +103,34 @@ async function updateDbUsage() {
         // 缓存读取失败，继续查询
     }
 
-    try {
-        // 统计各表的记录数来估算空间（实际数据库大小难以直接获取）
-        const tables = ['inventory_data', 'product_id', 'new_product_data'];
-        let totalRecords = 0;
+    let usedMB = '0.0';
 
-        for (const table of tables) {
-            const { count } = await window.supabaseClient
-                .from(table)
-                .select('*', { count: 'exact', head: true });
-            totalRecords += count || 0;
+    try {
+        // 优先调用 RPC 函数获取真实数据库大小
+        const { data, error } = await window.supabaseClient.rpc('get_database_size');
+
+        if (!error && data && data.size_mb !== undefined) {
+            usedMB = parseFloat(data.size_mb).toFixed(2);
+            console.log('📊 数据库大小（RPC）:', usedMB, 'MB');
+        } else {
+            // RPC 失败，回退到估算方式
+            console.warn('⚠️ RPC 获取数据库大小失败，使用估算方式:', error?.message);
+            const tables = ['inventory_data', 'product_id', 'new_product_data', 'ranking_config'];
+            let totalRecords = 0;
+
+            for (const table of tables) {
+                const { count } = await window.supabaseClient
+                    .from(table)
+                    .select('*', { count: 'exact', head: true });
+                totalRecords += count || 0;
+            }
+
+            // 估算：每条记录约 0.5KB
+            const usedKB = totalRecords * 0.5;
+            usedMB = (usedKB / 1024).toFixed(2);
         }
 
-        // 估算：每条记录约 0.5KB，计算使用量
-        const usedKB = totalRecords * 0.5;
-        const usedMB = (usedKB / 1024).toFixed(1);
-        const remainMB = (totalMB - usedMB).toFixed(0);
+        const remainMB = (totalMB - parseFloat(usedMB)).toFixed(0);
 
         // 保存到缓存
         try {
@@ -132,6 +144,7 @@ async function updateDbUsage() {
 
         dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
     } catch (e) {
+        console.error('❌ 获取数据库大小失败:', e);
         dbUsageText.textContent = '-- / 500MB';
     }
 }
