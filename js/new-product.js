@@ -663,7 +663,7 @@ function initNewProductUpload() {
             const { data, error } = await window.supabaseClient
                 .from('new_product_data')
                 .select('*')
-                .order('id', { ascending: false })
+                .order('product_code', { ascending: true })
                 .limit(100);
 
             if (error) throw error;
