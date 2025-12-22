@@ -722,6 +722,7 @@ function generateRankingPage() {
                     position: relative;
                     width: 48px;
                     height: 48px;
+                    margin: 0 auto;
                 }
                 .hover-zoom-img {
                     width: 100%;
@@ -736,7 +737,11 @@ function generateRankingPage() {
                     z-index: 1;
                 }
                 .hover-zoom-img:hover {
-                    transform: scale(3);
+                    width: 144px; /* 3倍大小 */
+                    height: 144px;
+                    left: 54px; /* 右侧显示 */
+                    top: -48px; /* 垂直居中调整 */
+                    transform: none;
                     z-index: 1000;
                     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
                     border-radius: 4px;
@@ -1277,9 +1282,9 @@ function renderRankingResults(results) {
                     <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
                             <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
-                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">图片</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">序号</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 220px;">商品名称</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">图片</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 250px;">商品名称</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 200px;">商品ID</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
@@ -1312,9 +1317,9 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
-                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary);">${codeDisplay}</td>
-                                        <td style="padding: 0.75rem 0.5rem;">${idDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
+                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
                                             <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 1rem; padding: 0.25rem;">✕</button>
                                         </td>
