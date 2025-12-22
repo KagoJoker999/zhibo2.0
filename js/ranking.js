@@ -1354,18 +1354,28 @@ async function initRankingSettings() {
         const btnAddRule = document.getElementById('btnAddRule');
         const selectNewRuleField = document.getElementById('selectNewRuleField');
 
+        console.log('[排品设置] btnAddRule:', btnAddRule, 'selectNewRuleField:', selectNewRuleField);
+
         if (btnAddRule && selectNewRuleField) {
-            btnAddRule.addEventListener('click', () => {
+            btnAddRule.onclick = function () {
+                console.log('[排品设置] 点击添加规则按钮');
                 const field = selectNewRuleField.value;
+                console.log('[排品设置] 选择的字段:', field, '当前分类:', category);
+                if (!config.筛选条件[category]) {
+                    config.筛选条件[category] = {};
+                }
                 if (!config.筛选条件[category][field]) {
                     config.筛选条件[category][field] = { "启用": true };
+                    console.log('[排品设置] 添加规则成功，重新渲染');
                     // 重新渲染
                     reloadRules();
                     saveConfigQuietly();
                 } else {
                     alert('该字段的规则已存在，请直接在下方编辑。');
                 }
-            });
+            };
+        } else {
+            console.error('[排品设置] 找不到添加规则按钮或字段选择框');
         }
     }
 
