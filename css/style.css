@@ -1951,3 +1951,35 @@ select:focus {
     background: var(--danger-color);
     color: white;
 }
+/* 统计区域样式 */
+.ranking-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    padding: 1rem 0;
+    margin-bottom: 0;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-family: 'SF Mono', 'Roboto Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

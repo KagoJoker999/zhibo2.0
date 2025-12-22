@@ -703,7 +703,7 @@ async function initRankingPage() {
 
                 // 参与排品的商品总数及计算逻辑显示
                 const totalCount = cachedProducts.length;
-                const formulaHtml = `<span style="font-size:0.85em; color:var(--text-muted); margin-left:0.5rem; font-weight:normal;">(${baseInventoryCount} + ${addedNewCount} - ${excludedCount})</span>`;
+                const formulaHtml = `<span title="库存数 + 新增数 - 实际排除数" style="font-size:0.85em; color:var(--text-muted); margin-left:0.5rem; font-weight:normal;">(${baseInventoryCount} + ${addedNewCount} - ${excludedCount})</span>`;
                 document.getElementById('statCombined').innerHTML = `${totalCount} ${formulaHtml}`;
 
                 btnCalculate.disabled = false;
