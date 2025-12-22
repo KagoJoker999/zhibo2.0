@@ -64,7 +64,19 @@ async function loadCombinedProductData() {
         });
     });
 
-    return Array.from(combinedMap.values());
+    // 转为数组并计算评分排名
+    const products = Array.from(combinedMap.values());
+
+    // 按 total_score 降序排序，计算排名（分数越高排名越前）
+    const sortedByScore = [...products].sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
+    sortedByScore.forEach((p, idx) => {
+        const product = products.find(x => x.product_name === p.product_name);
+        if (product) {
+            product.rating_rank = idx + 1;  // 排名从1开始
+        }
+    });
+
+    return products;
 }
 
 // ========================================
@@ -131,11 +143,12 @@ function getDefaultRankingConfig() {
             "评分品A筛选条件": {
                 "virtual_category": { "等于": ["可预售"], "启用": true },
                 "actual_stock": { "大于等于": 1, "启用": true },
-                "total_score": { "前几名": 10, "启用": true }
+                "rating_rank": { "前几名": 10, "启用": true, "排序方式": "升序" }
             },
             "佩戴品筛选条件": {
+                "is_wearable": { "排除": ["不可佩戴"], "启用": true },
                 "product_category": {
-                    "包含": ["发圈", "发夹", "项链", "戒指", "手链", "耳钉", "胸针"],
+                    "包含": ["发圈", "发夹 - 鸭嘴夹", "周边 - 项链", "周边 - 戒指", "周边 - 手链", "周边 - 耳钉", "周边 - 胸针"],
                     "启用": true
                 },
                 "available_qty": { "大于等于": 3, "启用": true },
@@ -148,7 +161,7 @@ function getDefaultRankingConfig() {
             },
             "评分品B筛选条件": {
                 "available_qty": { "大于等于": 1, "启用": true },
-                "total_score": { "前几名": 15, "启用": true }
+                "rating_rank": { "前几名": 15, "启用": true, "排序方式": "升序" }
             },
             "库存品筛选条件": {
                 "available_qty": { "前几名": 10, "启用": true }
@@ -228,7 +241,13 @@ function applyFilters(products, conditions) {
             });
         }
         if (condition.前几名) {
-            filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+            // 支持升序/降序排序（升序用于排名字段，越小越好）
+            const ascending = condition.排序方式 === '升序';
+            if (ascending) {
+                filtered = filtered.sort((a, b) => (a[field] || 999999) - (b[field] || 999999));
+            } else {
+                filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+            }
             filtered = filtered.slice(0, condition.前几名);
         }
     }
