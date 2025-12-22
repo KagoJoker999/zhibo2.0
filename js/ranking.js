@@ -1136,247 +1136,290 @@ async function initRankingSettings() {
 
         if (!config.筛选条件) config.筛选条件 = {};
         if (!config.筛选条件[category]) config.筛选条件[category] = {};
-        let rules = config.筛选条件[category];
 
         // 辅助函数：推断字段类型
-        // Numeric: 实际库存数, 评分排名, 可用数, 价格
-        // String: 虚拟分类, 商品分类, 商品编码, 商品名称, 图片网址, 颜色规格, 商品标签, 仓位
-        // Boolean: 是否可佩戴
         function getFieldType(key) {
-            if (['实际库存数', '评分排名', '可用数', '价格'].includes(key)) return 'numeric';
+            if (['实际库存数', '评分排名', '可用数'].includes(key)) return 'numeric';
             if (key === '是否可佩戴') return 'boolean';
             return 'string';
         }
 
+        // 获取运算符选项
+        function getOperatorOptions(fieldType) {
+            if (fieldType === 'numeric') {
+                return `
+                    <option value="大于等于">大于等于</option>
+                    <option value="小于等于">小于等于</option>
+                    <option value="等于">等于</option>
+                    <option value="前几名">前几名</option>
+                    <option value="后几名">后几名</option>
+                `;
+            } else if (fieldType === 'boolean') {
+                return `<option value="排除">排除</option>`;
+            } else {
+                return `
+                    <option value="包含">包含</option>
+                    <option value="等于">等于</option>
+                `;
+            }
+        }
+
         const fieldOptions = FILTERABLE_FIELDS.map(key => `<option value="${key}">${key}</option>`).join('');
 
-        // HTML 结构构建
-        let html = `
-            <div class="settings-group">
-                <label>显示名称</label>
+        // 构建 HTML
+        filterContainer.innerHTML = `
+            <div class="settings-group" style="margin-bottom:1.5rem;">
+                <label style="font-weight:500; margin-bottom:0.5rem; display:block;">显示名称</label>
                 <input type="text" class="input settings-input" id="inputDisplayName" value="${displayName}">
             </div>
             
-            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
-            
-            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
-
-            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
+            <div style="border-top:1px solid var(--border-color); margin:1.5rem 0;"></div>
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                 <h4 style="margin:0;">筛选规则列表</h4>
-                <div style="display:flex; gap:0.5rem;">
-                    <select id="selectNewRuleField" class="input" style="padding:0.3rem; font-size:0.9rem;">
-                        ${fieldOptions}
-                    </select>
-                    <button id="btnAddRule" class="btn btn-primary" style="padding:0.3rem 0.8rem; font-size:0.9rem;">+ 添加规则</button>
-                </div>
+                <button class="btn btn-primary" id="btnAddRule" style="padding:0.4rem 1rem;">+ 添加规则</button>
             </div>
 
             <div id="rulesListContainer" style="display:flex; flex-direction:column; gap:1rem;">
-                <!-- 规则条目将动态插入这里 -->
+                <!-- 规则卡片将动态插入这里 -->
             </div>
         `;
 
-        filterContainer.innerHTML = html;
+        const rulesContainer = filterContainer.querySelector('#rulesListContainer');
 
-        const rulesContainer = document.getElementById('rulesListContainer');
+        // 渲染条件行 HTML
+        function renderConditionRow(condition, condIndex, ruleIndex) {
+            const fieldType = getFieldType(condition.field || FILTERABLE_FIELDS[0]);
+            const operatorOpts = getOperatorOptions(fieldType);
 
-        // 渲染单条规则卡片
-        function renderRuleCard(fieldKey, ruleData) {
-            const type = getFieldType(fieldKey);
-            const card = document.createElement('div');
-            card.className = 'rule-card';
-            card.style.cssText = 'background:var(--bg-secondary); padding:1rem; border-radius:var(--border-radius); border:1px solid var(--border-color); position:relative;';
-            card.dataset.field = fieldKey;
+            return `
+                <div class="condition-row" data-rule-index="${ruleIndex}" data-cond-index="${condIndex}" style="display:flex; gap:0.5rem; align-items:center; padding:0.75rem; background:var(--bg-tertiary); border-radius:var(--border-radius-sm); margin-bottom:0.5rem;">
+                    <select class="input condition-field" style="flex:1; min-width:100px;">
+                        ${FILTERABLE_FIELDS.map(f => `<option value="${f}" ${condition.field === f ? 'selected' : ''}>${f}</option>`).join('')}
+                    </select>
+                    <select class="input condition-operator" style="flex:1; min-width:80px;">
+                        ${operatorOpts.replace(`value="${condition.operator}"`, `value="${condition.operator}" selected`)}
+                    </select>
+                    <input type="text" class="input condition-value" style="flex:1; min-width:80px;" value="${Array.isArray(condition.value) ? condition.value.join(',') : (condition.value || '')}" placeholder="值">
+                    <button class="btn-icon btn-delete-condition" title="删除条件" style="color:var(--error-color); font-size:1.2rem; cursor:pointer; padding:0.25rem;">×</button>
+                </div>
+            `;
+        }
 
-            // 启用状态
-            const isEnabled = ruleData.启用 !== false; // 默认为 true
+        // 渲染规则卡片
+        function renderRuleCard(ruleIndex) {
+            const rules = config.筛选条件[category];
+            const ruleKey = Object.keys(rules).filter(k => k !== '按子分类分别筛选' && k !== '子分类字段')[ruleIndex];
 
-            let inputsHtml = '';
+            if (!ruleKey) return '';
 
-            // 根据类型生成不同的输入区域
-            if (type === 'numeric') {
-                inputsHtml = `
-                    <div class="form-row" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                        <div style="flex:1;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">大于等于 (>=)</label>
-                            <input type="number" class="input settings-input rule-input" data-op="大于等于" value="${ruleData.大于等于 !== undefined ? ruleData.大于等于 : ''}">
-                        </div>
-                        <div style="flex:1;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">小于等于 (<=)</label>
-                            <input type="number" class="input settings-input rule-input" data-op="小于等于" value="${ruleData.小于等于 !== undefined ? ruleData.小于等于 : ''}">
-                        </div>
-                    </div>
-                    <div class="form-row" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                        <div style="flex:1;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">前几名 (Top N)</label>
-                            <input type="number" class="input settings-input rule-input" data-op="前几名" value="${ruleData.前几名 || ''}">
-                        </div>
-                        <div style="flex:1;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">后几名 (Bottom N)</label>
-                            <input type="number" class="input settings-input rule-input" data-op="后几名" value="${ruleData.后几名 || ''}">
-                        </div>
-                    </div>
-                    <div class="form-row" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                        <div style="flex:1;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">排序方式</label>
-                            <select class="input settings-input rule-input" data-op="排序方式">
-                                <option value="降序" ${ruleData.排序方式 !== '升序' ? 'selected' : ''}>降序 (数值大优先)</option>
-                                <option value="升序" ${ruleData.排序方式 === '升序' ? 'selected' : ''}>升序 (数值小优先)</option>
-                            </select>
-                        </div>
-                        <div style="flex:1;">
-                            <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配)</label>
-                            <input type="number" class="input settings-input rule-input" data-op="等于" value="${ruleData.等于 !== undefined ? ruleData.等于 : ''}" placeholder="例如: 1">
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'boolean') {
-                inputsHtml = `
-                     <div class="form-row" style="margin-top:0.5rem;">
-                        <label style="font-size:0.8rem; color:var(--text-muted);">排除值 (输入 "不可佩戴" 等)</label>
-                        <input type="text" class="input settings-input rule-input" data-op="排除" value="${(ruleData.排除 || []).join ? ruleData.排除.join(',') : (ruleData.排除 || '')}" placeholder="不可佩戴">
-                    </div>
-                `;
+            const ruleData = rules[ruleKey];
+
+            // 转换旧格式到新格式（条件数组）
+            let conditions = [];
+            if (ruleData.conditions && Array.isArray(ruleData.conditions)) {
+                conditions = ruleData.conditions;
             } else {
-                // String - 只保留包含和等于
-                inputsHtml = `
-                    <div class="form-row" style="margin-top:0.5rem;">
-                        <label style="font-size:0.8rem; color:var(--text-muted);">包含 (逗号分隔)</label>
-                        <input type="text" class="input settings-input rule-input" data-op="包含" value="${(ruleData.包含 || []).join ? ruleData.包含.join(',') : (ruleData.包含 || '')}">
-                    </div>
-                     <div class="form-row" style="margin-top:0.5rem;">
-                        <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配，逗号分隔)</label>
-                        <input type="text" class="input settings-input rule-input" data-op="等于" value="${(ruleData.等于 || []).join ? ruleData.等于.join(',') : (ruleData.等于 || '')}">
-                    </div>
-                `;
+                // 旧格式：直接的运算符键值
+                const ops = ['大于等于', '小于等于', '等于', '前几名', '后几名', '包含', '排除'];
+                ops.forEach(op => {
+                    if (ruleData[op] !== undefined) {
+                        conditions.push({ field: ruleKey, operator: op, value: ruleData[op] });
+                    }
+                });
+                if (conditions.length === 0) {
+                    conditions.push({ field: ruleKey, operator: getFieldType(ruleKey) === 'numeric' ? '大于等于' : '包含', value: '' });
+                }
             }
 
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                    <strong style="color:var(--primary-color);">${fieldKey}</strong>
-                    <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <label class="switch-label" style="display:flex; align-items:center; gap:0.3rem; font-size:0.8rem;">
-                            <input type="checkbox" class="rule-enable" ${isEnabled ? 'checked' : ''}>
-                            <span>启用</span>
-                        </label>
-                        <button class="btn-icon btn-delete-rule" title="删除规则" style="color:var(--text-muted); font-size:1rem; cursor:pointer;">&times;</button>
+            const conditionsHtml = conditions.map((c, i) => {
+                const andLabel = i > 0 ? '<div style="text-align:center; color:var(--primary-color); font-weight:bold; margin:0.25rem 0;">且</div>' : '';
+                return andLabel + renderConditionRow(c, i, ruleIndex);
+            }).join('');
+
+            const isEnabled = ruleData.启用 !== false;
+
+            return `
+                <div class="rule-card" data-rule-key="${ruleKey}" data-rule-index="${ruleIndex}" style="background:var(--bg-secondary); padding:1rem; border-radius:var(--border-radius); border:1px solid var(--border-color);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                        <strong style="color:var(--primary-color);">规则 ${ruleIndex + 1}</strong>
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem; cursor:pointer;">
+                                <input type="checkbox" class="rule-enable" ${isEnabled ? 'checked' : ''}>
+                                <span>启用</span>
+                            </label>
+                            <button class="btn-icon btn-add-condition" title="添加条件(且)" style="color:var(--primary-color); font-size:0.85rem; cursor:pointer; padding:0.25rem 0.5rem; border:1px solid var(--primary-color); border-radius:4px;">+ 且</button>
+                            <button class="btn-icon btn-delete-rule" title="删除规则" style="color:var(--error-color); font-size:1.2rem; cursor:pointer; padding:0.25rem;">×</button>
+                        </div>
+                    </div>
+                    <div class="conditions-container">
+                        ${conditionsHtml}
                     </div>
                 </div>
-                <div>${inputsHtml}</div>
             `;
+        }
 
-            // 绑定事件
-            // 删除
-            card.querySelector('.btn-delete-rule').addEventListener('click', () => {
-                if (confirm(`删除 "${fieldKey}" 的筛选规则？`)) {
-                    delete config.筛选条件[category][fieldKey];
-                    // 重新加载规则列表
+        // 重新加载所有规则
+        function reloadRules() {
+            const rules = config.筛选条件[category];
+            const ruleKeys = Object.keys(rules).filter(k => k !== '按子分类分别筛选' && k !== '子分类字段');
+
+            if (ruleKeys.length === 0) {
+                rulesContainer.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">暂无筛选规则，点击上方"添加规则"开始配置</div>';
+            } else {
+                rulesContainer.innerHTML = ruleKeys.map((_, i) => renderRuleCard(i)).join('');
+            }
+        }
+
+        // 保存规则数据
+        function saveRuleData(ruleKey, conditions, enabled) {
+            // 使用新格式存储
+            config.筛选条件[category][ruleKey] = {
+                conditions: conditions,
+                启用: enabled
+            };
+
+            // 同时保持旧格式兼容（第一个条件作为主条件）
+            if (conditions.length > 0) {
+                const firstCond = conditions[0];
+                config.筛选条件[category][ruleKey][firstCond.operator] = firstCond.value;
+            }
+
+            saveConfigQuietly();
+        }
+
+        // 初始加载
+        reloadRules();
+
+        // ============ 事件委托 ============
+        filterContainer.addEventListener('click', (e) => {
+            const target = e.target;
+
+            // 添加规则按钮
+            if (target.id === 'btnAddRule' || target.closest('#btnAddRule')) {
+                e.preventDefault();
+                const newKey = `rule_${Date.now()}`;
+                config.筛选条件[category][newKey] = {
+                    conditions: [{ field: FILTERABLE_FIELDS[0], operator: '包含', value: '' }],
+                    启用: true
+                };
+                reloadRules();
+                saveConfigQuietly();
+                return;
+            }
+
+            // 删除规则
+            if (target.classList.contains('btn-delete-rule') || target.closest('.btn-delete-rule')) {
+                const card = target.closest('.rule-card');
+                if (card && confirm('确定删除此规则？')) {
+                    const ruleKey = card.dataset.ruleKey;
+                    delete config.筛选条件[category][ruleKey];
                     reloadRules();
                     saveConfigQuietly();
                 }
-            });
+                return;
+            }
 
-            // 启用/禁用
-            card.querySelector('.rule-enable').addEventListener('change', (e) => {
-                config.筛选条件[category][fieldKey].启用 = e.target.checked;
-                saveConfigQuietly();
-            });
-
-            // 输入框变更
-            card.querySelectorAll('.rule-input').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    const op = input.dataset.op;
-                    let val = input.value;
-
-                    // 数值转换
-                    if (input.type === 'number') {
-                        val = val === '' ? undefined : parseFloat(val);
-                    }
-
-                    // 数组转换 (包含, 排除, 等于 - 对于 String 类型)
-                    if (['包含', '排除', '等于'].includes(op) && type !== 'numeric') { // Numeric 一般用区间
-                        if (val) {
-                            config.筛选条件[category][fieldKey][op] = val.split(/[，,]/).map(s => s.trim()).filter(s => s);
-                        } else {
-                            delete config.筛选条件[category][fieldKey][op];
-                        }
-                    } else {
-                        // 普通赋值
-                        if (val === undefined || val === '') {
-                            delete config.筛选条件[category][fieldKey][op];
-                        } else {
-                            config.筛选条件[category][fieldKey][op] = val;
-                        }
-                    }
+            // 添加条件（且）
+            if (target.classList.contains('btn-add-condition') || target.closest('.btn-add-condition')) {
+                const card = target.closest('.rule-card');
+                if (card) {
+                    const ruleKey = card.dataset.ruleKey;
+                    const ruleData = config.筛选条件[category][ruleKey];
+                    if (!ruleData.conditions) ruleData.conditions = [];
+                    ruleData.conditions.push({ field: FILTERABLE_FIELDS[0], operator: '包含', value: '' });
+                    reloadRules();
                     saveConfigQuietly();
-                });
-            });
+                }
+                return;
+            }
 
-            return card;
-        }
-
-        function reloadRules() {
-            rulesContainer.innerHTML = '';
-            // 遍历所有规则键 (排除特殊键)
-            Object.keys(config.筛选条件[category]).forEach(key => {
-                if (key === '按子分类分别筛选' || key === '子分类字段') return;
-                // 渲染卡片
-                const card = renderRuleCard(key, config.筛选条件[category][key]);
-                rulesContainer.appendChild(card);
-            });
-        }
-
-        // 初始加载规则
-        reloadRules();
-
-        // 绑定外部控件事件
-        const displayNameInput = document.getElementById('inputDisplayName');
-        displayNameInput.addEventListener('change', (e) => {
-            const newName = e.target.value.trim();
-            if (newName) {
-                const oldName = config.结果映射[category];
-                if (oldName && oldName !== newName) {
-                    if (config.样品序号规则 && config.样品序号规则[oldName]) {
-                        config.样品序号规则[newName] = config.样品序号规则[oldName];
-                        delete config.样品序号规则[oldName];
+            // 删除条件
+            if (target.classList.contains('btn-delete-condition') || target.closest('.btn-delete-condition')) {
+                const row = target.closest('.condition-row');
+                const card = target.closest('.rule-card');
+                if (row && card) {
+                    const ruleKey = card.dataset.ruleKey;
+                    const condIndex = parseInt(row.dataset.condIndex);
+                    const ruleData = config.筛选条件[category][ruleKey];
+                    if (ruleData.conditions && ruleData.conditions.length > 1) {
+                        ruleData.conditions.splice(condIndex, 1);
+                        reloadRules();
+                        saveConfigQuietly();
+                    } else {
+                        alert('至少需要保留一个条件');
                     }
                 }
-                config.结果映射[category] = newName;
-                renderCategories();
-                saveConfigQuietly();
+                return;
             }
         });
 
+        // 输入变更事件委托
+        filterContainer.addEventListener('change', (e) => {
+            const target = e.target;
 
-
-        const btnAddRule = document.getElementById('btnAddRule');
-        const selectNewRuleField = document.getElementById('selectNewRuleField');
-
-        console.log('[排品设置] btnAddRule:', btnAddRule, 'selectNewRuleField:', selectNewRuleField);
-
-        if (btnAddRule && selectNewRuleField) {
-            btnAddRule.onclick = function () {
-                console.log('[排品设置] 点击添加规则按钮');
-                const field = selectNewRuleField.value;
-                console.log('[排品设置] 选择的字段:', field, '当前分类:', category);
-                if (!config.筛选条件[category]) {
-                    config.筛选条件[category] = {};
-                }
-                if (!config.筛选条件[category][field]) {
-                    config.筛选条件[category][field] = { "启用": true };
-                    console.log('[排品设置] 添加规则成功，重新渲染');
-                    // 重新渲染
-                    reloadRules();
+            // 显示名称变更
+            if (target.id === 'inputDisplayName') {
+                const newName = target.value.trim();
+                if (newName) {
+                    const oldName = config.结果映射[category];
+                    if (oldName && oldName !== newName && config.样品序号规则 && config.样品序号规则[oldName]) {
+                        config.样品序号规则[newName] = config.样品序号规则[oldName];
+                        delete config.样品序号规则[oldName];
+                    }
+                    config.结果映射[category] = newName;
+                    renderCategories();
                     saveConfigQuietly();
-                } else {
-                    alert('该字段的规则已存在，请直接在下方编辑。');
                 }
-            };
-        } else {
-            console.error('[排品设置] 找不到添加规则按钮或字段选择框');
-        }
+                return;
+            }
+
+            // 规则启用状态变更
+            if (target.classList.contains('rule-enable')) {
+                const card = target.closest('.rule-card');
+                if (card) {
+                    const ruleKey = card.dataset.ruleKey;
+                    config.筛选条件[category][ruleKey].启用 = target.checked;
+                    saveConfigQuietly();
+                }
+                return;
+            }
+
+            // 条件字段/运算符/值变更
+            const row = target.closest('.condition-row');
+            if (row) {
+                const card = target.closest('.rule-card');
+                if (card) {
+                    const ruleKey = card.dataset.ruleKey;
+                    const condIndex = parseInt(row.dataset.condIndex);
+                    const ruleData = config.筛选条件[category][ruleKey];
+
+                    if (!ruleData.conditions) ruleData.conditions = [];
+                    if (!ruleData.conditions[condIndex]) ruleData.conditions[condIndex] = {};
+
+                    if (target.classList.contains('condition-field')) {
+                        ruleData.conditions[condIndex].field = target.value;
+                        // 字段变更时重置运算符
+                        const fieldType = getFieldType(target.value);
+                        ruleData.conditions[condIndex].operator = fieldType === 'numeric' ? '大于等于' : '包含';
+                        reloadRules(); // 重新渲染以更新运算符选项
+                    } else if (target.classList.contains('condition-operator')) {
+                        ruleData.conditions[condIndex].operator = target.value;
+                    } else if (target.classList.contains('condition-value')) {
+                        let val = target.value;
+                        // 如果包含逗号，转为数组
+                        if (val.includes(',') || val.includes('，')) {
+                            val = val.split(/[,，]/).map(s => s.trim()).filter(s => s);
+                        } else if (!isNaN(parseFloat(val)) && isFinite(val)) {
+                            val = parseFloat(val);
+                        }
+                        ruleData.conditions[condIndex].value = val;
+                    }
+
+                    saveConfigQuietly();
+                }
+            }
+        });
     }
 
     async function saveConfigQuietly() {
