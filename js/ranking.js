@@ -565,70 +565,106 @@ function generateRankingPage() {
 
 function generateRankingSettingsPage() {
     return `
-        <div class="ranking-settings-page">
+        <div class="ranking-settings-page rankings-split-layout">
             <div class="page-intro">
                 <h2>⚙️ 排品设置</h2>
-                <p>配置筛选规则和样品序号规则，设置自动保存到数据库</p>
+                <p>配置筛选分类及其对应的筛选条件</p>
             </div>
             
-            <div class="settings-container">
-                <!-- 分类设置 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📑 分类设置 <span class="db-table-tag">→ ranking_config</span></h3>
+            <div class="settings-split-container">
+                <!-- 左侧：分类列表 -->
+                <div class="settings-split-left">
+                    <div class="panel-header" style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="font-size:1rem; margin:0;">分类列表</h3>
+                        <button class="btn btn-sm btn-primary" id="btnAddCategory" title="添加分类">+</button>
                     </div>
-                    <div class="card-body">
-                        <p class="setting-hint">拖拽调整筛选分类的优先顺序（排在前面的分类先选商品），点击编辑修改分类名称</p>
-                        <ul class="sortable-list" id="categoryOrderList">
-                            <li class="placeholder">加载中...</li>
-                        </ul>
-                        <div class="input-group" style="margin-top: 1rem;">
-                            <input type="text" id="newCategoryInput" class="input" placeholder="输入新分类名称..." style="flex:1;">
-                            <button class="btn btn-primary" id="btnAddCategory">添加分类</button>
-                        </div>
+                    <ul class="sortable-list" id="categoryOrderList" style="flex:1;">
+                        <li class="placeholder">加载中...</li>
+                    </ul>
+                    <div class="category-add-area" style="margin-top:1rem; display:none; padding-top:1rem; border-top:1px solid var(--border-color);" id="addCategoryContainer">
+                         <input type="text" id="newCategoryInput" class="input" placeholder="输入名称..." style="width:100%; margin-bottom:0.5rem;">
+                         <div style="display:flex; gap:0.5rem;">
+                             <button class="btn btn-sm btn-primary" id="btnConfirmAddCategory" style="flex:1;">确认</button>
+                             <button class="btn btn-sm btn-secondary" id="btnCancelAddCategory" style="flex:1;">取消</button>
+                         </div>
                     </div>
                 </div>
                 
-                <!-- 筛选条件设置 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🔍 筛选条件</h3>
+                <!-- 右侧：筛选条件 -->
+                <div class="settings-split-right">
+                    <div class="panel-header" style="margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem;">
+                        <div>
+                            <h3 style="font-size:1rem; margin:0;" id="filterSettingsTitle">筛选条件设置</h3>
+                            <p class="text-muted" style="font-size:0.8rem; margin:0.25rem 0;" id="filterSettingsSubtitle">请从左侧选择一个分类进行配置</p>
+                        </div>
+                        <div class="settings-actions">
+                             <button class="btn btn-primary" id="btnSaveSettings">保存设置</button>
+                        </div>
                     </div>
-                    <div class="card-body" id="filterConditionsContainer">
+                    <div id="filterConditionsContainer">
+                        <div class="placeholder-content" style="padding:2rem 0;">
+                            <p>请点击左侧分类以编辑筛选条件</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateRankingAssignmentPage() {
+    return `
+        <div class="ranking-assignment-page">
+            <div class="page-intro">
+                <h2>🔢 排品序号分配</h2>
+                <p>配置各分类生成样品序号的规则（前缀、起始号、步长）</p>
+            </div>
+            
+             <div class="ranking-options" style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm); display:flex; justify-content:space-between; align-items:center;">
+                <span class="text-muted">此处配置的规则将用于生成最终排品结果中的样品序号</span>
+                <button class="btn btn-primary" id="btnSaveAssignment">保存规则</button>
+            </div>
+
+            <div class="card">
+                 <div class="card-body">
+                     <div id="sampleRulesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem;">
                         <p>加载中...</p>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateRankingExclusionPage() {
+    return `
+        <div class="ranking-exclusion-page">
+             <div class="page-intro">
+                <h2>🚫 排除商品设置</h2>
+                <p>管理不参与排品的商品名单</p>
+            </div>
+            <div class="card">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>排除列表 <span class="db-table-tag">→ excluded_products</span></h3>
+                    <div class="input-group" style="max-width:400px; display:flex; gap:0.5rem;">
+                        <input type="text" id="excludeInput" class="input" placeholder="输入商品名称..." style="flex:1;">
+                        <button class="btn btn-primary" id="btnAddExclude">添加排除</button>
                     </div>
                 </div>
-                
-                <!-- 样品序号规则 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🔢 样品序号规则</h3>
+                <div class="card-body">
+                    <div class="excluded-list-container" style="max-height:calc(100vh - 300px); overflow-y:auto;">
+                        <table class="data-table" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:1rem;">商品名称</th>
+                                    <th style="width:100px; text-align:center; padding:1rem;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="excludedListBody">
+                                <tr><td colspan="2" class="text-center" style="padding:2rem;">加载中...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="card-body" id="sampleNumberRulesContainer">
-                        <p>加载中...</p>
-                    </div>
-                </div>
-                
-                <!-- 排除商品设置 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🚫 排除商品 <span class="db-table-tag">→ excluded_products</span></h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="setting-hint">输入商品名称添加到排除列表，这些商品将不参与排品计算</p>
-                        <div class="input-group" style="margin-bottom: 1rem;">
-                            <input type="text" id="excludeProductInput" class="input" placeholder="输入商品名称..." style="flex:1;">
-                            <button class="btn btn-primary" id="btnAddExclude">添加</button>
-                        </div>
-                        <div class="excluded-list" id="excludedListContainer">
-                            <p class="placeholder">加载中...</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="settings-actions">
-                    <button class="btn btn-primary" id="btnSaveSettings">保存设置</button>
-                    <button class="btn btn-secondary" id="btnResetSettings">重置为默认</button>
                 </div>
             </div>
         </div>
@@ -808,291 +844,388 @@ function renderRankingResults(results) {
 async function initRankingSettings() {
     let config = await loadRankingConfig();
     const orderList = document.getElementById('categoryOrderList');
+    const filterContainer = document.getElementById('filterConditionsContainer');
+    const filterTitle = document.getElementById('filterSettingsTitle');
+    const filterSubtitle = document.getElementById('filterSettingsSubtitle');
+    const btnSave = document.getElementById('btnSaveSettings');
 
-    // ========================================
-    // 分类渲染函数
-    // ========================================
+    let selectedCategory = null;
+
+    // 渲染左侧分类列表
     function renderCategories() {
         if (!orderList) return;
 
-        // 如果没有数据，显示提示
         if (!config.分类排序 || config.分类排序.length === 0) {
-            orderList.innerHTML = '<li class="placeholder">暂无分类，请在下方添加</li>';
+            orderList.innerHTML = '<li class="placeholder">暂无分类，请添加</li>';
             return;
         }
 
-        orderList.innerHTML = config.分类排序.map((cat, idx) => `
-            <li class="sortable-item" data-category="${cat}" data-index="${idx}">
-                <div class="order-input-container" style="margin-right:0.5rem;">
-                    <input type="number" class="order-input" value="${idx + 1}" min="1" max="${config.分类排序.length}" style="width:3rem; padding:0.25rem; text-align:center; background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:var(--border-radius-sm);">
-                </div>
-                <span class="category-name-container" style="flex:1; display:flex; align-items:center;">
-                    <span class="category-name">${config.结果映射[cat] || cat}</span>
-                </span>
-                <div class="category-actions" style="display:flex;gap:0.25rem;">
-                    <button class="btn-icon btn-edit" data-category="${cat}" title="编辑">✎</button>
-                    <button class="btn-icon btn-delete" data-category="${cat}" title="删除">✕</button>
-                </div>
-            </li>
-        `).join('');
+        orderList.innerHTML = config.分类排序.map((cat, idx) => {
+            const displayName = config.结果映射[cat] || cat;
+            const isActive = cat === selectedCategory ? 'active' : '';
+            return `
+                <li class="sortable-item ${isActive}" data-category="${cat}" data-index="${idx}" style="cursor:pointer; padding:0.75rem; border:1px solid transparent; border-radius:var(--border-radius-sm); margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
+                    <span class="category-name" style="font-weight:500;">${idx + 1}. ${displayName}</span>
+                    <div class="category-actions">
+                        <button class="btn-icon btn-delete" data-category="${cat}" title="删除" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7;">✕</button>
+                    </div>
+                </li>
+            `;
+        }).join('');
 
-        // 绑定序号变更事件
-        orderList.querySelectorAll('.order-input').forEach(input => {
-            input.addEventListener('change', (e) => {
-                let newOrder = parseInt(e.target.value);
-                const li = e.target.closest('.sortable-item');
-                const oldIndex = parseInt(li.dataset.index);
+        // 绑定点击事件（选中）
+        orderList.querySelectorAll('.sortable-item').forEach(li => {
+            li.addEventListener('click', (e) => {
+                // 如果点的是删除按钮，不处理选中
+                if (e.target.closest('.btn-delete')) return;
 
-                // 验证范围
-                if (isNaN(newOrder) || newOrder < 1) newOrder = 1;
-                if (newOrder > config.分类排序.length) newOrder = config.分类排序.length;
-
-                // 如果序号没变，或计算后位置没变
-                if (newOrder - 1 === oldIndex) return;
-
-                // 调整数组顺序
-                const newIndex = newOrder - 1;
-                const item = config.分类排序.splice(oldIndex, 1)[0];
-                config.分类排序.splice(newIndex, 0, item);
-
-                // 重新渲染并保存
-                renderCategories();
-                saveConfigQuietly();
-                window.AppUtils?.showToast?.('顺序已更新', 'success');
+                const cat = li.dataset.category;
+                selectedCategory = cat;
+                renderCategories(); // 刷新高亮
+                renderFilterSettings(cat);
             });
         });
 
-        // 绑定编辑按钮事件
-        orderList.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // 防止冒泡
-                const li = btn.closest('.sortable-item');
-                const container = li.querySelector('.category-name-container');
-                const nameSpan = container.querySelector('.category-name');
-                const cat = btn.dataset.category;
-                const currentName = config.结果映射[cat] || cat;
-
-                // 如果已经是编辑模式，不重复处理
-                if (container.querySelector('input')) return;
-
-                // 创建输入框
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.value = currentName;
-                input.className = 'input-edit-category'; // 样式类名
-                input.style.width = '100%';
-                input.style.border = '1px solid var(--primary-color)';
-                input.style.background = 'var(--bg-primary)';
-                input.style.color = 'var(--text-primary)';
-                input.style.padding = '0.25rem 0.5rem';
-                input.style.borderRadius = 'var(--border-radius-sm)';
-
-                // 替换 span 为 input
-                nameSpan.style.display = 'none';
-                container.appendChild(input);
-                input.focus();
-
-                // 保存函数
-                const saveEdit = () => {
-                    const newName = input.value.trim();
-                    if (newName && newName !== currentName) {
-                        config.结果映射[cat] = newName;
-                        nameSpan.textContent = newName;
-                        // 同时更新其他相关配置的键名（如果需要，或者仅更新显示映射）
-                        // 注意：这里只更新了显示映射，这通常是足够的。
-                        // 如果样品序号规则是按显示名称索引的，则也需要更新
-                        if (config.样品序号规则[currentName]) {
-                            config.样品序号规则[newName] = config.样品序号规则[currentName];
-                            delete config.样品序号规则[currentName];
-                        }
-                        saveConfigQuietly();
-                        window.AppUtils?.showToast?.('已保存', 'success');
-                    }
-                    // 恢复显示
-                    input.remove();
-                    nameSpan.style.display = '';
-                };
-
-                // 绑定保存事件
-                input.addEventListener('blur', saveEdit);
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        input.blur(); // 触发 blur 保存
-                    }
-                });
-            });
-        });
-
-        // 绑定删除按钮事件
+        // 绑定删除事件
         orderList.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const cat = btn.dataset.category;
-                const displayName = config.结果映射[cat] || cat;
-                if (confirm(`确定删除分类"${displayName}"吗？`)) {
+                const name = config.结果映射[cat] || cat;
+                if (confirm(`确定删除分类"${name}"吗？`)) {
                     config.分类排序 = config.分类排序.filter(c => c !== cat);
                     delete config.结果映射[cat];
                     delete config.筛选条件[cat];
-                    delete config.样品序号规则[config.结果映射[cat]];
+                    // delete config.样品序号规则[name]; // name might be old
+                    if (config.样品序号规则 && config.样品序号规则[name]) {
+                        delete config.样品序号规则[name];
+                    }
+
+                    if (selectedCategory === cat) {
+                        selectedCategory = null;
+                        renderFilterSettings(null);
+                    }
                     renderCategories();
                     saveConfigQuietly();
-                    window.AppUtils?.showToast?.('已删除', 'success');
                 }
             });
         });
     }
-    // 静默保存配置
-    async function saveConfigQuietly() {
-        try {
-            await saveRankingConfig('filter_config', config);
-        } catch (e) {
-            console.error('自动保存失败:', e);
+
+    // 渲染右侧筛选条件
+    function renderFilterSettings(category) {
+        if (!filterContainer) return;
+
+        if (!category) {
+            if (filterTitle) filterTitle.textContent = '筛选条件设置';
+            if (filterSubtitle) filterSubtitle.textContent = '请从左侧选择一个分类进行配置';
+            filterContainer.innerHTML = '<div class="placeholder-content" style="padding:2rem 0;"><p>请点击左侧分类以编辑筛选条件</p></div>';
+            return;
         }
+
+        const displayName = config.结果映射[category] || category;
+        if (filterTitle) filterTitle.textContent = `${displayName} - 筛选规则`;
+        if (filterSubtitle) filterSubtitle.textContent = `配置 ${displayName} 的筛选逻辑`;
+
+        if (!config.筛选条件[category]) config.筛选条件[category] = {};
+        const rules = config.筛选条件[category];
+
+        filterContainer.innerHTML = `
+            <div class="settings-group">
+                <label>显示名称</label>
+                <input type="text" class="input settings-input" id="inputDisplayName" value="${displayName}">
+            </div>
+            
+            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
+            
+            <h4>关键词筛选</h4>
+            <div class="settings-group">
+                <label>包含关键词 (逗号分隔)</label>
+                <input type="text" class="input settings-input" data-field="包含" value="${(rules.包含 || []).join ? rules.包含.join(',') : (rules.包含 || '')}" placeholder="例如: 连衣裙,套装">
+            </div>
+             <div class="settings-group">
+                <label>排除关键词 (逗号分隔)</label>
+                <input type="text" class="input settings-input" data-field="排除" value="${(rules.排除 || []).join ? rules.排除.join(',') : (rules.排除 || '')}" placeholder="例如: 瑕疵,次品">
+            </div>
+            
+            <div class="form-row" style="display:flex; gap:1rem;">
+                <div class="settings-group" style="flex:1;">
+                    <label>排在多少名之前 (Top N)</label>
+                    <input type="number" class="input settings-input" data-field="前几名" value="${rules.前几名 || ''}" placeholder="例如: 50">
+                </div>
+                 <div class="settings-group" style="flex:1;">
+                    <label>排序方式</label>
+                    <select class="input settings-input" data-field="排序方式">
+                        <option value="降序" ${rules.排序方式 !== '升序' ? 'selected' : ''}>降序 (数值越大越靠前)</option>
+                        <option value="升序" ${rules.排序方式 === '升序' ? 'selected' : ''}>升序 (数值越小越靠前)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
+            
+            <h4>数值范围筛选 (可选)</h4>
+            <div class="form-row" style="display:flex; gap:1rem;">
+                 <div class="settings-group" style="flex:1;">
+                    <label>大于等于 (>=)</label>
+                    <input type="number" class="input settings-input" data-field="大于等于" value="${rules.大于等于 || ''}">
+                </div>
+                 <div class="settings-group" style="flex:1;">
+                    <label>小于等于 (<=)</label>
+                    <input type="number" class="input settings-input" data-field="小于等于" value="${rules.小于等于 || ''}">
+                </div>
+            </div>
+            
+             <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
+             
+             <h4>子分类高级设置</h4>
+             <div class="settings-group">
+                 <label class="checkbox-label" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                    <input type="checkbox" id="checkSubFilter" ${rules.按子分类分别筛选 ? 'checked' : ''}>
+                    <span>按子分类分别筛选 (每个子分类取Top1)</span>
+                 </label>
+             </div>
+             <div class="settings-group" id="subFieldGroup" style="display:${rules.按子分类分别筛选 ? 'block' : 'none'}; margin-top:0.5rem;">
+                <label>子分类字段名</label>
+                <input type="text" class="input settings-input" data-field="子分类字段" value="${rules.子分类字段 || 'product_category'}" placeholder="默认为 product_category">
+            </div>
+        `;
+
+        const displayNameInput = document.getElementById('inputDisplayName');
+        displayNameInput.addEventListener('change', (e) => {
+            const newName = e.target.value.trim();
+            if (newName) {
+                // 如果名称变了，也需要更新样品序号规则的 key?
+                // 旧逻辑是用显示名称作为 key。
+                // 如果这里改名，最好同步迁移 Key。
+                const oldName = config.结果映射[category];
+                if (oldName && oldName !== newName) {
+                    if (config.样品序号规则 && config.样品序号规则[oldName]) {
+                        config.样品序号规则[newName] = config.样品序号规则[oldName];
+                        delete config.样品序号规则[oldName];
+                    }
+                }
+
+                config.结果映射[category] = newName;
+                renderCategories();
+            }
+        });
+
+        filterContainer.querySelectorAll('input[data-field], select[data-field]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const field = e.target.dataset.field;
+                let val = e.target.value;
+                if (input.type === 'number') val = val === '' ? undefined : parseFloat(val);
+
+                if (field === '包含' || field === '排除') {
+                    if (val) {
+                        config.筛选条件[category][field] = val.split(/[，,]/).map(s => s.trim()).filter(s => s);
+                    } else {
+                        delete config.筛选条件[category][field];
+                    }
+                } else {
+                    if (val === '' || val === undefined) {
+                        delete config.筛选条件[category][field];
+                    } else {
+                        config.筛选条件[category][field] = val;
+                    }
+                }
+            });
+        });
+
+        const checkSubFilter = document.getElementById('checkSubFilter');
+        const subFieldGroup = document.getElementById('subFieldGroup');
+        checkSubFilter.addEventListener('change', (e) => {
+            config.筛选条件[category].按子分类分别筛选 = e.target.checked;
+            subFieldGroup.style.display = e.target.checked ? 'block' : 'none';
+        });
     }
 
-    // 初始渲染
+    async function saveConfigQuietly() {
+        await saveRankingConfig('filter_config', config);
+    }
+
     renderCategories();
 
-    // ========================================
-    // 添加分类
-    // ========================================
     const newCategoryInput = document.getElementById('newCategoryInput');
     const btnAddCategory = document.getElementById('btnAddCategory');
+    const btnConfirmAdd = document.getElementById('btnConfirmAddCategory');
+    const btnCancelAdd = document.getElementById('btnCancelAddCategory');
+    const addContainer = document.getElementById('addCategoryContainer');
 
-    if (btnAddCategory && newCategoryInput) {
+    if (btnAddCategory) {
         btnAddCategory.addEventListener('click', () => {
+            if (addContainer) addContainer.style.display = 'block';
+            if (newCategoryInput) newCategoryInput.focus();
+        });
+    }
+    if (btnCancelAdd) {
+        btnCancelAdd.addEventListener('click', () => {
+            if (addContainer) addContainer.style.display = 'none';
+            if (newCategoryInput) newCategoryInput.value = '';
+        });
+    }
+    if (btnConfirmAdd) {
+        btnConfirmAdd.addEventListener('click', () => {
             const name = newCategoryInput.value.trim();
-            if (!name) {
-                window.AppUtils?.showToast?.('请输入分类名称', 'warning');
-                return;
-            }
-            // 生成唯一的分类 key
+            if (!name) return;
+
             const catKey = `自定义${Date.now()}`;
             config.分类排序.push(catKey);
             config.结果映射[catKey] = name;
-            config.筛选条件[catKey] = {};  // 空筛选条件
-            config.样品序号规则[name] = { prefix: 'X', start: 1, step: 1 };  // 默认序号规则
+            config.筛选条件[catKey] = {};
+            if (!config.样品序号规则) config.样品序号规则 = {};
+            config.样品序号规则[name] = { prefix: 'X', start: 1, step: 1 };
 
             newCategoryInput.value = '';
+            if (addContainer) addContainer.style.display = 'none';
             renderCategories();
             saveConfigQuietly();
-            window.AppUtils?.showToast?.(`已添加分类"${name}"`, 'success');
-        });
-
-        newCategoryInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') btnAddCategory.click();
         });
     }
 
-    // ========================================
-    // 保存按钮
-    // ========================================
-    const btnSave = document.getElementById('btnSaveSettings');
     if (btnSave) {
         btnSave.addEventListener('click', async () => {
+            btnSave.disabled = true;
+            btnSave.textContent = '保存中...';
             try {
-                btnSave.disabled = true;
-                btnSave.textContent = '保存中...';
-
-                // 获取当前排序（从 DOM 顺序获取）
-                const newOrder = Array.from(orderList?.querySelectorAll('.sortable-item') || [])
-                    .map(li => li.dataset.category);
-                config.分类排序 = newOrder;
-
-                await saveRankingConfig('filter_config', config);
+                await saveConfigQuietly();
                 window.AppUtils?.showToast?.('设置已保存', 'success');
-            } catch (error) {
-                window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+            } catch (e) {
+                window.AppUtils?.showToast?.(e.message, 'error');
             } finally {
                 btnSave.disabled = false;
                 btnSave.textContent = '保存设置';
             }
         });
     }
+}
 
-    // ========================================
-    // 重置按钮
-    // ========================================
-    const btnReset = document.getElementById('btnResetSettings');
-    if (btnReset) {
-        btnReset.addEventListener('click', async () => {
-            if (confirm('确定要重置为默认配置吗？')) {
-                await saveRankingConfig('filter_config', getDefaultRankingConfig());
-                location.reload();
-            }
-        });
-    }
+async function initRankingAssignment() {
+    let config = await loadRankingConfig();
+    const container = document.getElementById('sampleRulesContainer');
+    const btnSave = document.getElementById('btnSaveAssignment');
 
-    // ========================================
-    // 排除商品管理
-    // ========================================
-    const excludedContainer = document.getElementById('excludedListContainer');
-    const excludeInput = document.getElementById('excludeProductInput');
-    const btnAddExclude = document.getElementById('btnAddExclude');
-
-    // 渲染排除商品列表
-    async function renderExcludedList() {
-        const excludedList = await loadExcludedProducts();
-        if (excludedContainer) {
-            if (excludedList.length === 0) {
-                excludedContainer.innerHTML = '<p class="placeholder">暂无排除商品</p>';
-            } else {
-                excludedContainer.innerHTML = excludedList.map(item => `
-                    <div class="excluded-item" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:var(--bg-secondary);border-radius:var(--border-radius-sm);margin-bottom:0.375rem;">
-                        <span style="flex:1;font-size:0.875rem;">${item.product_name}</span>
-                        <button class="btn-icon btn-delete-exclude" data-name="${item.product_name}" title="删除">✕</button>
-                    </div>
-                `).join('');
-
-                // 绑定删除事件
-                excludedContainer.querySelectorAll('.btn-delete-exclude').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const name = btn.dataset.name;
-                        if (confirm(`确定删除排除商品"${name}"吗？`)) {
-                            try {
-                                await removeExcludedProduct(name);
-                                await renderExcludedList();
-                                window.AppUtils?.showToast?.('已删除', 'success');
-                            } catch (e) {
-                                window.AppUtils?.showToast?.(e.message, 'error');
-                            }
-                        }
-                    });
-                });
-            }
+    function renderRules() {
+        if (!config.分类排序 || config.分类排序.length === 0) {
+            container.innerHTML = '<p>请先在排品设置中添加分类</p>';
+            return;
         }
+
+        const html = config.分类排序.map(cat => {
+            const displayName = config.结果映射[cat] || cat;
+            if (!config.样品序号规则) config.样品序号规则 = {};
+            const rule = config.样品序号规则[displayName] || { prefix: 'A', start: 1, step: 1 };
+
+            return `
+                <div class="card rule-card" style="border:1px solid var(--border-color); padding:1rem; border-radius:var(--border-radius-sm); background:var(--bg-card); display:flex; flex-direction:column; gap:0.5rem;">
+                    <h4 style="margin:0; font-size:1rem;">${displayName}</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
+                        <div class="input-group-sm">
+                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">前缀</label>
+                            <input type="text" class="input input-rule" data-cat="${displayName}" data-key="prefix" value="${rule.prefix}" style="width:100%; padding:0.25rem;">
+                        </div>
+                        <div class="input-group-sm">
+                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">起始</label>
+                            <input type="number" class="input input-rule" data-cat="${displayName}" data-key="start" value="${rule.start}" style="width:100%; padding:0.25rem;">
+                        </div>
+                        <div class="input-group-sm">
+                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">步长</label>
+                             <input type="number" class="input input-rule" data-cat="${displayName}" data-key="step" value="${rule.step}" style="width:100%; padding:0.25rem;">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        container.innerHTML = html;
+
+        container.querySelectorAll('.input-rule').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const catName = e.target.dataset.cat;
+                const key = e.target.dataset.key;
+                const val = e.target.value;
+
+                if (!config.样品序号规则[catName]) config.样品序号规则[catName] = { prefix: 'X', start: 1, step: 1 };
+
+                if (key === 'start' || key === 'step') {
+                    config.样品序号规则[catName][key] = parseInt(val) || 1;
+                } else {
+                    config.样品序号规则[catName][key] = val;
+                }
+            });
+        });
     }
 
-    // 初始渲染
-    await renderExcludedList();
+    renderRules();
 
-    // 添加按钮事件
-    if (btnAddExclude && excludeInput) {
-        btnAddExclude.addEventListener('click', async () => {
-            const name = excludeInput.value.trim();
-            if (!name) {
-                window.AppUtils?.showToast?.('请输入商品名称', 'warning');
-                return;
-            }
-            try {
-                await addExcludedProduct(name);
-                excludeInput.value = '';
-                await renderExcludedList();
-                window.AppUtils?.showToast?.(`已添加"${name}"到排除列表`, 'success');
-            } catch (e) {
-                window.AppUtils?.showToast?.(e.message, 'error');
-            }
-        });
-
-        // 回车添加
-        excludeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') btnAddExclude.click();
+    if (btnSave) {
+        btnSave.addEventListener('click', async () => {
+            btnSave.disabled = true;
+            btnSave.textContent = '保存中...';
+            await saveRankingConfig('filter_config', config);
+            window.AppUtils?.showToast?.('规则已保存', 'success');
+            renderRules();
+            btnSave.disabled = false;
+            btnSave.textContent = '保存规则';
         });
     }
 }
 
-// ========================================
-// 导出加载函数
-// ========================================
+async function initRankingExclusion() {
+    const excludedContainer = document.getElementById('excludedListBody');
+    const excludeInput = document.getElementById('excludeInput');
+    const btnAddExclude = document.getElementById('btnAddExclude');
+
+    async function renderList() {
+        const list = await loadExcludedProducts();
+        if (!excludedContainer) return;
+
+        if (list.length === 0) {
+            excludedContainer.innerHTML = '<tr><td colspan="2" class="text-center" style="padding:2rem; color:var(--text-muted);">暂无排除商品</td></tr>';
+        } else {
+            excludedContainer.innerHTML = list.map(item => `
+                 <tr style="border-bottom:1px solid var(--border-color);">
+                     <td style="padding:0.75rem 1rem;">${item.product_name}</td>
+                     <td style="text-align:center;">
+                         <button class="btn-icon btn-delete-exclude" data-name="${item.product_name}" title="删除" style="color:var(--error-color);">✕</button>
+                     </td>
+                 </tr>
+             `).join('');
+
+            excludedContainer.querySelectorAll('.btn-delete-exclude').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const name = btn.dataset.name;
+                    if (confirm(`移除 "${name}"？`)) {
+                        await removeExcludedProduct(name);
+                        renderList();
+                    }
+                });
+            });
+        }
+    }
+
+    if (btnAddExclude) {
+        btnAddExclude.addEventListener('click', async () => {
+            const name = excludeInput.value.trim();
+            if (name) {
+                try {
+                    await addExcludedProduct(name);
+                    excludeInput.value = '';
+                    renderList();
+                    window.AppUtils?.showToast?.('已添加', 'success');
+                } catch (e) {
+                    window.AppUtils?.showToast?.(e.message, 'error');
+                }
+            }
+        });
+        excludeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnAddExclude.click();
+        });
+    }
+
+    renderList();
+}
+
 window.loadRankingPage = function (pageId) {
     if (pageId === 'ranking' || pageId === 'ranking-calculate') {
         return {
@@ -1104,6 +1237,18 @@ window.loadRankingPage = function (pageId) {
         return {
             html: generateRankingSettingsPage(),
             init: initRankingSettings
+        };
+    }
+    if (pageId === 'ranking-assignment') {
+        return {
+            html: generateRankingAssignmentPage(),
+            init: initRankingAssignment
+        };
+    }
+    if (pageId === 'ranking-exclusion') {
+        return {
+            html: generateRankingExclusionPage(),
+            init: initRankingExclusion
         };
     }
     return null;

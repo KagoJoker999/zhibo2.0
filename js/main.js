@@ -40,6 +40,8 @@ const PageConfig = {
     'arrangement-upload': { title: '基础数据上传', icon: '📋' },
     'arrangement-main': { title: '排品功能', icon: '📋' },
     'arrangement-settings': { title: '排品设置', icon: '📋' },
+    'arrangement-assignment': { title: '排品序号分配', icon: '🔢' },
+    'arrangement-exclusion': { title: '排除商品设置', icon: '🚫' },
     'arrangement-mapping': { title: '对照表生成', icon: '📋' },
     'new-product': { title: '新品处理', icon: '🆕' },
     'new-product-upload': { title: '新品数据上传', icon: '🆕' },
@@ -245,6 +247,10 @@ function loadPage(page) {
                 rankingPageId = 'ranking';
             } else if (page === 'arrangement-settings') {
                 rankingPageId = 'ranking-settings';
+            } else if (page === 'arrangement-assignment') {
+                rankingPageId = 'ranking-assignment';
+            } else if (page === 'arrangement-exclusion') {
+                rankingPageId = 'ranking-exclusion';
             }
             if (rankingPageId) {
                 const rankingPage = window.loadRankingPage(rankingPageId);

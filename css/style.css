@@ -1992,3 +1992,39 @@ select:focus {
     justify-content: center;
     line-height: 1;
 }
+/* 排品设置左右分栏布局 */
+.settings-split-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+    height: calc(100vh - 140px); /* 适应屏幕高度 */
+    min-height: 600px;
+}
+
+.settings-split-left {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.settings-split-right {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+/* 选中状态 */
+.sortable-item.active .category-name-container {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+.sortable-item.active {
+    border-color: var(--primary-color);
+    background-color: var(--bg-secondary);
+}
