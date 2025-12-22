@@ -907,7 +907,6 @@ select:focus {
 
 /* 可滚动区块 */
 .upload-block-scrollable {
-    max-height: 400px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -921,6 +920,8 @@ select:focus {
     flex: 1;
     overflow-y: auto;
     padding-right: 0.5rem;
+    min-height: 0;
+    /* 重要：允许 flex 子元素收缩 */
 }
 
 .upload-block .upload-zone {
