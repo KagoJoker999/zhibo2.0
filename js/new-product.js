@@ -250,6 +250,12 @@ async function saveListingCategoryMapping(items) {
 function generateNewProductPage() {
     return `
         <div class="new-product-page">
+            <div class="page-tabs" style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border-color);">
+                <button class="tab-item active" data-target="upload" style="padding:0.75rem 0.5rem; cursor:pointer; border:none; background:none; border-bottom:2px solid var(--primary-color); font-weight:600; color:var(--text-primary);">数据上传</button>
+                <button class="tab-item" data-target="rules" style="padding:0.75rem 0.5rem; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; color:var(--text-secondary);">序号分配</button>
+            </div>
+
+            <div id="view-upload" class="tab-view">
             <div class="upload-blocks-grid">
                 <!-- 上传区块 -->
                 <div class="upload-block" id="block-new-product">
@@ -368,6 +374,39 @@ function generateNewProductPage() {
                 <div id="dataTableContainer" class="data-table-container">
                     <p class="text-muted">点击刷新加载数据</p>
                 </div>
+            </div>
+            </div> <!-- End view-upload -->
+
+            <div id="view-rules" class="tab-view" style="display:none;">
+                ${generateNumberingRulesUI()}
+            </div>
+        </div>
+    `;
+}
+
+function generateNumberingRulesUI() {
+    return `
+        <div class="rules-settings-panel" style="max-width:800px; margin:0 auto; background:var(--bg-secondary); padding:2rem; border-radius:var(--border-radius);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                <div>
+                    <h3 style="margin:0;">🔢 序号分配规则</h3>
+                    <p class="text-muted" style="margin:0.5rem 0 0;">配置新品导入时的自动编号逻辑（按顺序分配）</p>
+                </div>
+                <button class="btn btn-primary" id="btnSaveRules">💾 保存配置</button>
+            </div>
+
+            <div id="rulesListContainer" style="display:flex; flex-direction:column; gap:1rem;">
+                <!-- Rules injected via JS -->
+            </div>
+
+            <button class="btn btn-secondary" id="btnAddRule" style="margin-top:1.5rem; width:100%; border-style:dashed;">+ 添加分配规则</button>
+
+            <div class="rules-preview" style="margin-top:2rem; padding:1.5rem; background:var(--bg-tertiary); border-radius:var(--border-radius-sm);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h4 style="margin:0; font-size:0.9rem;">👁️ 规则预览</h4>
+                    <button class="btn btn-sm btn-secondary" id="btnPreviewRules">刷新预览</button>
+                </div>
+                <div id="rulesPreviewText" style="font-family:monospace; color:var(--text-secondary); font-size:0.85rem; line-height:1.6; white-space: pre-wrap;">请配置规则...</div>
             </div>
         </div>
     `;
@@ -498,6 +537,28 @@ function initNewProductUpload() {
 
     let selectedFile = null;
 
+    // Tabs Logic
+    const tabs = document.querySelectorAll('.new-product-page .tab-item');
+    const views = document.querySelectorAll('.new-product-page .tab-view');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.target;
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = 'var(--text-secondary)';
+            });
+            views.forEach(v => v.style.display = 'none');
+            tab.classList.add('active');
+            tab.style.borderBottomColor = 'var(--primary-color)';
+            tab.style.color = 'var(--text-primary)';
+            document.getElementById('view-' + target).style.display = 'block';
+        });
+    });
+
+    // Init Rules Logic
+    initNumberingRulesLogic();
+
     uploadZone.addEventListener('click', () => fileInput.click());
     uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
     uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
@@ -537,7 +598,15 @@ function initNewProductUpload() {
             records = await generateProductNames(records);
 
             updateStatus('生成上架分类...', 50);
+            updateStatus('生成上架分类...', 50);
             records = await generateListingCategories(records);
+
+            // 分配序号
+            updateStatus('分配序号...', 55);
+            try {
+                const rules = await loadNumberingRules();
+                records = assignSampleNumbers(records, rules);
+            } catch (e) { console.warn('序号分配失败', e); }
 
             if (isFullMode) {
                 updateStatus('清空旧数据...', 60);
@@ -633,6 +702,7 @@ function initNewProductUpload() {
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>序号</th>
                                 <th>图片</th>
                                 <th>原名称</th>
                                 <th>生成名称</th>
@@ -644,6 +714,7 @@ function initNewProductUpload() {
                         <tbody>
                             ${data.map(row => `
                                 <tr>
+                                    <td style="font-weight:bold; color:var(--primary-color);">${row.sample_number || '-'}</td>
                                     <td>
                                         <div class="thumb-wrapper">
                                             ${row.image_url ?
@@ -693,10 +764,11 @@ function initNewProductUpload() {
 
             let rows, filename;
             if (type === 'rename') {
-                // 重命名表格：商品编码, 商品名称(新名), 商品简称(原名)
-                rows = [['商品编码', '商品名称', '商品简称']];
+                // 重命名表格：序号, 商品编码, 商品名称(新名), 商品简称(原名)
+                rows = [['序号', '商品编码', '商品名称', '商品简称']];
                 data.forEach(item => {
                     rows.push([
+                        item.sample_number || '',
                         item.product_code || '',
                         item.product_name || '',
                         item.original_name || ''
@@ -1136,6 +1208,176 @@ async function readExcelFile(file) {
         };
         reader.onerror = () => reject(new Error('读取失败'));
         reader.readAsArrayBuffer(file);
+    });
+}
+
+// ========================================
+// 新品序号规则逻辑
+// ========================================
+async function loadNumberingRules() {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('ranking_config')
+            .select('value')
+            .eq('key', 'new_product_number_rules')
+            .single();
+        if (error || !data) return [];
+        return data.value || [];
+    } catch (e) { console.warn(e); return []; }
+}
+
+async function saveNumberingRules(rules) {
+    const { error } = await window.supabaseClient
+        .from('ranking_config')
+        .upsert({
+            key: 'new_product_number_rules',
+            value: rules,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+    if (error) throw error;
+}
+
+function assignSampleNumbers(records, rules) {
+    if (!rules || rules.length === 0) return records;
+    const sortedRules = [...rules].sort((a, b) => a.range_start - b.range_start);
+    const nameToNumber = new Map();
+    let currentCount = 1;
+
+    return records.map(record => {
+        const name = record.product_name;
+        if (nameToNumber.has(name)) {
+            return { ...record, sample_number: nameToNumber.get(name) };
+        }
+
+        let targetRule = sortedRules.find(r => currentCount >= r.range_start && currentCount <= r.range_end);
+        let sampleNum = '';
+        if (targetRule) {
+            const offset = currentCount - targetRule.range_start;
+            const numVal = parseInt(targetRule.start_num) + (offset * parseInt(targetRule.step));
+            sampleNum = (targetRule.prefix || '') + String(numVal).padStart(2, '0');
+        } else {
+            // 默认不做处理或留空
+            sampleNum = '';
+        }
+
+        nameToNumber.set(name, sampleNum);
+        currentCount++;
+        return { ...record, sample_number: sampleNum };
+    });
+}
+
+function initNumberingRulesLogic() {
+    const rulesContainer = document.getElementById('rulesListContainer');
+    const addBtn = document.getElementById('btnAddRule');
+    const saveBtn = document.getElementById('btnSaveRules');
+    const previewBtn = document.getElementById('btnPreviewRules');
+    const previewText = document.getElementById('rulesPreviewText');
+
+    let rules = [];
+
+    loadNumberingRules().then(data => {
+        rules = data && data.length ? data : [
+            { range_start: 1, range_end: 40, prefix: 'A', start_num: 1, step: 2 },
+            { range_start: 41, range_end: 99999, prefix: 'A', start_num: 41, step: 1 }
+        ];
+        renderRules();
+    });
+
+    function renderRules() {
+        if (!rulesContainer) return;
+        rulesContainer.innerHTML = rules.map((r, i) => `
+            <div class="rule-item" data-index="${i}" style="background:var(--bg-tertiary); padding:1rem; border-radius:4px; display:flex; gap:1rem; align-items:flex-end; border:1px solid var(--border-color);">
+                <div style="flex:1">
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">序号范围 (Start-End)</label>
+                    <div style="display:flex; align-items:center; gap:0.5rem">
+                        <input type="number" class="input input-sm rule-start" value="${r.range_start}" style="width:70px">
+                        <span>-</span>
+                        <input type="number" class="input input-sm rule-end" value="${r.range_end}" style="width:70px">
+                    </div>
+                </div>
+                 <div style="width:80px">
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">前缀</label>
+                    <input type="text" class="input input-sm rule-prefix" value="${r.prefix || ''}" style="width:100%">
+                </div>
+                <div style="width:80px">
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">起始号</label>
+                    <input type="number" class="input input-sm rule-start-num" value="${r.start_num}" style="width:100%">
+                </div>
+                <div style="width:80px">
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">步长</label>
+                    <input type="number" class="input input-sm rule-step" value="${r.step}" style="width:100%">
+                </div>
+                <button class="btn btn-sm btn-icon btn-delete-rule" style="color:var(--error-color); height:32px; width:32px; display:flex; align-items:center; justify-content:center; cursor: pointer;">✕</button>
+            </div>
+        `).join('');
+
+        rulesContainer.querySelectorAll('.btn-delete-rule').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.closest('.rule-item').dataset.index);
+                rules.splice(idx, 1);
+                renderRules();
+            });
+        });
+
+        rulesContainer.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const item = e.target.closest('.rule-item');
+                const idx = parseInt(item.dataset.index);
+                const r = rules[idx];
+                if (e.target.classList.contains('rule-start')) r.range_start = parseInt(e.target.value) || 0;
+                if (e.target.classList.contains('rule-end')) r.range_end = parseInt(e.target.value) || 0;
+                if (e.target.classList.contains('rule-prefix')) r.prefix = e.target.value;
+                if (e.target.classList.contains('rule-start-num')) r.start_num = parseInt(e.target.value) || 0;
+                if (e.target.classList.contains('rule-step')) r.step = parseInt(e.target.value) || 1;
+            });
+        });
+    }
+
+    addBtn?.addEventListener('click', () => {
+        const lastRule = rules[rules.length - 1];
+        const nextStart = lastRule ? (lastRule.range_end + 1) : 1;
+        rules.push({ range_start: nextStart, range_end: nextStart + 99, prefix: 'A', start_num: nextStart, step: 1 });
+        renderRules();
+    });
+
+    saveBtn?.addEventListener('click', async () => {
+        try {
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+            await saveNumberingRules(rules);
+            window.AppUtils?.showToast?.('规则保存成功', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 保存配置';
+        }
+    });
+
+    previewBtn?.addEventListener('click', () => {
+        let output = [];
+        const sortedRules = [...rules].sort((a, b) => a.range_start - b.range_start);
+
+        const previewRange = [];
+        for (let i = 1; i <= 20; i++) previewRange.push(i);
+        previewRange.push('...');
+        for (let i = 40; i <= 45; i++) previewRange.push(i);
+
+        previewRange.forEach(i => {
+            if (i === '...') { output.push('------'); return; }
+            let num = '';
+            let r = sortedRules.find(ru => i >= ru.range_start && i <= ru.range_end);
+            if (r) {
+                let offset = i - r.range_start;
+                let val = parseInt(r.start_num) + (offset * parseInt(r.step));
+                num = (r.prefix || '') + String(val).padStart(2, '0');
+            } else {
+                num = 'N/A';
+            }
+            output.push(`第 ${i} 个 -> ${num}`);
+        });
+
+        previewText.textContent = output.join('\n');
     });
 }
 
