@@ -654,7 +654,7 @@ function generateRankingAssignmentPage() {
         <div class="ranking-assignment-page">
             <div class="page-intro">
                 <h2>🔢 排品序号分配</h2>
-                <p>配置各分类生成样品序号的规则（前缀、起始号、步长）</p>
+                <p>配置各分类及新品的生成样品序号规则</p>
             </div>
             
              <div class="ranking-options" style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm); display:flex; justify-content:space-between; align-items:center;">
@@ -662,12 +662,48 @@ function generateRankingAssignmentPage() {
                 <button class="btn btn-primary" id="btnSaveAssignment">保存规则</button>
             </div>
 
-            <div class="card">
-                 <div class="card-body">
-                     <div id="sampleRulesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem;">
-                        <p>加载中...</p>
+            <div class="settings-split-container" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                <!-- 左侧：分类序号规则 -->
+                <div class="card settings-split-left" style="height:auto;">
+                    <div class="card-header">
+                        <h3>分类序号规则</h3>
+                    </div>
+                     <div class="card-body">
+                         <div id="sampleRulesContainer" style="display:grid; grid-template-columns: 1fr; gap:1rem;">
+                            <p>加载中...</p>
+                         </div>
                      </div>
-                 </div>
+                </div>
+
+                <!-- 右侧：新品序号规则 -->
+                <div class="card settings-split-right" style="height:auto;">
+                    <div class="card-header">
+                         <h3>新品序号规则</h3>
+                    </div>
+                     <div class="card-body">
+                         <div id="newProductRulesContainer">
+                            <div class="rules-card" style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--border-radius-sm);">
+                                <div style="display:flex; gap:1rem; margin-bottom:0.5rem; align-items:center;">
+                                    <strong style="width:100px;">新品</strong>
+                                </div>
+                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
+                                    <div class="input-group-vertical">
+                                        <label style="font-size:0.8rem; color:var(--text-muted);">前缀</label>
+                                        <input type="text" class="input input-sm new-rule-input" data-field="prefix" placeholder="例如: N">
+                                    </div>
+                                    <div class="input-group-vertical">
+                                        <label style="font-size:0.8rem; color:var(--text-muted);">起始号</label>
+                                        <input type="number" class="input input-sm new-rule-input" data-field="start" placeholder="未配置">
+                                    </div>
+                                    <div class="input-group-vertical">
+                                        <label style="font-size:0.8rem; color:var(--text-muted);">步长</label>
+                                        <input type="number" class="input input-sm new-rule-input" data-field="step" placeholder="未配置">
+                                    </div>
+                                </div>
+                            </div>
+                         </div>
+                     </div>
+                </div>
             </div>
         </div>
     `;
@@ -933,8 +969,10 @@ async function initRankingSettings() {
             return `
                 <li class="sortable-item ${isActive}" data-category="${cat}" data-index="${idx}" style="cursor:pointer; padding:0.75rem; border:1px solid transparent; border-radius:var(--border-radius-sm); margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
                     <span class="category-name" style="font-weight:500;">${idx + 1}. ${displayName}</span>
-                    <div class="category-actions">
-                        <button class="btn-icon btn-delete" data-category="${cat}" title="删除" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7;">✕</button>
+                    <div class="category-actions" style="display:flex; gap:0.25rem;">
+                         <button class="btn-icon btn-move-up" data-index="${idx}" title="上移" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7;">↑</button>
+                         <button class="btn-icon btn-move-down" data-index="${idx}" title="下移" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7;">↓</button>
+                        <button class="btn-icon btn-delete" data-category="${cat}" title="删除" style="font-size:0.8rem; color:var(--text-muted); opacity:0.7; margin-left:0.5rem;">✕</button>
                     </div>
                 </li>
             `;
@@ -943,13 +981,42 @@ async function initRankingSettings() {
         // 绑定点击事件（选中）
         orderList.querySelectorAll('.sortable-item').forEach(li => {
             li.addEventListener('click', (e) => {
-                // 如果点的是删除按钮，不处理选中
-                if (e.target.closest('.btn-delete')) return;
+                // 如果点的是按钮，不处理选中
+                if (e.target.closest('.category-actions')) return;
 
                 const cat = li.dataset.category;
                 selectedCategory = cat;
                 renderCategories(); // 刷新高亮
                 renderFilterSettings(cat);
+            });
+        });
+
+        // 绑定上移/下移事件
+        orderList.querySelectorAll('.btn-move-up').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.dataset.index);
+                if (idx > 0) {
+                    const temp = config.分类排序[idx];
+                    config.分类排序[idx] = config.分类排序[idx - 1];
+                    config.分类排序[idx - 1] = temp;
+                    renderCategories();
+                    saveConfigQuietly();
+                }
+            });
+        });
+
+        orderList.querySelectorAll('.btn-move-down').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.dataset.index);
+                if (idx < config.分类排序.length - 1) {
+                    const temp = config.分类排序[idx];
+                    config.分类排序[idx] = config.分类排序[idx + 1];
+                    config.分类排序[idx + 1] = temp;
+                    renderCategories();
+                    saveConfigQuietly();
+                }
             });
         });
 
@@ -1171,59 +1238,106 @@ async function initRankingSettings() {
 async function initRankingAssignment() {
     let config = await loadRankingConfig();
     const container = document.getElementById('sampleRulesContainer');
+    const newProductContainer = document.getElementById('newProductRulesContainer');
     const btnSave = document.getElementById('btnSaveAssignment');
 
+    if (!config.样品序号规则) config.样品序号规则 = {};
+    if (!config.新品序号规则) config.新品序号规则 = { prefix: 'N', start: 1, step: 1 };
+
     function renderRules() {
-        if (!config.分类排序 || config.分类排序.length === 0) {
-            container.innerHTML = '<p>请先在排品设置中添加分类</p>';
-            return;
-        }
+        if (!container) return;
 
-        const html = config.分类排序.map(cat => {
-            const displayName = config.结果映射[cat] || cat;
-            if (!config.样品序号规则) config.样品序号规则 = {};
-            const rule = config.样品序号规则[displayName] || { prefix: 'A', start: 1, step: 1 };
+        // 渲染分类规则 (左侧)
+        const categories = config.分类排序 || [];
+        if (categories.length === 0) {
+            container.innerHTML = '<p class="text-muted">请先在【排品设置】中添加分类</p>';
+        } else {
+            container.innerHTML = categories.map((catKey, idx) => {
+                const displayName = config.结果映射[catKey] || catKey;
+                // 兼容旧数据：key 可能是 displayName
+                let rule = config.样品序号规则[displayName] || { prefix: '', start: 1, step: 1 };
+                // 确保数据结构存在
+                if (!config.样品序号规则[displayName]) config.样品序号规则[displayName] = rule;
 
-            return `
-                <div class="card rule-card" style="border:1px solid var(--border-color); padding:1rem; border-radius:var(--border-radius-sm); background:var(--bg-card); display:flex; flex-direction:column; gap:0.5rem;">
-                    <h4 style="margin:0; font-size:1rem;">${displayName}</h4>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
-                        <div class="input-group-sm">
-                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">前缀</label>
-                            <input type="text" class="input input-rule" data-cat="${displayName}" data-key="prefix" value="${rule.prefix}" style="width:100%; padding:0.25rem;">
+                return `
+                    <div class="rules-card" style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--border-radius-sm); border-left: 3px solid var(--primary-color);">
+                        <div style="display:flex; gap:1rem; margin-bottom:0.5rem; align-items:center;">
+                            <strong>${idx + 1}. ${displayName}</strong>
                         </div>
-                        <div class="input-group-sm">
-                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">起始</label>
-                            <input type="number" class="input input-rule" data-cat="${displayName}" data-key="start" value="${rule.start}" style="width:100%; padding:0.25rem;">
-                        </div>
-                        <div class="input-group-sm">
-                            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">步长</label>
-                             <input type="number" class="input input-rule" data-cat="${displayName}" data-key="step" value="${rule.step}" style="width:100%; padding:0.25rem;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
+                            <div class="input-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">前缀</label>
+                                <input type="text" class="input input-sm rule-input" data-cat="${displayName}" data-field="prefix" value="${rule.prefix || ''}">
+                            </div>
+                            <div class="input-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">起始号</label>
+                                <input type="number" class="input input-sm rule-input" data-cat="${displayName}" data-field="start" value="${rule.start || 1}">
+                            </div>
+                            <div class="input-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">步长</label>
+                                <input type="number" class="input input-sm rule-input" data-cat="${displayName}" data-field="step" value="${rule.step || 1}">
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-        }).join('');
-        container.innerHTML = html;
+                `;
+            }).join('');
 
-        container.querySelectorAll('.input-rule').forEach(input => {
+            // 绑定分类规则输入事件
+            container.querySelectorAll('.rule-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const catName = e.target.dataset.cat;
+                    const key = e.target.dataset.field;
+                    const val = e.target.value;
+                    if (!config.样品序号规则[catName]) config.样品序号规则[catName] = {};
+
+                    if (key === 'start' || key === 'step') {
+                        config.样品序号规则[catName][key] = parseInt(val) || 1;
+                    } else {
+                        config.样品序号规则[catName][key] = val;
+                    }
+                });
+            });
+        }
+
+        // 渲染新品规则 (右侧)
+        if (newProductContainer) {
+            const npRule = config.新品序号规则;
+            const inputs = newProductContainer.querySelectorAll('.new-rule-input');
+            inputs.forEach(input => {
+                const field = input.dataset.field;
+                if (field === 'prefix') input.value = npRule.prefix || '';
+                if (field === 'start') input.value = npRule.start || 1;
+                if (field === 'step') input.value = npRule.step || 1;
+            });
+
+            // 绑定新品规则输入事件 (只需绑定一次，但为了简单放在这里重新绑定需注意防止重复? 其实 renderRules 只在 init 时调用一次，或者保存后重绘)
+            // 实际上这里的 inputs 是静态 HTML (如果在 generateRankingAssignmentPage 写死的话)
+            // 但如果我在 generateRankingAssignmentPage 已经写好了 HTML，这里只需要填值。
+            // 修正：generateRankingAssignmentPage 中的 HTML 已经是静态的了。
+            // 这里只需要在 init 时获取 inputs 并赋值，绑定事件即可。
+            // 为了避免重复绑定，我应该把事件绑定移出 renderRules 或者保证 renderRules 不会重复绑定。
+            // 当前逻辑 renderRules 会重绘左侧，但右侧是静态的。
+            // 让我们修正一下：右侧也可以动态渲染，或者只赋值。
+        }
+    }
+
+    renderRules();
+
+    // 绑定新品规则事件 (只绑定一次)
+    if (newProductContainer) {
+        newProductContainer.querySelectorAll('.new-rule-input').forEach(input => {
             input.addEventListener('change', (e) => {
-                const catName = e.target.dataset.cat;
-                const key = e.target.dataset.key;
+                const key = e.target.dataset.field;
                 const val = e.target.value;
-
-                if (!config.样品序号规则[catName]) config.样品序号规则[catName] = { prefix: 'X', start: 1, step: 1 };
-
                 if (key === 'start' || key === 'step') {
-                    config.样品序号规则[catName][key] = parseInt(val) || 1;
+                    config.新品序号规则[key] = parseInt(val) || 1;
                 } else {
-                    config.样品序号规则[catName][key] = val;
+                    config.新品序号规则[key] = val;
                 }
             });
         });
     }
 
-    renderRules();
 
     if (btnSave) {
         btnSave.addEventListener('click', async () => {
@@ -1231,7 +1345,7 @@ async function initRankingAssignment() {
             btnSave.textContent = '保存中...';
             await saveRankingConfig('filter_config', config);
             window.AppUtils?.showToast?.('规则已保存', 'success');
-            renderRules();
+            // renderRules(); // 不需要重绘，输入值且未保存时已经更新了 config
             btnSave.disabled = false;
             btnSave.textContent = '保存规则';
         });
