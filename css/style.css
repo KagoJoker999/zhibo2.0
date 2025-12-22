@@ -886,6 +886,30 @@ select:focus {
     overflow-y: auto;
 }
 
+/* 自定义滚动条 - 隐藏式灰色 */
+.upload-block::-webkit-scrollbar {
+    width: 6px;
+}
+
+.upload-block::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.upload-block::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.upload-block:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.upload-block::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
 .upload-block-header h3 {
     font-size: 1.125rem;
     font-weight: 600;
