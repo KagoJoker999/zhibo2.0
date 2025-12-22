@@ -593,17 +593,27 @@ function filterBySubcategory(products, conditions) {
     const subField = FIELD_MAPPING[subFieldKey] || subFieldKey;
     const selectedSubcategories = conditions.选中子分类 || [];
 
+    console.log(`[filterBySubcategory] 输入商品数: ${products.length}`);
+    console.log(`[filterBySubcategory] 子分类字段: ${subFieldKey} -> ${subField}`);
+    console.log(`[filterBySubcategory] 选中子分类: ${JSON.stringify(selectedSubcategories)}`);
+
     const subCategories = new Map();
 
     // 先应用基础筛选条件
     let filtered = applyFilters(products, conditions);
+    console.log(`[filterBySubcategory] applyFilters后商品数: ${filtered.length}`);
 
     // 如果指定了选中子分类，只保留这些分类的商品
     if (selectedSubcategories.length > 0) {
+        // 先看看商品的分类都有哪些
+        const sampleCategories = filtered.slice(0, 10).map(p => p[subField]);
+        console.log(`[filterBySubcategory] 商品分类样本: ${JSON.stringify(sampleCategories)}`);
+
         filtered = filtered.filter(p => {
             const subCat = p[subField] || '';
             return selectedSubcategories.includes(subCat);
         });
+        console.log(`[filterBySubcategory] 按选中子分类过滤后: ${filtered.length}`);
     }
 
     // 按子分类分组
@@ -615,6 +625,8 @@ function filterBySubcategory(products, conditions) {
         subCategories.get(subCat).push(p);
     });
 
+    console.log(`[filterBySubcategory] 分组数量: ${subCategories.size}`);
+
     // 每个子分类取可用数 (available_qty) 最大的一个
     const result = [];
     subCategories.forEach(items => {
@@ -624,6 +636,7 @@ function filterBySubcategory(products, conditions) {
         }
     });
 
+    console.log(`[filterBySubcategory] 最终结果: ${result.length}`);
     return result;
 }
 
