@@ -943,6 +943,28 @@ let cachedProducts = [];      // 库存+评分汇总数据
 let cachedNewProducts = [];   // 新品数据
 let cachedExcluded = [];      // 排除商品列表
 let cachedResults = [];       // 排品结果
+let cachedProductIds = {};    // 商品ID映射 { product_name: product_id }
+let deletedItems = [];        // 已删除的项（用于撤回）
+
+// 加载商品ID映射
+async function loadProductIdMapping() {
+    const client = window.supabaseClient;
+    if (!client) return {};
+
+    const { data, error } = await client.from('product_id_data').select('product_name, product_id');
+    if (error) {
+        console.warn('加载商品ID失败:', error.message);
+        return {};
+    }
+
+    const mapping = {};
+    (data || []).forEach(item => {
+        if (item.product_name) {
+            mapping[item.product_name] = item.product_id || '';
+        }
+    });
+    return mapping;
+}
 
 async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
@@ -953,6 +975,7 @@ async function initRankingPage() {
             try {
                 btnLoadAndCalculate.disabled = true;
                 btnLoadAndCalculate.textContent = '加载中...';
+                deletedItems = []; // 重置删除记录
 
                 // 获取是否包含新品的设置
                 const includeNewProducts = document.getElementById('includeNewProducts')?.checked ?? true;
@@ -969,8 +992,13 @@ async function initRankingPage() {
                 document.getElementById('statInventory').textContent = r2.count || 0;
                 document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
 
-                // 加载排除商品列表
-                cachedExcluded = await loadExcludedProducts();
+                // 加载排除商品列表和商品ID映射
+                const [excluded, productIdMapping] = await Promise.all([
+                    loadExcludedProducts(),
+                    loadProductIdMapping()
+                ]);
+                cachedExcluded = excluded;
+                cachedProductIds = productIdMapping;
                 document.getElementById('statExcluded').textContent = cachedExcluded.length;
 
                 // 汇总商品数据（库存 + 评分）
@@ -1067,6 +1095,33 @@ async function initRankingPage() {
     }
 }
 
+// 删除排品项（从当前分类移除，但可在其他分类出现）
+function removeRankingItem(category, productName) {
+    // 记录删除（用于撤回）
+    const itemIndex = cachedResults.findIndex(r => r.ranking_result === category && r.product_name === productName);
+    if (itemIndex !== -1) {
+        deletedItems.push({
+            item: cachedResults[itemIndex],
+            index: itemIndex
+        });
+        cachedResults.splice(itemIndex, 1);
+        renderRankingResults(cachedResults);
+        window.AppUtils?.showToast?.('已删除，可点击撤回恢复', 'info');
+    }
+}
+
+// 撤回删除
+function undoDeleteRankingItem() {
+    if (deletedItems.length === 0) {
+        window.AppUtils?.showToast?.('没有可撤回的操作', 'warning');
+        return;
+    }
+    const last = deletedItems.pop();
+    cachedResults.splice(last.index, 0, last.item);
+    renderRankingResults(cachedResults);
+    window.AppUtils?.showToast?.('已撤回删除', 'success');
+}
+
 function renderRankingResults(results) {
     const container = document.getElementById('rankingResultContent');
     if (!container) return;
@@ -1078,18 +1133,56 @@ function renderRankingResults(results) {
         grouped[r.ranking_result].push(r);
     });
 
-    let html = '';
+    let html = `
+        <div class="ranking-result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+            <span style="font-size: 0.875rem; color: var(--text-secondary);">共 ${results.length} 个商品</span>
+            <button class="btn btn-sm btn-secondary" onclick="undoDeleteRankingItem()" style="font-size: 0.75rem;" ${deletedItems.length === 0 ? 'disabled' : ''}>
+                ↩ 撤回 (${deletedItems.length})
+            </button>
+        </div>
+    `;
+
     for (const [category, items] of Object.entries(grouped)) {
         html += `
             <div class="result-category">
                 <h4>${category} <span class="count">(${items.length})</span></h4>
-                <div class="result-items">
-                    ${items.map(item => `
-                        <div class="result-item">
-                            <span class="sample-number">${item.sample_number}</span>
-                            <span class="product-name">${item.product_name}</span>
-                        </div>
-                    `).join('')}
+                <div class="result-items-table">
+                    <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.8125rem;">
+                        <thead>
+                            <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
+                                <th style="padding: 0.5rem; text-align: center; width: 40px;">图片</th>
+                                <th style="padding: 0.5rem; text-align: center; width: 50px;">序号</th>
+                                <th style="padding: 0.5rem; text-align: left;">商品名称</th>
+                                <th style="padding: 0.5rem; text-align: left; width: 120px;">商品编码</th>
+                                <th style="padding: 0.5rem; text-align: left; width: 100px;">商品ID</th>
+                                <th style="padding: 0.5rem; text-align: center; width: 40px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(item => {
+            const productId = cachedProductIds[item.product_name];
+            const idDisplay = productId ? productId : '<span style="color: var(--warning-color); font-size: 0.75rem;">疑似未上架</span>';
+            const imageUrl = item.image_url || '';
+            const imageHtml = imageUrl
+                ? `<img src="${imageUrl.split(',')[0].trim()}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">`
+                : '<span style="color: var(--text-muted); font-size: 0.625rem;">无图</span>';
+            const productCode = item.product_code || '--';
+
+            return `
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 0.375rem; text-align: center;">${imageHtml}</td>
+                                        <td style="padding: 0.375rem; text-align: center; font-weight: 600; color: var(--primary-color);">${item.sample_number}</td>
+                                        <td style="padding: 0.375rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
+                                        <td style="padding: 0.375rem; font-size: 0.75rem; color: var(--text-secondary);">${productCode}</td>
+                                        <td style="padding: 0.375rem; font-size: 0.75rem;">${idDisplay}</td>
+                                        <td style="padding: 0.375rem; text-align: center;">
+                                            <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 0.875rem;">✕</button>
+                                        </td>
+                                    </tr>
+                                `;
+        }).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         `;
