@@ -8,22 +8,42 @@
  */
 
 // ========================================
-// 数据汇总 - 从评分视图 + 库存表读取并合并
+// 数据汇总 - 从 ranking_data + inventory_data 读取并融合
 // ========================================
 async function loadCombinedProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行读取评分视图和库存表
-    const [rankingViewRes, inventoryRes] = await Promise.all([
-        client.from('product_ranking_view').select('*'),
+    // 并行读取排名数据和库存表
+    const [rankingRes, inventoryRes] = await Promise.all([
+        client.from('ranking_data').select('*'),
         client.from('inventory_data').select('*')
     ]);
 
-    if (rankingViewRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingViewRes.error.message);
+    if (rankingRes.error) throw new Error('读取 ranking_data 失败: ' + rankingRes.error.message);
     if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
 
-    // 直接使用库存数据（上传时已去重）
+    // 步骤1：构建排名数据 Map，计算总分
+    const rankingMap = new Map();
+    (rankingRes.data || []).forEach(item => {
+        if (!item.product_name) return;
+        // 计算总分（根据业务规则调整权重）
+        const totalScore =
+            (item.sales_amount || 0) * 0.4 +
+            (item.lecture_count || 0) * 0.2 +
+            (item.exposure_rate || 0) * 100 * 0.2 +
+            (item.conversion_rate || 0) * 100 * 0.2;
+
+        rankingMap.set(item.product_name, {
+            total_score: totalScore,
+            sales_amount: item.sales_amount || 0,
+            lecture_count: item.lecture_count || 0,
+            exposure_rate: item.exposure_rate || 0,
+            conversion_rate: item.conversion_rate || 0
+        });
+    });
+
+    // 步骤2：构建库存数据 Map
     const inventoryMap = new Map();
     (inventoryRes.data || []).forEach(item => {
         if (!item.product_name) return;
@@ -35,27 +55,35 @@ async function loadCombinedProductData() {
             product_category: item.product_category || '',
             product_code: item.product_code || '',
             image_url: item.image_url || '',
-            warehouse: item.warehouse || ''
+            warehouse: item.warehouse || '',
+            // 初始化评分相关字段
+            total_score: 0,
+            rating_rank: 999999,  // 默认无排名
+            sales_amount: 0,
+            lecture_count: 0,
+            exposure_rate: 0,
+            conversion_rate: 0
         });
     });
 
-    // 合并评分视图数据（包含评分和排名）
-    (rankingViewRes.data || []).forEach(item => {
-        const existing = inventoryMap.get(item.product_name);
+    // 步骤3：融合评分数据到库存数据
+    rankingMap.forEach((rankData, productName) => {
+        const existing = inventoryMap.get(productName);
         if (existing) {
-            Object.assign(existing, {
-                total_score: item.total_score || 0,
-                rating_rank: item.rating_rank || 999999,
-                sales_amount: item.sales_amount || 0,
-                lecture_count: item.lecture_count || 0,
-                exposure_rate: item.exposure_rate || 0,
-                conversion_rate: item.conversion_rate || 0,
-                product_id: item.product_id || ''
-            });
+            Object.assign(existing, rankData);
         }
     });
 
-    return Array.from(inventoryMap.values());
+    // 步骤4：生成排名（按总分降序）
+    const products = Array.from(inventoryMap.values());
+    products
+        .filter(p => p.total_score > 0)  // 只对有评分的商品排名
+        .sort((a, b) => b.total_score - a.total_score)
+        .forEach((p, idx) => {
+            p.rating_rank = idx + 1;  // 排名从1开始
+        });
+
+    return products;
 }
 
 // 读取新品数据（含本地去重）
