@@ -586,7 +586,7 @@ function initNewProductUpload() {
             try {
                 const rules = await loadNumberingRules();
                 console.log('加载到的规则:', rules);
-                records = assignSampleNumbers(records, rules);
+                records = assignNewProductNumbers(records, rules);
                 console.log('分配后的第一条记录:', records[0]);
             } catch (e) { console.warn('序号分配失败', e); }
 
@@ -1228,7 +1228,7 @@ async function saveNumberingRules(rules) {
     if (error) throw error;
 }
 
-function assignSampleNumbers(records, rules) {
+function assignNewProductNumbers(records, rules) {
     if (!rules || rules.length === 0) return records;
     const sortedRules = [...rules].sort((a, b) => a.range_start - b.range_start);
 
