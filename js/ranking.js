@@ -401,12 +401,19 @@ function calculateRanking(products, config) {
     const usedProducts = new Set();
     const results = {};
 
+    console.log('[排品调试] 开始计算，商品总数:', products.length);
+    console.log('[排品调试] 分类排序:', config.分类排序);
+
     for (const category of config.分类排序) {
         const conditions = config.筛选条件[category];
-        if (!conditions) continue;
+        if (!conditions) {
+            console.log(`[排品调试] ${category}: 无筛选条件，跳过`);
+            continue;
+        }
 
         // 获取未使用的商品
         let available = products.filter(p => !usedProducts.has(p.product_name));
+        console.log(`[排品调试] ${category}: 可用商品数=${available.length}, 按子分类筛选=${conditions.按子分类分别筛选}, 选中子分类=${JSON.stringify(conditions.选中子分类)}`);
 
         // 应用筛选条件
         if (category.includes('库存品')) {
@@ -416,11 +423,15 @@ function calculateRanking(products, config) {
             available = available.slice(0, limit);
         } else if (conditions.按子分类分别筛选) {
             // 按子分类分别筛选
+            console.log(`[排品调试] ${category}: 调用 filterBySubcategory`);
             available = filterBySubcategory(available, conditions);
+            console.log(`[排品调试] ${category}: filterBySubcategory 返回 ${available.length} 个商品`);
         } else {
             // 普通筛选
             available = applyFilters(available, conditions);
         }
+
+        console.log(`[排品调试] ${category}: 筛选后商品数=${available.length}`);
 
         // 标记为已使用
         available.forEach(p => usedProducts.add(p.product_name));
