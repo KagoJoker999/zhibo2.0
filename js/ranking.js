@@ -1669,7 +1669,10 @@ async function initRankingSettings() {
                         ruleData.conditions[condIndex].field = target.value;
                         // 字段变更时重置运算符
                         const fieldType = getFieldType(target.value);
-                        ruleData.conditions[condIndex].operator = fieldType === 'numeric' ? '大于等于' : '包含';
+                        let defaultOperator = '包含';
+                        if (fieldType === 'numeric') defaultOperator = '大于等于';
+                        else if (fieldType === 'boolean') defaultOperator = '排除';
+                        ruleData.conditions[condIndex].operator = defaultOperator;
                         reloadRules(); // 重新渲染以更新运算符选项
                     } else if (target.classList.contains('condition-operator')) {
                         ruleData.conditions[condIndex].operator = target.value;
