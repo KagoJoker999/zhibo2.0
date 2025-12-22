@@ -689,7 +689,7 @@ async function saveRankingResults(results) {
     // 准备插入数据
     const records = results.map(r => ({
         product_name: r.product_name,
-        product_id: r.product_id || '',
+        product_id: cachedProductIds[r.product_name] || r.product_id || '',
         ranking_result: r.ranking_result,
         sample_number: r.sample_number
     }));
@@ -802,7 +802,9 @@ function generateRankingPage() {
                 </div>
                 
                 <div class="upload-actions">
-                    <button class="btn btn-primary" id="btnSaveResults" disabled>保存结果到数据库</button>
+                    <button class="btn btn-primary" id="btnSaveResults" disabled style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        保存结果到数据库 <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: normal; font-family: monospace;">ranking_results</span>
+                    </button>
                 </div>
             </div>
         </div>
