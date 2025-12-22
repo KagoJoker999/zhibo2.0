@@ -789,9 +789,7 @@ function generateRankingPage() {
             
             <!-- 下部分：排品结果（全宽） -->
             <div class="upload-block" id="block-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 400px;">
-                <div class="upload-block-header">
-                    <h3>📊 排品结果 <span class="db-table-tag">→ ranking_results</span></h3>
-                </div>
+
                 
                 <div class="scrollable-content" id="rankingResultContent" style="max-height: 500px; overflow-y: auto;">
                     <div class="placeholder-content">
@@ -1255,7 +1253,7 @@ function renderRankingResults(results) {
     let html = `
         <div class="ranking-result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📊 排品结果</h3>
+                <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📊 排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">→ ranking_results</span></h3>
                 <span style="font-size: 0.875rem; color: var(--text-secondary);">共 ${results.length} 个商品</span>
             </div>
             <button class="btn btn-sm" onclick="undoDeleteRankingItem()" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;" ${deletedItems.length === 0 ? 'disabled' : ''}>
