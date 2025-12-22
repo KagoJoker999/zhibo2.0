@@ -1354,17 +1354,19 @@ async function initRankingSettings() {
         const btnAddRule = document.getElementById('btnAddRule');
         const selectNewRuleField = document.getElementById('selectNewRuleField');
 
-        btnAddRule.addEventListener('click', () => {
-            const field = selectNewRuleField.value;
-            if (!config.筛选条件[category][field]) {
-                config.筛选条件[category][field] = { "启用": true };
-                // 重新渲染
-                reloadRules();
-                saveConfigQuietly();
-            } else {
-                alert('该字段的规则已存在，请直接在下方编辑。');
-            }
-        });
+        if (btnAddRule && selectNewRuleField) {
+            btnAddRule.addEventListener('click', () => {
+                const field = selectNewRuleField.value;
+                if (!config.筛选条件[category][field]) {
+                    config.筛选条件[category][field] = { "启用": true };
+                    // 重新渲染
+                    reloadRules();
+                    saveConfigQuietly();
+                } else {
+                    alert('该字段的规则已存在，请直接在下方编辑。');
+                }
+            });
+        }
     }
 
     async function saveConfigQuietly() {
