@@ -218,6 +218,43 @@ async function removeExcludedProduct(productName) {
     return true;
 }
 
+// ========================================
+// 排除不可佩戴品管理 (New)
+// ========================================
+async function loadExcludedNonWearables() {
+    const client = window.supabaseClient;
+    if (!client) return [];
+
+    const { data, error } = await client.from('excluded_non_wearables').select('*').order('created_at', { ascending: false });
+    if (error) {
+        console.warn('读取排除不可佩戴品失败:', error.message);
+        return [];
+    }
+    return data || [];
+}
+
+async function addExcludedNonWearable(productName) {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { error } = await client.from('excluded_non_wearables').insert({
+        product_name: productName.trim()
+    });
+    if (error) throw new Error('添加失败: ' + error.message);
+    return true;
+}
+
+async function removeExcludedNonWearable(productName) {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { error } = await client.from('excluded_non_wearables')
+        .delete()
+        .eq('product_name', productName);
+    if (error) throw new Error('删除失败: ' + error.message);
+    return true;
+}
+
 // 过滤排除商品
 function filterExcludedProducts(products, excludedList) {
     const excludedNames = new Set(excludedList.map(e => e.product_name));
@@ -641,29 +678,59 @@ function generateRankingExclusionPage() {
         <div class="ranking-exclusion-page">
              <div class="page-intro">
                 <h2>🚫 排除商品设置</h2>
-                <p>管理不参与排品的商品名单</p>
+                <p>管理不参与排品的商品名单以及不可佩戴品名单</p>
             </div>
-            <div class="card">
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>排除列表 <span class="db-table-tag">→ excluded_products</span></h3>
-                    <div class="input-group" style="max-width:400px; display:flex; gap:0.5rem;">
-                        <input type="text" id="excludeInput" class="input" placeholder="输入商品名称..." style="flex:1;">
-                        <button class="btn btn-primary" id="btnAddExclude">添加排除</button>
+            
+            <div class="settings-split-container" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                <!-- 左侧：排除商品 -->
+                <div class="card settings-split-left" style="height:auto;">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>排除列表 <span class="db-table-tag">→ excluded_products</span></h3>
+                    </div>
+                    <div class="card-body">
+                         <div class="input-group" style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                            <input type="text" id="excludeInput" class="input" placeholder="输入商品名称..." style="flex:1;">
+                            <button class="btn btn-primary" id="btnAddExclude">添加</button>
+                        </div>
+                        <div class="excluded-list-container" style="max-height:500px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--border-radius-sm);">
+                            <table class="data-table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left; padding:0.75rem;">商品名称</th>
+                                        <th style="width:60px; text-align:center; padding:0.75rem;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="excludedListBody">
+                                    <tr><td colspan="2" class="text-center" style="padding:2rem;">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="excluded-list-container" style="max-height:calc(100vh - 300px); overflow-y:auto;">
-                        <table class="data-table" style="width:100%;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align:left; padding:1rem;">商品名称</th>
-                                    <th style="width:100px; text-align:center; padding:1rem;">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="excludedListBody">
-                                <tr><td colspan="2" class="text-center" style="padding:2rem;">加载中...</td></tr>
-                            </tbody>
-                        </table>
+
+                <!-- 右侧：不可佩戴品 -->
+                <div class="card settings-split-right" style="height:auto;">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>不可佩戴品 <span class="db-table-tag">→ excluded_non_wearables</span></h3>
+                    </div>
+                    <div class="card-body">
+                         <div class="input-group" style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                            <input type="text" id="excludeNonWearableInput" class="input" placeholder="输入商品名称..." style="flex:1;">
+                            <button class="btn btn-primary" id="btnAddNonWearable">添加</button>
+                        </div>
+                        <div class="excluded-list-container" style="max-height:500px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--border-radius-sm);">
+                            <table class="data-table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left; padding:0.75rem;">商品名称</th>
+                                        <th style="width:60px; text-align:center; padding:0.75rem;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="excludedNonWearableListBody">
+                                    <tr><td colspan="2" class="text-center" style="padding:2rem;">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1172,11 +1239,12 @@ async function initRankingAssignment() {
 }
 
 async function initRankingExclusion() {
+    // === 左侧：排除商品 ===
     const excludedContainer = document.getElementById('excludedListBody');
     const excludeInput = document.getElementById('excludeInput');
     const btnAddExclude = document.getElementById('btnAddExclude');
 
-    async function renderList() {
+    async function renderExcludedList() {
         const list = await loadExcludedProducts();
         if (!excludedContainer) return;
 
@@ -1184,20 +1252,22 @@ async function initRankingExclusion() {
             excludedContainer.innerHTML = '<tr><td colspan="2" class="text-center" style="padding:2rem; color:var(--text-muted);">暂无排除商品</td></tr>';
         } else {
             excludedContainer.innerHTML = list.map(item => `
-                 <tr style="border-bottom:1px solid var(--border-color);">
-                     <td style="padding:0.75rem 1rem;">${item.product_name}</td>
-                     <td style="text-align:center;">
-                         <button class="btn-icon btn-delete-exclude" data-name="${item.product_name}" title="删除" style="color:var(--error-color);">✕</button>
-                     </td>
-                 </tr>
-             `).join('');
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:0.75rem 1rem;">${item.product_name}</td>
+                    <td style="text-align:center;">
+                        <button class="btn-icon btn-delete-exclude" data-name="${item.product_name}" title="删除" style="color:var(--error-color);">✕</button>
+                    </td>
+                </tr>
+            `).join('');
 
             excludedContainer.querySelectorAll('.btn-delete-exclude').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const name = btn.dataset.name;
                     if (confirm(`移除 "${name}"？`)) {
-                        await removeExcludedProduct(name);
-                        renderList();
+                        try {
+                            await removeExcludedProduct(name);
+                            renderExcludedList();
+                        } catch (e) { console.error(e); }
                     }
                 });
             });
@@ -1211,7 +1281,7 @@ async function initRankingExclusion() {
                 try {
                     await addExcludedProduct(name);
                     excludeInput.value = '';
-                    renderList();
+                    renderExcludedList();
                     window.AppUtils?.showToast?.('已添加', 'success');
                 } catch (e) {
                     window.AppUtils?.showToast?.(e.message, 'error');
@@ -1223,7 +1293,65 @@ async function initRankingExclusion() {
         });
     }
 
-    renderList();
+    // === 右侧：不可佩戴品 ===
+    const nonWearableContainer = document.getElementById('excludedNonWearableListBody');
+    const nonWearableInput = document.getElementById('excludeNonWearableInput');
+    const btnAddNonWearable = document.getElementById('btnAddNonWearable');
+
+    async function renderNonWearableList() {
+        const list = await loadExcludedNonWearables();
+        if (!nonWearableContainer) return;
+
+        if (list.length === 0) {
+            nonWearableContainer.innerHTML = '<tr><td colspan="2" class="text-center" style="padding:2rem; color:var(--text-muted);">暂无记录</td></tr>';
+        } else {
+            nonWearableContainer.innerHTML = list.map(item => `
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:0.75rem 1rem;">${item.product_name}</td>
+                    <td style="text-align:center;">
+                        <button class="btn-icon btn-delete-nw" data-name="${item.product_name}" title="删除" style="color:var(--error-color);">✕</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            nonWearableContainer.querySelectorAll('.btn-delete-nw').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const name = btn.dataset.name;
+                    if (confirm(`移除 "${name}"？`)) {
+                        try {
+                            await removeExcludedNonWearable(name);
+                            renderNonWearableList();
+                        } catch (e) {
+                            window.AppUtils?.showToast?.(e.message, 'error');
+                        }
+                    }
+                });
+            });
+        }
+    }
+
+    if (btnAddNonWearable) {
+        btnAddNonWearable.addEventListener('click', async () => {
+            const name = nonWearableInput.value.trim();
+            if (name) {
+                try {
+                    await addExcludedNonWearable(name);
+                    nonWearableInput.value = '';
+                    renderNonWearableList();
+                    window.AppUtils?.showToast?.('已添加', 'success');
+                } catch (e) {
+                    window.AppUtils?.showToast?.(e.message, 'error');
+                }
+            }
+        });
+        nonWearableInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnAddNonWearable.click();
+        });
+    }
+
+    // Initial render
+    renderExcludedList();
+    renderNonWearableList();
 }
 
 window.loadRankingPage = function (pageId) {
