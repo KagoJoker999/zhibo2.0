@@ -14,6 +14,7 @@ const FIELD_MAPPING = {
     "虚拟分类": "virtual_category",
     "实际库存数": "actual_stock",
     "评分排名": "rating_rank",
+    "产品总分": "total_score",
     "是否可佩戴": "is_wearable",
     "商品分类": "product_category",
     "可用数": "available_qty",
@@ -31,6 +32,7 @@ const FILTERABLE_FIELDS = [
     "虚拟分类",      // 文本
     "实际库存数",    // 数值
     "评分排名",      // 数值
+    "产品总分",      // 数值
     "是否可佩戴",    // 布尔
     "商品分类",      // 文本
     "可用数",        // 数值
