@@ -404,17 +404,24 @@ function generateRankingPage() {
                             <span class="stat-value" id="statInventory">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">可排品商品</span>
-                            <span class="stat-value" id="statCombined">--</span>
+                            <span class="stat-label">新品数据</span>
+                            <span class="stat-value" id="statNewProduct">--</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">排除商品</span>
                             <span class="stat-value" id="statExcluded">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">新品数据</span>
-                            <span class="stat-value" id="statNewProduct">--</span>
+                            <span class="stat-label">参与排品</span>
+                            <span class="stat-value" id="statCombined">--</span>
                         </div>
+                    </div>
+                    
+                    <div class="ranking-options" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="includeNewProducts" checked>
+                            <span>包含新品数据参与排品</span>
+                        </label>
                     </div>
                     
                     <div class="upload-actions">
@@ -529,6 +536,9 @@ async function initRankingPage() {
                 btnLoadData.disabled = true;
                 btnLoadData.textContent = '加载中...';
 
+                // 获取是否包含新品的设置
+                const includeNewProducts = document.getElementById('includeNewProducts')?.checked ?? true;
+
                 // 获取各表统计
                 const client = window.supabaseClient;
                 const [r1, r2, r3] = await Promise.all([
@@ -539,7 +549,7 @@ async function initRankingPage() {
 
                 document.getElementById('statRanking').textContent = r1.count || 0;
                 document.getElementById('statInventory').textContent = r2.count || 0;
-                document.getElementById('statNewProduct').textContent = r3.count || 0;
+                document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
 
                 // 加载排除商品列表
                 cachedExcluded = await loadExcludedProducts();
@@ -548,18 +558,33 @@ async function initRankingPage() {
                 // 汇总商品数据（库存 + 评分）
                 let allProducts = await loadCombinedProductData();
 
+                // 如果包含新品，将新品数据合并到排品数据中
+                if (includeNewProducts) {
+                    cachedNewProducts = await loadNewProductData();
+                    // 将新品添加到商品列表（赋予默认评分排名）
+                    cachedNewProducts.forEach(np => {
+                        if (!allProducts.find(p => p.product_name === np.product_name)) {
+                            allProducts.push({
+                                ...np,
+                                rating_rank: 999999,  // 新品默认排名最后
+                                total_score: 0,
+                                is_new_product: true
+                            });
+                        }
+                    });
+                } else {
+                    cachedNewProducts = [];
+                }
+
                 // 过滤排除商品
                 cachedProducts = filterExcludedProducts(allProducts, cachedExcluded);
 
-                // 只计算有评分数据的商品作为可排品商品
-                const rankableCount = cachedProducts.filter(p => p.rating_rank && p.rating_rank < 999999).length;
-                document.getElementById('statCombined').textContent = rankableCount;
-
-                // 加载新品数据
-                cachedNewProducts = await loadNewProductData();
+                // 参与排品的商品总数
+                const totalCount = cachedProducts.length;
+                document.getElementById('statCombined').textContent = totalCount;
 
                 btnCalculate.disabled = false;
-                window.AppUtils?.showToast?.(`数据加载完成：可排品 ${rankableCount} 个，排除 ${cachedExcluded.length} 个`, 'success');
+                window.AppUtils?.showToast?.(`数据加载完成：参与排品 ${totalCount} 个（排除 ${cachedExcluded.length} 个）`, 'success');
             } catch (error) {
                 console.error('加载失败:', error);
                 window.AppUtils?.showToast?.('加载失败: ' + error.message, 'error');
