@@ -666,6 +666,9 @@ async function initRankingPage() {
 
                 // 汇总商品数据（库存 + 评分）
                 let allProducts = await loadCombinedProductData();
+                const baseInventoryCount = allProducts.length;
+                let addedNewCount = 0;
+
                 // 如果包含新品，将新品数据合并到排品数据中
                 if (includeNewProducts) {
                     cachedNewProducts = await loadNewProductData();
@@ -683,6 +686,7 @@ async function initRankingPage() {
                                 total_score: 0,
                                 is_new_product: true
                             });
+                            addedNewCount++;
                         }
                     });
                 } else {
@@ -690,11 +694,15 @@ async function initRankingPage() {
                 }
 
                 // 过滤排除商品
+                const countBeforeExclude = allProducts.length;
                 cachedProducts = filterExcludedProducts(allProducts, cachedExcluded);
+                const countAfterExclude = cachedProducts.length;
+                const excludedCount = countBeforeExclude - countAfterExclude;
 
-                // 参与排品的商品总数
+                // 参与排品的商品总数及计算逻辑显示
                 const totalCount = cachedProducts.length;
-                document.getElementById('statCombined').textContent = totalCount;
+                const formulaHtml = `<span style="font-size:0.85em; color:var(--text-muted); margin-left:0.5rem; font-weight:normal;">(${baseInventoryCount} + ${addedNewCount} - ${excludedCount})</span>`;
+                document.getElementById('statCombined').innerHTML = `${totalCount} ${formulaHtml}`;
 
                 btnCalculate.disabled = false;
                 window.AppUtils?.showToast?.(`数据加载完成：参与排品 ${totalCount} 个（排除 ${cachedExcluded.length} 个）`, 'success');
