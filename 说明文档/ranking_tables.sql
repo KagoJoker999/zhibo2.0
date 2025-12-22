@@ -80,3 +80,15 @@ INSERT INTO ranking_config (config_key, config_value) VALUES (
         }
     }'::jsonb
 ) ON CONFLICT (config_key) DO NOTHING;
+
+-- 3. 排除商品表
+-- 存储需要排除不参与排品的商品
+CREATE TABLE IF NOT EXISTS excluded_products (
+    id SERIAL PRIMARY KEY,
+    product_name TEXT UNIQUE NOT NULL,    -- 商品名称
+    reason TEXT,                           -- 排除原因（可选）
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 为商品名称创建索引
+CREATE INDEX IF NOT EXISTS idx_excluded_products_name ON excluded_products(product_name);

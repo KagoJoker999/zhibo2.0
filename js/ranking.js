@@ -75,6 +75,51 @@ async function loadNewProductData() {
 }
 
 // ========================================
+// 排除商品管理
+// ========================================
+async function loadExcludedProducts() {
+    const client = window.supabaseClient;
+    if (!client) return [];
+
+    const { data, error } = await client.from('excluded_products').select('*');
+    if (error) {
+        console.warn('读取排除商品失败:', error.message);
+        return [];
+    }
+    return data || [];
+}
+
+async function addExcludedProduct(productName, reason = '') {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { error } = await client.from('excluded_products').insert({
+        product_name: productName.trim(),
+        reason: reason,
+        created_at: new Date().toISOString()
+    });
+    if (error) throw new Error('添加排除商品失败: ' + error.message);
+    return true;
+}
+
+async function removeExcludedProduct(productName) {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { error } = await client.from('excluded_products')
+        .delete()
+        .eq('product_name', productName);
+    if (error) throw new Error('删除排除商品失败: ' + error.message);
+    return true;
+}
+
+// 过滤排除商品
+function filterExcludedProducts(products, excludedList) {
+    const excludedNames = new Set(excludedList.map(e => e.product_name));
+    return products.filter(p => !excludedNames.has(p.product_name));
+}
+
+// ========================================
 // 配置读取/保存
 // ========================================
 async function loadRankingConfig(configKey = 'filter_config') {
@@ -363,6 +408,10 @@ function generateRankingPage() {
                             <span class="stat-value" id="statCombined">--</span>
                         </div>
                         <div class="stat-item">
+                            <span class="stat-label">排除商品</span>
+                            <span class="stat-value" id="statExcluded">--</span>
+                        </div>
+                        <div class="stat-item">
                             <span class="stat-label">新品数据</span>
                             <span class="stat-value" id="statNewProduct">--</span>
                         </div>
@@ -435,6 +484,23 @@ function generateRankingSettingsPage() {
                     </div>
                 </div>
                 
+                <!-- 排除商品设置 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🚫 排除商品 <span class="db-table-tag">→ excluded_products</span></h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="setting-hint">输入商品名称添加到排除列表，这些商品将不参与排品计算</p>
+                        <div class="input-group" style="margin-bottom: 1rem;">
+                            <input type="text" id="excludeProductInput" class="input" placeholder="输入商品名称..." style="flex:1;">
+                            <button class="btn btn-primary" id="btnAddExclude">添加</button>
+                        </div>
+                        <div class="excluded-list" id="excludedListContainer">
+                            <p class="placeholder">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="settings-actions">
                     <button class="btn btn-primary" id="btnSaveSettings">保存设置</button>
                     <button class="btn btn-secondary" id="btnResetSettings">重置为默认</button>
@@ -449,6 +515,7 @@ function generateRankingSettingsPage() {
 // ========================================
 let cachedProducts = [];      // 库存+评分汇总数据
 let cachedNewProducts = [];   // 新品数据
+let cachedExcluded = [];      // 排除商品列表
 let cachedResults = [];       // 排品结果
 
 async function initRankingPage() {
@@ -474,8 +541,16 @@ async function initRankingPage() {
                 document.getElementById('statInventory').textContent = r2.count || 0;
                 document.getElementById('statNewProduct').textContent = r3.count || 0;
 
+                // 加载排除商品列表
+                cachedExcluded = await loadExcludedProducts();
+                document.getElementById('statExcluded').textContent = cachedExcluded.length;
+
                 // 汇总商品数据（库存 + 评分）
-                cachedProducts = await loadCombinedProductData();
+                let allProducts = await loadCombinedProductData();
+
+                // 过滤排除商品
+                cachedProducts = filterExcludedProducts(allProducts, cachedExcluded);
+
                 // 只计算有评分数据的商品作为可排品商品
                 const rankableCount = cachedProducts.filter(p => p.rating_rank && p.rating_rank < 999999).length;
                 document.getElementById('statCombined').textContent = rankableCount;
@@ -484,7 +559,7 @@ async function initRankingPage() {
                 cachedNewProducts = await loadNewProductData();
 
                 btnCalculate.disabled = false;
-                window.AppUtils?.showToast?.(`数据加载完成：可排品 ${rankableCount} 个，新品 ${cachedNewProducts.length} 个`, 'success');
+                window.AppUtils?.showToast?.(`数据加载完成：可排品 ${rankableCount} 个，排除 ${cachedExcluded.length} 个`, 'success');
             } catch (error) {
                 console.error('加载失败:', error);
                 window.AppUtils?.showToast?.('加载失败: ' + error.message, 'error');
@@ -621,6 +696,73 @@ async function initRankingSettings() {
                 await saveRankingConfig('filter_config', getDefaultRankingConfig());
                 location.reload();
             }
+        });
+    }
+
+    // ========================================
+    // 排除商品管理
+    // ========================================
+    const excludedContainer = document.getElementById('excludedListContainer');
+    const excludeInput = document.getElementById('excludeProductInput');
+    const btnAddExclude = document.getElementById('btnAddExclude');
+
+    // 渲染排除商品列表
+    async function renderExcludedList() {
+        const excludedList = await loadExcludedProducts();
+        if (excludedContainer) {
+            if (excludedList.length === 0) {
+                excludedContainer.innerHTML = '<p class="placeholder">暂无排除商品</p>';
+            } else {
+                excludedContainer.innerHTML = excludedList.map(item => `
+                    <div class="excluded-item" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;background:var(--bg-secondary);border-radius:var(--border-radius-sm);margin-bottom:0.375rem;">
+                        <span style="flex:1;font-size:0.875rem;">${item.product_name}</span>
+                        <button class="btn-icon btn-delete-exclude" data-name="${item.product_name}" title="删除">✕</button>
+                    </div>
+                `).join('');
+
+                // 绑定删除事件
+                excludedContainer.querySelectorAll('.btn-delete-exclude').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const name = btn.dataset.name;
+                        if (confirm(`确定删除排除商品"${name}"吗？`)) {
+                            try {
+                                await removeExcludedProduct(name);
+                                await renderExcludedList();
+                                window.AppUtils?.showToast?.('已删除', 'success');
+                            } catch (e) {
+                                window.AppUtils?.showToast?.(e.message, 'error');
+                            }
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    // 初始渲染
+    await renderExcludedList();
+
+    // 添加按钮事件
+    if (btnAddExclude && excludeInput) {
+        btnAddExclude.addEventListener('click', async () => {
+            const name = excludeInput.value.trim();
+            if (!name) {
+                window.AppUtils?.showToast?.('请输入商品名称', 'warning');
+                return;
+            }
+            try {
+                await addExcludedProduct(name);
+                excludeInput.value = '';
+                await renderExcludedList();
+                window.AppUtils?.showToast?.(`已添加"${name}"到排除列表`, 'success');
+            } catch (e) {
+                window.AppUtils?.showToast?.(e.message, 'error');
+            }
+        });
+
+        // 回车添加
+        excludeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnAddExclude.click();
         });
     }
 }
