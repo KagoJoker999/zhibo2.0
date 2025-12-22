@@ -1123,6 +1123,12 @@ async function initRankingSettings() {
     function renderFilterSettings(category) {
         if (!filterContainer) return;
 
+        // ========== 关键修复：清除旧的事件监听器 ==========
+        // 通过克隆并替换节点来移除所有旧的事件监听器
+        const newContainer = filterContainer.cloneNode(false); // 浅克隆，不复制子节点和事件
+        filterContainer.parentNode.replaceChild(newContainer, filterContainer);
+        filterContainer = newContainer; // 更新引用
+
         if (!category) {
             if (filterTitle) filterTitle.textContent = '筛选条件设置';
             if (filterSubtitle) filterSubtitle.textContent = '请从左侧选择一个分类进行配置';
