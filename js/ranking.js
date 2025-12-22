@@ -578,11 +578,20 @@ function applyCondition(product, field, operator, value, fieldName) {
 function filterBySubcategory(products, conditions) {
     const subFieldKey = conditions.子分类字段 || '商品分类';
     const subField = FIELD_MAPPING[subFieldKey] || subFieldKey;
+    const selectedSubcategories = conditions.选中子分类 || [];
 
     const subCategories = new Map();
 
     // 先应用基础筛选条件
     let filtered = applyFilters(products, conditions);
+
+    // 如果指定了选中子分类，只保留这些分类的商品
+    if (selectedSubcategories.length > 0) {
+        filtered = filtered.filter(p => {
+            const subCat = p[subField] || '';
+            return selectedSubcategories.includes(subCat);
+        });
+    }
 
     // 按子分类分组
     filtered.forEach(p => {
@@ -594,7 +603,6 @@ function filterBySubcategory(products, conditions) {
     });
 
     // 每个子分类取可用数 (available_qty) 最大的一个
-    // 默认我们假设用户想要库存最多的
     const result = [];
     subCategories.forEach(items => {
         items.sort((a, b) => (b.available_qty || 0) - (a.available_qty || 0));
@@ -1269,6 +1277,17 @@ async function initRankingSettings() {
         // 获取当前的按子分类筛选设置
         const isSubcategoryFilter = config.筛选条件[category].按子分类分别筛选 === true;
         const subcategoryField = config.筛选条件[category].子分类字段 || '商品分类';
+        const selectedSubcategories = config.筛选条件[category].选中子分类 || [];
+
+        // 构建分类选择器的复选框HTML
+        const subcategoryCheckboxesHtml = productCategoryOptions.map(opt => `
+            <label style="display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0.5rem; cursor:pointer; border-radius:4px;" 
+                   onmouseover="this.style.background='var(--bg-secondary)'" 
+                   onmouseout="this.style.background='transparent'">
+                <input type="checkbox" class="subcategory-checkbox" value="${opt}" ${selectedSubcategories.includes(opt) ? 'checked' : ''}>
+                <span style="font-size:0.85rem;">${opt}</span>
+            </label>
+        `).join('');
 
         // 构建 HTML
         filterContainer.innerHTML = `
@@ -1293,11 +1312,27 @@ async function initRankingSettings() {
                         </span>
                     </label>
                 </div>
-                <div id="subcategoryFieldContainer" style="display:${isSubcategoryFilter ? 'block' : 'none'}; margin-top:0.75rem;">
-                    <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem; display:block;">子分类字段</label>
-                    <select id="selectSubcategoryField" class="input" style="width:100%;">
-                        ${FILTERABLE_FIELDS.filter(f => getFieldType(f) === 'string').map(f => `<option value="${f}" ${f === subcategoryField ? 'selected' : ''}>${f}</option>`).join('')}
-                    </select>
+                <div id="subcategoryFieldContainer" style="display:${isSubcategoryFilter ? 'flex' : 'none'}; gap:1rem; margin-top:0.75rem;">
+                    <!-- 左侧：子分类字段 -->
+                    <div style="flex:1;">
+                        <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem; display:block;">子分类字段</label>
+                        <select id="selectSubcategoryField" class="input" style="width:100%;">
+                            ${FILTERABLE_FIELDS.filter(f => getFieldType(f) === 'string').map(f => `<option value="${f}" ${f === subcategoryField ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <!-- 右侧：选择要提取的分类 -->
+                    <div style="flex:2;">
+                        <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem; display:block;">选择要提取的分类 <span style="color:var(--primary-color);">(已选 ${selectedSubcategories.length} 项)</span></label>
+                        <div class="subcategory-selector" style="position:relative;">
+                            <div class="subcategory-toggle" style="padding:0.5rem; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--border-radius-sm); cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                                <span style="color:var(--text-muted); font-size:0.85rem;">${selectedSubcategories.length > 0 ? selectedSubcategories.slice(0, 3).join(', ') + (selectedSubcategories.length > 3 ? '...' : '') : '点击选择分类'}</span>
+                                <span style="font-size:0.7rem;">▼</span>
+                            </div>
+                            <div class="subcategory-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--border-radius-sm); box-shadow:0 4px 12px rgba(0,0,0,0.3); z-index:100; margin-top:4px; padding:0.5rem;">
+                                ${subcategoryCheckboxesHtml || '<span style="color:var(--text-muted); font-size:0.85rem; padding:0.5rem;">暂无分类数据</span>'}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1515,7 +1550,22 @@ async function initRankingSettings() {
                     if (dropdown) {
                         const isVisible = dropdown.style.display !== 'none';
                         // 先关闭所有其他下拉框
-                        filterContainer.querySelectorAll('.category-dropdown').forEach(d => d.style.display = 'none');
+                        filterContainer.querySelectorAll('.category-dropdown, .subcategory-dropdown').forEach(d => d.style.display = 'none');
+                        dropdown.style.display = isVisible ? 'none' : 'block';
+                    }
+                }
+                return;
+            }
+
+            // 子分类选择器下拉框切换
+            if (target.closest('.subcategory-toggle')) {
+                const selector = target.closest('.subcategory-selector');
+                if (selector) {
+                    const dropdown = selector.querySelector('.subcategory-dropdown');
+                    if (dropdown) {
+                        const isVisible = dropdown.style.display !== 'none';
+                        // 先关闭所有其他下拉框
+                        filterContainer.querySelectorAll('.category-dropdown, .subcategory-dropdown').forEach(d => d.style.display = 'none');
                         dropdown.style.display = isVisible ? 'none' : 'block';
                     }
                 }
@@ -1523,8 +1573,8 @@ async function initRankingSettings() {
             }
 
             // 点击其他地方关闭下拉框
-            if (!target.closest('.category-selector')) {
-                filterContainer.querySelectorAll('.category-dropdown').forEach(d => d.style.display = 'none');
+            if (!target.closest('.category-selector') && !target.closest('.subcategory-selector')) {
+                filterContainer.querySelectorAll('.category-dropdown, .subcategory-dropdown').forEach(d => d.style.display = 'none');
             }
         }, { signal });
 
@@ -1561,6 +1611,20 @@ async function initRankingSettings() {
             if (target.id === 'selectSubcategoryField') {
                 config.筛选条件[category].子分类字段 = target.value;
                 saveConfigQuietly();
+                return;
+            }
+
+            // 子分类复选框变更（选择要提取的分类）
+            if (target.classList.contains('subcategory-checkbox')) {
+                const selector = target.closest('.subcategory-selector');
+                if (selector) {
+                    const checkboxes = selector.querySelectorAll('.subcategory-checkbox:checked');
+                    const selectedValues = Array.from(checkboxes).map(cb => cb.value);
+                    config.筛选条件[category].选中子分类 = selectedValues;
+                    // 更新显示的计数和预览
+                    renderFilterSettings(category);
+                    saveConfigQuietly();
+                }
                 return;
             }
 
