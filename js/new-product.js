@@ -611,6 +611,7 @@ function initNewProductUpload() {
                     <p>商品数量：${records.length}</p>
                     <p>已应用名称公式</p>
                     <p>已生成上架分类</p>
+                    <p>已分配序号</p>
                 </div>
             `;
 
@@ -1200,9 +1201,22 @@ async function loadNumberingRules() {
             .select('config_value')
             .eq('config_key', 'new_product_number_rules')
             .single();
-        if (error || !data) return [];
-        return data.config_value || [];
-    } catch (e) { console.warn(e); return []; }
+
+        if (error || !data || !data.config_value || data.config_value.length === 0) {
+            console.log('未找到序号规则，使用默认规则');
+            return [
+                { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
+                { range_start: 21, range_end: 999999, prefix: 'A', start_num: 41, step: 1 }
+            ];
+        }
+        return data.config_value;
+    } catch (e) {
+        console.warn(e);
+        return [
+            { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
+            { range_start: 21, range_end: 999999, prefix: 'A', start_num: 41, step: 1 }
+        ];
+    }
 }
 
 async function saveNumberingRules(rules) {
