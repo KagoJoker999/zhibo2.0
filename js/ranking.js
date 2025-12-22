@@ -732,11 +732,16 @@ function generateRankingPage() {
                     </div>
                 </div>
                 
-                <!-- 选项 -->
-                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; white-space: nowrap;">
-                    <input type="checkbox" id="includeNewProducts" checked>
-                    <span>包含新品</span>
-                </label>
+                <!-- 切换选项 -->
+                <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <button type="button" class="toggle-btn active" id="btnExcludeNew" onclick="setNewProductMode(false)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">
+                        排除新品<span style="font-size: 0.625rem; opacity: 0.8; display: block;">开播前</span>
+                    </button>
+                    <button type="button" class="toggle-btn" id="btnIncludeNew" onclick="setNewProductMode(true)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;">
+                        包含新品<span style="font-size: 0.625rem; opacity: 0.8; display: block;">下播调拨</span>
+                    </button>
+                </div>
+                <input type="hidden" id="includeNewProducts" value="false">
                 
                 <!-- 按钮 -->
                 <button class="btn btn-primary" id="btnLoadAndCalculate">加载数据并计算</button>
@@ -966,6 +971,29 @@ async function loadProductIdMapping() {
     return mapping;
 }
 
+// 切换新品模式
+function setNewProductMode(include) {
+    const hiddenInput = document.getElementById('includeNewProducts');
+    const btnExclude = document.getElementById('btnExcludeNew');
+    const btnInclude = document.getElementById('btnIncludeNew');
+
+    if (hiddenInput) hiddenInput.value = include ? 'true' : 'false';
+
+    if (include) {
+        // 包含新品
+        btnInclude.style.background = 'var(--primary-color)';
+        btnInclude.style.color = 'white';
+        btnExclude.style.background = 'var(--bg-secondary)';
+        btnExclude.style.color = 'var(--text-secondary)';
+    } else {
+        // 排除新品
+        btnExclude.style.background = 'var(--primary-color)';
+        btnExclude.style.color = 'white';
+        btnInclude.style.background = 'var(--bg-secondary)';
+        btnInclude.style.color = 'var(--text-secondary)';
+    }
+}
+
 async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
@@ -977,8 +1005,8 @@ async function initRankingPage() {
                 btnLoadAndCalculate.textContent = '加载中...';
                 deletedItems = []; // 重置删除记录
 
-                // 获取是否包含新品的设置
-                const includeNewProducts = document.getElementById('includeNewProducts')?.checked ?? true;
+                // 获取是否包含新品的设置（从hidden input读取value）
+                const includeNewProducts = document.getElementById('includeNewProducts')?.value === 'true';
 
                 // 获取各表统计
                 const client = window.supabaseClient;
