@@ -946,6 +946,13 @@ function renderRankingResults(results) {
 
 async function initRankingSettings() {
     let config = await loadRankingConfig();
+
+    // 初始化默认配置结构，防止 undefined 报错
+    if (!config) config = {};
+    if (!config.分类排序) config.分类排序 = [];
+    if (!config.结果映射) config.结果映射 = {};
+    if (!config.筛选条件) config.筛选条件 = {};
+    if (!config.样品序号规则) config.样品序号规则 = {};
     const orderList = document.getElementById('categoryOrderList');
     const filterContainer = document.getElementById('filterConditionsContainer');
     const filterTitle = document.getElementById('filterSettingsTitle');
