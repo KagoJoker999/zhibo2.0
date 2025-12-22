@@ -737,9 +737,9 @@ function generateRankingPage() {
                     display: none;
                     position: absolute;
                     left: 54px;
-                    top: -48px;
-                    width: 144px;
-                    height: 144px;
+                    top: -72px; /* 垂直居中: -(192/2 - 48/2) */
+                    width: 192px; /* 4倍大小 */
+                    height: 192px;
                     object-fit: cover;
                     border-radius: 4px;
                     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
