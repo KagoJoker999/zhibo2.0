@@ -388,7 +388,8 @@ function generateNumberingRulesUI() {
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
                 <div>
                     <h3 style="margin:0;">🔢 序号分配规则</h3>
-                    <p class="text-muted" style="margin:0.5rem 0 0;">配置新品导入时的自动编号逻辑（按顺序分配）</p>
+                    <p class="text-muted" style="margin:0.5rem 0 0;">按商品编码从小到大排序后依次分配序号（同名商品共享序号）</p>
+                    <p class="text-muted" style="margin:0.25rem 0 0; font-size:0.8rem;">数据库表: ranking_config (config_key='new_product_number_rules')</p>
                 </div>
                 <button class="btn btn-primary" id="btnSaveRules">💾 保存配置</button>
             </div>
@@ -1284,7 +1285,7 @@ function initNumberingRulesLogic() {
         rulesContainer.innerHTML = rules.map((r, i) => `
             <div class="rule-item" data-index="${i}" style="background:var(--bg-tertiary); padding:1rem; border-radius:4px; display:flex; gap:1rem; align-items:flex-end; border:1px solid var(--border-color);">
                 <div style="flex:1">
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">序号范围 (Start-End)</label>
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">第几个品（按编码排序后）</label>
                     <div style="display:flex; align-items:center; gap:0.5rem">
                         <input type="number" class="input input-sm rule-start" value="${r.range_start}" style="width:70px">
                         <span>-</span>

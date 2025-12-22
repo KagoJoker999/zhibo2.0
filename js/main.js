@@ -48,6 +48,7 @@ const PageConfig = {
     'new-product-process': { title: '新品数据处理', icon: '🆕' },
     'new-product-download': { title: '新品数据下载', icon: '🆕' },
     'new-product-settings': { title: '新品处理设置', icon: '🆕' },
+    'new-product-rules': { title: '新品序号分配', icon: '🔢' },
     'coupon': { title: '发券品处理', icon: '🎟️' },
     'coupon-upload': { title: '发券品数据上传', icon: '🎟️' },
     'coupon-process': { title: '发券品数据处理', icon: '🎟️' },
