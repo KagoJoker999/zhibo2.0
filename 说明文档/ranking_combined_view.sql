@@ -66,7 +66,7 @@ ranking_data_scored AS (
 -- 步骤3：新品数据（商品标签包含"上架中"）
 new_product_aggregated AS (
     SELECT
-        initial_name AS product_name,
+        COALESCE(product_name, original_name) AS product_name,
         0 AS available_qty,
         0 AS actual_stock,
         virtual_category,
@@ -76,9 +76,9 @@ new_product_aggregated AS (
         image_url,
         '新品' AS data_source
     FROM new_product_data
-    WHERE initial_name IS NOT NULL 
-      AND initial_name != ''
-      AND product_tag LIKE '%上架中%'
+    WHERE (product_name IS NOT NULL AND product_name != '')
+       OR (original_name IS NOT NULL AND original_name != '')
+    AND product_tag LIKE '%上架中%'
 ),
 
 -- 步骤4：合并库存数据和新品数据（新品不在库存中的才加入）
