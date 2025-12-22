@@ -8,18 +8,113 @@
  */
 
 // ========================================
-// 数据加载 - 直接从融合视图读取
+// 数据汇总 - 从评分视图 + 库存表读取并合并
 // ========================================
 async function loadCombinedProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 直接读取已融合的视图（库存数据去重 + 评分数据关联）
-    const { data, error } = await client.from('ranking_combined_view').select('*');
+    // 并行读取评分视图和库存表
+    const [rankingViewRes, inventoryRes] = await Promise.all([
+        client.from('product_ranking_view').select('*'),
+        client.from('inventory_data').select('*')
+    ]);
 
-    if (error) throw new Error('读取 ranking_combined_view 失败: ' + error.message);
+    if (rankingViewRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingViewRes.error.message);
+    if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
 
-    return data || [];
+    const rawInventory = inventoryRes.data || [];
+    const rawCount = rawInventory.length;
+
+    // ========================================
+    // 库存数据本地去重（以商品名称为主键）
+    // ========================================
+    const inventoryMap = new Map();
+
+    rawInventory.forEach(item => {
+        const name = item.product_name;
+        if (!name) return;
+
+        const existing = inventoryMap.get(name);
+        if (existing) {
+            // 数值字段：相加
+            existing.available_qty += (item.available_qty || 0);
+            existing.actual_stock += (item.actual_stock || 0);
+
+            // 图片网址：用逗号分隔
+            if (item.image_url && !existing.image_url.includes(item.image_url)) {
+                existing.image_url = existing.image_url
+                    ? `${existing.image_url}, ${item.image_url}`
+                    : item.image_url;
+            }
+
+            // 商品编码：用逗号分隔
+            if (item.product_code && !existing.product_code.includes(item.product_code)) {
+                existing.product_code = existing.product_code
+                    ? `${existing.product_code}, ${item.product_code}`
+                    : item.product_code;
+            }
+
+            // 仓位：用逗号分隔
+            if (item.warehouse && !existing.warehouse.includes(item.warehouse)) {
+                existing.warehouse = existing.warehouse
+                    ? `${existing.warehouse}, ${item.warehouse}`
+                    : item.warehouse;
+            }
+
+            // 虚拟类别：去重（只保留第一个）
+            if (!existing.virtual_category && item.virtual_category) {
+                existing.virtual_category = item.virtual_category;
+            }
+
+            // 产品类别：去重（只保留第一个）
+            if (!existing.product_category && item.product_category) {
+                existing.product_category = item.product_category;
+            }
+        } else {
+            inventoryMap.set(name, {
+                product_name: name,
+                available_qty: item.available_qty || 0,
+                actual_stock: item.actual_stock || 0,
+                virtual_category: item.virtual_category || '',
+                product_category: item.product_category || '',
+                product_code: item.product_code || '',
+                image_url: item.image_url || '',
+                warehouse: item.warehouse || ''
+            });
+        }
+    });
+
+    const deduplicatedCount = inventoryMap.size;
+
+    // ========================================
+    // 合并评分视图数据（包含评分和排名）
+    // ========================================
+    (rankingViewRes.data || []).forEach(item => {
+        const existing = inventoryMap.get(item.product_name);
+        if (existing) {
+            Object.assign(existing, {
+                total_score: item.total_score || 0,
+                rating_rank: item.rating_rank || 999999,
+                sales_amount: item.sales_amount || 0,
+                lecture_count: item.lecture_count || 0,
+                exposure_rate: item.exposure_rate || 0,
+                conversion_rate: item.conversion_rate || 0,
+                product_id: item.product_id || ''
+            });
+        }
+    });
+
+    // 转为数组
+    const products = Array.from(inventoryMap.values());
+
+    // 返回去重统计（用于UI显示）
+    products._deduplicateStats = {
+        before: rawCount,
+        after: deduplicatedCount
+    };
+
+    return products;
 }
 
 // 读取新品数据
@@ -343,24 +438,24 @@ function generateRankingPage() {
         <div class="ranking-page">
             <div class="page-intro">
                 <h2>📋 排品计算</h2>
-                <p>从融合视图读取数据，按配置规则进行排品计算</p>
+                <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
             </div>
             
             <div class="upload-blocks-grid">
                 <!-- 数据加载区块 -->
                 <div class="upload-block" id="block-ranking-data">
                     <div class="upload-block-header">
-                        <h3>📦 数据加载 <span class="db-table-tag">ranking_combined_view</span></h3>
+                        <h3>📦 数据汇总 <span class="db-table-tag">product_ranking_view + inventory_data</span></h3>
                     </div>
                     
                     <div class="ranking-stats" id="rankingStats">
                         <div class="stat-item">
-                            <span class="stat-label">融合数据</span>
-                            <span class="stat-value" id="statInventory">--</span>
+                            <span class="stat-label">评分数据</span>
+                            <span class="stat-value" id="statRanking">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">有评分</span>
-                            <span class="stat-value" id="statRanking">--</span>
+                            <span class="stat-label">库存数据</span>
+                            <span class="stat-value" id="statInventory">--</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">新品数据</span>
@@ -502,24 +597,27 @@ async function initRankingPage() {
                 // 获取是否包含新品的设置
                 const includeNewProducts = document.getElementById('includeNewProducts')?.checked ?? true;
 
+                // 获取各表统计
                 const client = window.supabaseClient;
-
-                // 从融合视图读取数据
-                let allProducts = await loadCombinedProductData();
-
-                // 获取原始表统计（供参考）
-                const [npRes] = await Promise.all([
+                const [r1, r2, r3] = await Promise.all([
+                    client.from('product_ranking_view').select('*', { count: 'exact', head: true }),
+                    client.from('inventory_data').select('*', { count: 'exact', head: true }),
                     client.from('new_product_data').select('*', { count: 'exact', head: true })
                 ]);
 
-                // 更新统计显示
-                document.getElementById('statRanking').textContent = allProducts.filter(p => p.rating_rank && p.rating_rank < 999999).length;
-                document.getElementById('statInventory').textContent = allProducts.length;
-                document.getElementById('statNewProduct').textContent = includeNewProducts ? (npRes.count || 0) : `${npRes.count || 0}（未参与）`;
+                document.getElementById('statRanking').textContent = r1.count || 0;
+                document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
 
                 // 加载排除商品列表
                 cachedExcluded = await loadExcludedProducts();
                 document.getElementById('statExcluded').textContent = cachedExcluded.length;
+
+                // 汇总商品数据（库存 + 评分，包含本地去重）
+                let allProducts = await loadCombinedProductData();
+
+                // 显示库存数据去重统计（去重后/去重前）
+                const dedupeStats = allProducts._deduplicateStats || { before: r2.count, after: allProducts.length };
+                document.getElementById('statInventory').textContent = `${dedupeStats.after}/${dedupeStats.before}`;
 
                 // 如果包含新品，将新品数据合并到排品数据中
                 if (includeNewProducts) {
