@@ -1398,7 +1398,9 @@ async function initRankingSettings() {
         // 渲染规则卡片
         function renderRuleCard(ruleIndex) {
             const rules = config.筛选条件[category];
-            const ruleKey = Object.keys(rules).filter(k => k !== '按子分类分别筛选' && k !== '子分类字段')[ruleIndex];
+            // 排除配置字段，只保留规则
+            const configKeys = ['按子分类分别筛选', '子分类字段', '选中子分类'];
+            const ruleKey = Object.keys(rules).filter(k => !configKeys.includes(k))[ruleIndex];
 
             if (!ruleKey) return '';
 
@@ -1621,8 +1623,18 @@ async function initRankingSettings() {
                     const checkboxes = selector.querySelectorAll('.subcategory-checkbox:checked');
                     const selectedValues = Array.from(checkboxes).map(cb => cb.value);
                     config.筛选条件[category].选中子分类 = selectedValues;
-                    // 更新显示的计数和预览
-                    renderFilterSettings(category);
+
+                    // 只更新显示的计数和预览，不重新渲染整个页面
+                    const countLabel = filterContainer.querySelector('#subcategoryFieldContainer label span');
+                    if (countLabel) countLabel.textContent = `(已选 ${selectedValues.length} 项)`;
+
+                    const toggleText = selector.querySelector('.subcategory-toggle span:first-child');
+                    if (toggleText) {
+                        toggleText.textContent = selectedValues.length > 0
+                            ? selectedValues.slice(0, 3).join(', ') + (selectedValues.length > 3 ? '...' : '')
+                            : '点击选择分类';
+                    }
+
                     saveConfigQuietly();
                 }
                 return;
