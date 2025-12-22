@@ -611,7 +611,6 @@ function initNewProductUpload() {
                     <p>商品数量：${records.length}</p>
                     <p>已应用名称公式</p>
                     <p>已生成上架分类</p>
-                    <p>已分配序号</p>
                 </div>
             `;
 
@@ -1195,27 +1194,23 @@ async function readExcelFile(file) {
 // 新品序号规则逻辑
 // ========================================
 async function loadNumberingRules() {
+    const defaultRules = [
+        { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
+        { range_start: 21, range_end: 99999, prefix: 'A', start_num: 41, step: 1 }
+    ];
     try {
         const { data, error } = await window.supabaseClient
             .from('ranking_config')
             .select('config_value')
             .eq('config_key', 'new_product_number_rules')
             .single();
-
         if (error || !data || !data.config_value || data.config_value.length === 0) {
-            console.log('未找到序号规则，使用默认规则');
-            return [
-                { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
-                { range_start: 21, range_end: 999999, prefix: 'A', start_num: 41, step: 1 }
-            ];
+            return defaultRules;
         }
         return data.config_value;
     } catch (e) {
-        console.warn(e);
-        return [
-            { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
-            { range_start: 21, range_end: 999999, prefix: 'A', start_num: 41, step: 1 }
-        ];
+        console.warn('加载序号规则失败，使用默认规则', e);
+        return defaultRules;
     }
 }
 
