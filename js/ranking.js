@@ -572,7 +572,9 @@ function generateRankingSettingsPage() {
                     </div>
                     <div class="card-body">
                         <p class="setting-hint">拖拽调整筛选分类的优先顺序（排在前面的分类先选商品），点击编辑修改分类名称</p>
-                        <ul class="sortable-list" id="categoryOrderList"></ul>
+                        <ul class="sortable-list" id="categoryOrderList">
+                            <li class="placeholder">加载中...</li>
+                        </ul>
                         <div class="input-group" style="margin-top: 1rem;">
                             <input type="text" id="newCategoryInput" class="input" placeholder="输入新分类名称..." style="flex:1;">
                             <button class="btn btn-primary" id="btnAddCategory">添加分类</button>
@@ -805,10 +807,19 @@ async function initRankingSettings() {
     // ========================================
     function renderCategories() {
         if (!orderList) return;
+
+        // 如果没有数据，显示提示
+        if (!config.分类排序 || config.分类排序.length === 0) {
+            orderList.innerHTML = '<li class="placeholder">暂无分类，请在下方添加</li>';
+            return;
+        }
+
         orderList.innerHTML = config.分类排序.map((cat, idx) => `
             <li class="sortable-item" data-category="${cat}" data-index="${idx}">
                 <span class="drag-handle" title="拖拽排序">☰</span>
-                <span class="category-name" contenteditable="false">${config.结果映射[cat] || cat}</span>
+                <span class="category-name-container" style="flex:1; display:flex; align-items:center;">
+                    <span class="category-name">${config.结果映射[cat] || cat}</span>
+                </span>
                 <div class="category-actions" style="display:flex;gap:0.25rem;">
                     <button class="btn-icon btn-edit" data-category="${cat}" title="编辑">✎</button>
                     <button class="btn-icon btn-delete" data-category="${cat}" title="删除">✕</button>
@@ -818,17 +829,62 @@ async function initRankingSettings() {
 
         // 绑定编辑按钮事件
         orderList.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const cat = btn.dataset.category;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 防止冒泡
                 const li = btn.closest('.sortable-item');
-                const nameSpan = li.querySelector('.category-name');
+                const container = li.querySelector('.category-name-container');
+                const nameSpan = container.querySelector('.category-name');
+                const cat = btn.dataset.category;
                 const currentName = config.结果映射[cat] || cat;
-                const newName = prompt('修改分类名称：', currentName);
-                if (newName && newName.trim() && newName !== currentName) {
-                    config.结果映射[cat] = newName.trim();
-                    nameSpan.textContent = newName.trim();
-                    saveConfigQuietly();
-                }
+
+                // 如果已经是编辑模式，不重复处理
+                if (container.querySelector('input')) return;
+
+                // 创建输入框
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentName;
+                input.className = 'input-edit-category'; // 样式类名
+                input.style.width = '100%';
+                input.style.border = '1px solid var(--primary-color)';
+                input.style.background = 'var(--bg-primary)';
+                input.style.color = 'var(--text-primary)';
+                input.style.padding = '0.25rem 0.5rem';
+                input.style.borderRadius = 'var(--border-radius-sm)';
+
+                // 替换 span 为 input
+                nameSpan.style.display = 'none';
+                container.appendChild(input);
+                input.focus();
+
+                // 保存函数
+                const saveEdit = () => {
+                    const newName = input.value.trim();
+                    if (newName && newName !== currentName) {
+                        config.结果映射[cat] = newName;
+                        nameSpan.textContent = newName;
+                        // 同时更新其他相关配置的键名（如果需要，或者仅更新显示映射）
+                        // 注意：这里只更新了显示映射，这通常是足够的。
+                        // 如果样品序号规则是按显示名称索引的，则也需要更新
+                        if (config.样品序号规则[currentName]) {
+                            config.样品序号规则[newName] = config.样品序号规则[currentName];
+                            delete config.样品序号规则[currentName];
+                        }
+                        saveConfigQuietly();
+                        window.AppUtils?.showToast?.('已保存', 'success');
+                    }
+                    // 恢复显示
+                    input.remove();
+                    nameSpan.style.display = '';
+                };
+
+                // 绑定保存事件
+                input.addEventListener('blur', saveEdit);
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        input.blur(); // 触发 blur 保存
+                    }
+                });
             });
         });
 
@@ -844,11 +900,11 @@ async function initRankingSettings() {
                     delete config.样品序号规则[config.结果映射[cat]];
                     renderCategories();
                     saveConfigQuietly();
+                    window.AppUtils?.showToast?.('已删除', 'success');
                 }
             });
         });
     }
-
     // 静默保存配置
     async function saveConfigQuietly() {
         try {
