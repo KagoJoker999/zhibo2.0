@@ -1232,9 +1232,19 @@ function renderRankingResults(results) {
     `;
 
     for (const [category, items] of Object.entries(grouped)) {
+        // 收集该分类的编码和ID用于批量复制
+        const codes = items.map(i => i.product_code).filter(c => c && c !== '--').join(',');
+        const ids = items.map(i => cachedProductIds[i.product_name]).filter(id => id).join(',');
+
         html += `
             <div class="result-category">
-                <h4>${category} <span class="count">(${items.length})</span></h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 style="margin: 0;">${category} <span class="count">(${items.length})</span></h4>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-sm" onclick="copyToClipboard('${codes}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">📋 复制编码</button>
+                        <button class="btn btn-sm" onclick="copyToClipboard('${ids}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">📋 复制ID</button>
+                    </div>
+                </div>
                 <div class="result-items-table">
                     <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
@@ -1242,29 +1252,40 @@ function renderRankingResults(results) {
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">图片</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">序号</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left;">商品名称</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 120px;">商品编码</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 140px;">商品ID</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 160px;">商品编码</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品ID</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${items.map(item => {
             const productId = cachedProductIds[item.product_name];
-            const idDisplay = productId ? productId : '<span style="color: var(--warning-color);">疑似未上架</span>';
+            const hasNoId = !productId;
+            const idDisplay = productId
+                ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
+                : '<span style="color: var(--warning-color);">疑似未上架</span>';
             const imageUrl = item.image_url || '';
             // 处理图片URL，可能包含多个逗号分隔的URL
             const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
+            // 添加 referrerpolicy 解决防盗链问题
             const imageHtml = firstImageUrl
-                ? `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);"><img src="${firstImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'"></div>`
+                ? `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);"><img src="${firstImageUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'"></div>`
                 : '<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>';
             const productCode = item.product_code || '--';
+            const codeDisplay = productCode !== '--'
+                ? `${productCode} <button onclick="copyToClipboard('${productCode}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
+                : '--';
+            // 无ID商品红底
+            const rowStyle = hasNoId
+                ? 'border-bottom: 1px solid var(--border-color); background: rgba(239, 68, 68, 0.15);'
+                : 'border-bottom: 1px solid var(--border-color);';
 
             return `
-                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
                                         <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
-                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary);">${productCode}</td>
+                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary);">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
                                             <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 1rem; padding: 0.25rem;">✕</button>
@@ -1280,6 +1301,20 @@ function renderRankingResults(results) {
     }
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
+}
+
+// 复制到剪贴板
+function copyToClipboard(text) {
+    if (!text) {
+        window.AppUtils?.showToast?.('没有可复制的内容', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+        window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
+    }).catch(err => {
+        console.error('复制失败:', err);
+        window.AppUtils?.showToast?.('复制失败', 'error');
+    });
 }
 
 // 加载缓存的结果（48小时内有效）
