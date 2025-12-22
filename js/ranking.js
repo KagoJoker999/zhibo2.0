@@ -8,59 +8,18 @@
  */
 
 // ========================================
-// 数据汇总 - 从评分视图 + 库存表读取并合并
+// 数据加载 - 直接从融合视图读取
 // ========================================
 async function loadCombinedProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行读取评分视图和库存表
-    const [rankingViewRes, inventoryRes] = await Promise.all([
-        client.from('product_ranking_view').select('*'),
-        client.from('inventory_data').select('*')
-    ]);
+    // 直接读取已融合的视图（库存数据去重 + 评分数据关联）
+    const { data, error } = await client.from('ranking_combined_view').select('*');
 
-    if (rankingViewRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingViewRes.error.message);
-    if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
+    if (error) throw new Error('读取 ranking_combined_view 失败: ' + error.message);
 
-    // 以商品名称为主键合并
-    const combinedMap = new Map();
-
-    // 1. 先加入库存数据（基础数据）
-    (inventoryRes.data || []).forEach(item => {
-        combinedMap.set(item.product_name, {
-            product_name: item.product_name,
-            available_qty: item.available_qty || 0,
-            actual_stock: item.actual_stock || 0,
-            virtual_category: item.virtual_category || '',
-            product_category: item.product_category || '',
-            product_code: item.product_code || '',
-            image_url: item.image_url || '',
-            warehouse: item.warehouse || ''
-        });
-    });
-
-    // 2. 合并评分视图数据（包含评分和排名）
-    (rankingViewRes.data || []).forEach(item => {
-        const existing = combinedMap.get(item.product_name);
-        if (existing) {
-            // 只更新已存在于库存表中的商品
-            Object.assign(existing, {
-                total_score: item.total_score || 0,
-                rating_rank: item.rating_rank || 999999,
-                sales_amount: item.sales_amount || 0,
-                lecture_count: item.lecture_count || 0,
-                exposure_rate: item.exposure_rate || 0,
-                conversion_rate: item.conversion_rate || 0,
-                product_id: item.product_id || ''
-            });
-        }
-    });
-
-    // 转为数组，只保留有评分数据的商品（可排品商品）
-    const products = Array.from(combinedMap.values());
-
-    return products;
+    return data || [];
 }
 
 // 读取新品数据
@@ -384,24 +343,24 @@ function generateRankingPage() {
         <div class="ranking-page">
             <div class="page-intro">
                 <h2>📋 排品计算</h2>
-                <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
+                <p>从融合视图读取数据，按配置规则进行排品计算</p>
             </div>
             
             <div class="upload-blocks-grid">
                 <!-- 数据加载区块 -->
                 <div class="upload-block" id="block-ranking-data">
                     <div class="upload-block-header">
-                        <h3>📦 数据汇总 <span class="db-table-tag">product_ranking_view + inventory_data</span></h3>
+                        <h3>📦 数据加载 <span class="db-table-tag">ranking_combined_view</span></h3>
                     </div>
                     
                     <div class="ranking-stats" id="rankingStats">
                         <div class="stat-item">
-                            <span class="stat-label">评分数据</span>
-                            <span class="stat-value" id="statRanking">--</span>
+                            <span class="stat-label">融合数据</span>
+                            <span class="stat-value" id="statInventory">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">库存数据</span>
-                            <span class="stat-value" id="statInventory">--</span>
+                            <span class="stat-label">有评分</span>
+                            <span class="stat-value" id="statRanking">--</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">新品数据</span>
@@ -543,24 +502,24 @@ async function initRankingPage() {
                 // 获取是否包含新品的设置
                 const includeNewProducts = document.getElementById('includeNewProducts')?.checked ?? true;
 
-                // 获取各表统计
                 const client = window.supabaseClient;
-                const [r1, r2, r3] = await Promise.all([
-                    client.from('product_ranking_view').select('*', { count: 'exact', head: true }),
-                    client.from('inventory_data').select('*', { count: 'exact', head: true }),
+
+                // 从融合视图读取数据
+                let allProducts = await loadCombinedProductData();
+
+                // 获取原始表统计（供参考）
+                const [npRes] = await Promise.all([
                     client.from('new_product_data').select('*', { count: 'exact', head: true })
                 ]);
 
-                document.getElementById('statRanking').textContent = r1.count || 0;
-                document.getElementById('statInventory').textContent = r2.count || 0;
-                document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
+                // 更新统计显示
+                document.getElementById('statRanking').textContent = allProducts.filter(p => p.rating_rank && p.rating_rank < 999999).length;
+                document.getElementById('statInventory').textContent = allProducts.length;
+                document.getElementById('statNewProduct').textContent = includeNewProducts ? (npRes.count || 0) : `${npRes.count || 0}（未参与）`;
 
                 // 加载排除商品列表
                 cachedExcluded = await loadExcludedProducts();
                 document.getElementById('statExcluded').textContent = cachedExcluded.length;
-
-                // 汇总商品数据（库存 + 评分）
-                let allProducts = await loadCombinedProductData();
 
                 // 如果包含新品，将新品数据合并到排品数据中
                 if (includeNewProducts) {
