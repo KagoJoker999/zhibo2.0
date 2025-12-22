@@ -79,21 +79,16 @@ async function loadCombinedProductData() {
     // 步骤2：构建不可佩戴品 Set
     const nonWearableSet = new Set((nonWearableRes.data || []).map(i => i.product_name));
 
-    // 步骤3：构建库存数据 Map（自动排除商品标签含"福利"的商品）
+    // 步骤3：构建库存数据 Map
     const inventoryMap = new Map();
     (inventoryRes.data || []).forEach(item => {
         if (!item.product_name) return;
-
-        // 自动排除商品标签含"福利"的商品
-        const productTag = item.product_tag || '';
-        if (productTag.includes('福利')) return;
 
         // 判断是否可佩戴
         const isWearable = !nonWearableSet.has(item.product_name);
 
         inventoryMap.set(item.product_name, {
             product_name: item.product_name,
-            product_tag: productTag,
             available_qty: item.available_qty || 0,
             actual_stock: item.actual_stock || 0,
             virtual_category: item.virtual_category || '',
@@ -996,15 +991,16 @@ async function initRankingPage() {
 
                 // 汇总商品数据（库存 + 评分）
                 let allProducts = await loadCombinedProductData();
-                const baseInventoryCount = allProducts.length;
+                let baseInventoryCount = allProducts.length;
                 let addedNewCount = 0;
+                let removedNewFromInventory = 0;
 
-                // 如果包含新品，将新品数据合并到排品数据中
+                // 加载新品数据（无论是否勾选都需要加载，用于排除判断）
+                cachedNewProducts = await loadNewProductData();
+                const newProductStats = cachedNewProducts._deduplicateStats || { before: r3.count, after: cachedNewProducts.length };
+
                 if (includeNewProducts) {
-                    cachedNewProducts = await loadNewProductData();
-
-                    // 显示新品数据去重统计（去重后/去重前）
-                    const newProductStats = cachedNewProducts._deduplicateStats || { before: r3.count, after: cachedNewProducts.length };
+                    // 勾选：正常加载库存数据，并将新品添加到排品列表
                     document.getElementById('statNewProduct').textContent = `${newProductStats.after}/${newProductStats.before}`;
 
                     // 将新品添加到商品列表（赋予默认评分排名）
@@ -1020,7 +1016,15 @@ async function initRankingPage() {
                         }
                     });
                 } else {
-                    cachedNewProducts = [];
+                    // 不勾选：从库存数据中排除与新品名称相同的产品
+                    const newProductNames = new Set(cachedNewProducts.map(np => np.product_name));
+                    const originalCount = allProducts.length;
+                    allProducts = allProducts.filter(p => !newProductNames.has(p.product_name));
+                    removedNewFromInventory = originalCount - allProducts.length;
+                    baseInventoryCount = allProducts.length;
+
+                    document.getElementById('statNewProduct').textContent = `${newProductStats.after}/${newProductStats.before}（已排除${removedNewFromInventory}个）`;
+                    cachedNewProducts = [];  // 不参与排品
                 }
 
                 // 过滤排除商品
