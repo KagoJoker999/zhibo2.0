@@ -4,6 +4,9 @@
 -- 请在 Supabase SQL Editor 中执行此脚本
 -- ================================================
 
+-- 删除旧函数（如果存在）
+DROP FUNCTION IF EXISTS get_database_size();
+
 -- 创建获取数据库大小的函数
 CREATE OR REPLACE FUNCTION get_database_size()
 RETURNS json
@@ -14,12 +17,9 @@ DECLARE
     total_size bigint;
     size_mb numeric;
 BEGIN
-    -- 计算所有用户表的总大小
-    SELECT COALESCE(SUM(pg_total_relation_size(quote_ident(table_name))), 0)
-    INTO total_size
-    FROM information_schema.tables
-    WHERE table_schema = 'public'
-    AND table_type = 'BASE TABLE';
+    -- 使用 pg_database_size 获取整个数据库大小（与 Supabase 控制台一致）
+    SELECT pg_database_size(current_database())
+    INTO total_size;
     
     -- 转换为 MB
     size_mb := ROUND(total_size / 1024.0 / 1024.0, 2);
