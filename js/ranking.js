@@ -117,7 +117,7 @@ async function loadCombinedProductData() {
     return products;
 }
 
-// 读取新品数据
+// 读取新品数据（含本地去重）
 async function loadNewProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
@@ -125,7 +125,89 @@ async function loadNewProductData() {
     const { data, error } = await client.from('new_product_data').select('*');
     if (error) throw new Error('读取 new_product_data 失败: ' + error.message);
 
-    return data || [];
+    const rawData = data || [];
+    const rawCount = rawData.length;
+
+    // ========================================
+    // 新品数据本地去重（以产品名称为主键）
+    // ========================================
+    const productMap = new Map();
+
+    rawData.forEach(item => {
+        const name = item.product_name;
+        if (!name) return;
+
+        const existing = productMap.get(name);
+        if (existing) {
+            // 图片网址：用逗号分隔
+            if (item.image_url && !existing.image_url.includes(item.image_url)) {
+                existing.image_url = existing.image_url
+                    ? `${existing.image_url}, ${item.image_url}`
+                    : item.image_url;
+            }
+
+            // 颜色规格：用逗号分隔
+            if (item.color_spec && !existing.color_spec.includes(item.color_spec)) {
+                existing.color_spec = existing.color_spec
+                    ? `${existing.color_spec}, ${item.color_spec}`
+                    : item.color_spec;
+            }
+
+            // 商品编码：用逗号分隔
+            if (item.product_code && !existing.product_code.includes(item.product_code)) {
+                existing.product_code = existing.product_code
+                    ? `${existing.product_code}, ${item.product_code}`
+                    : item.product_code;
+            }
+
+            // 仓位：用逗号分隔
+            if (item.warehouse && !existing.warehouse.includes(item.warehouse)) {
+                existing.warehouse = existing.warehouse
+                    ? `${existing.warehouse}, ${item.warehouse}`
+                    : item.warehouse;
+            }
+
+            // 类别：去重（保留第一个）
+            if (!existing.category && item.category) {
+                existing.category = item.category;
+            }
+
+            // 商品标签：去重（保留第一个）
+            if (!existing.product_tag && item.product_tag) {
+                existing.product_tag = item.product_tag;
+            }
+
+            // 价格：去重（保留第一个）
+            if (!existing.price && item.price) {
+                existing.price = item.price;
+            }
+        } else {
+            productMap.set(name, {
+                product_name: name,
+                image_url: item.image_url || '',
+                category: item.category || '',
+                color_spec: item.color_spec || '',
+                product_code: item.product_code || '',
+                warehouse: item.warehouse || '',
+                product_tag: item.product_tag || '',
+                price: item.price || '',
+                virtual_category: item.virtual_category || ''
+            });
+        }
+    });
+
+    const deduplicatedCount = productMap.size;
+
+    // 转为数组
+    const products = Array.from(productMap.values());
+
+    // 返回去重统计（用于UI显示）
+    products._deduplicateStats = {
+        before: rawCount,
+        after: deduplicatedCount
+    };
+
+    return products;
 }
 
 // ========================================
@@ -622,6 +704,11 @@ async function initRankingPage() {
                 // 如果包含新品，将新品数据合并到排品数据中
                 if (includeNewProducts) {
                     cachedNewProducts = await loadNewProductData();
+
+                    // 显示新品数据去重统计（去重后/去重前）
+                    const newProductStats = cachedNewProducts._deduplicateStats || { before: r3.count, after: cachedNewProducts.length };
+                    document.getElementById('statNewProduct').textContent = `${newProductStats.after}/${newProductStats.before}`;
+
                     // 将新品添加到商品列表（赋予默认评分排名）
                     cachedNewProducts.forEach(np => {
                         if (!allProducts.find(p => p.product_name === np.product_name)) {
