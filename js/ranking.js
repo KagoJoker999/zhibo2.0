@@ -440,7 +440,50 @@ function applyFilters(products, conditions) {
         if (key === '按子分类分别筛选' || key === '子分类字段') continue;
         if (!condition.启用) continue;
 
-        // 映射字段名
+        // ========== 新格式：使用 conditions 数组 ==========
+        if (condition.conditions && Array.isArray(condition.conditions)) {
+            // 新格式：每个规则包含多个条件，条件之间是 AND 关系
+            // 先应用普通过滤条件
+            filtered = filtered.filter(product => {
+                return condition.conditions.every(cond => {
+                    const field = FIELD_MAPPING[cond.field] || cond.field;
+                    const operator = cond.operator;
+                    const value = cond.value;
+
+                    // 前几名/后几名需要单独处理
+                    if (operator === '前几名' || operator === '后几名') return true;
+
+                    return applyCondition(product, field, operator, value, cond.field);
+                });
+            });
+
+            // 处理前几名/后几名
+            for (const cond of condition.conditions) {
+                if (cond.operator === '前几名' && cond.value) {
+                    const field = FIELD_MAPPING[cond.field] || cond.field;
+                    const ascending = cond.field === '评分排名'; // 评分排名越小越好
+                    if (ascending) {
+                        filtered = filtered.sort((a, b) => (a[field] ?? 999999) - (b[field] ?? 999999));
+                    } else {
+                        filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+                    }
+                    filtered = filtered.slice(0, parseInt(cond.value));
+                }
+                if (cond.operator === '后几名' && cond.value) {
+                    const field = FIELD_MAPPING[cond.field] || cond.field;
+                    const ascending = cond.field === '评分排名';
+                    if (ascending) {
+                        filtered = filtered.sort((a, b) => (a[field] ?? 999999) - (b[field] ?? 999999));
+                    } else {
+                        filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+                    }
+                    filtered = filtered.slice(-parseInt(cond.value));
+                }
+            }
+            continue;
+        }
+
+        // ========== 旧格式：直接使用字段名作为 key ==========
         const field = FIELD_MAPPING[key] || key;
 
         // 特殊处理：Boolean 类型字段（如 is_wearable）
@@ -448,8 +491,7 @@ function applyFilters(products, conditions) {
             if (condition.排除 && condition.排除.includes('不可佩戴')) {
                 filtered = filtered.filter(p => p[field] === true);
             }
-            // 可以扩展其他情况
-            continue; // 处理完特殊逻辑后跳过通用逻辑
+            continue;
         }
 
         if (condition.大于等于 !== undefined) {
@@ -477,10 +519,7 @@ function applyFilters(products, conditions) {
             });
         }
         if (condition.前几名) {
-            // 自动判断排序方向：评分排名越小越好（升序），其他如库存越大越好（降序）
-            // 也可以依赖配置中的 "排序方式"
             const ascending = condition.排序方式 === '升序' || key === '评分排名';
-
             if (ascending) {
                 filtered = filtered.sort((a, b) => (a[field] ?? 999999) - (b[field] ?? 999999));
             } else {
@@ -489,14 +528,10 @@ function applyFilters(products, conditions) {
             filtered = filtered.slice(0, condition.前几名);
         }
         if (condition.后几名) {
-            // 后几名：与前几名相反，取排序后的末尾N个
             const ascending = condition.排序方式 === '升序' || key === '评分排名';
-
             if (ascending) {
-                // 升序排列，取最后N个（即数值最大的N个）
                 filtered = filtered.sort((a, b) => (a[field] ?? 999999) - (b[field] ?? 999999));
             } else {
-                // 降序排列，取最后N个（即数值最小的N个）
                 filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
             }
             filtered = filtered.slice(-condition.后几名);
@@ -504,6 +539,40 @@ function applyFilters(products, conditions) {
     }
 
     return filtered;
+}
+
+// 辅助函数：应用单个条件
+function applyCondition(product, field, operator, value, fieldName) {
+    const fieldValue = product[field];
+
+    switch (operator) {
+        case '大于等于':
+            return (fieldValue || 0) >= value;
+        case '小于等于':
+            return (fieldValue || 0) <= value;
+        case '等于':
+            if (Array.isArray(value)) {
+                return value.includes(fieldValue);
+            }
+            return fieldValue == value;
+        case '包含':
+            const containValues = Array.isArray(value) ? value : [value];
+            return containValues.some(v => (fieldValue || '').includes(v));
+        case '排除':
+            const excludeValues = Array.isArray(value) ? value : [value];
+            if (fieldName === '是否可佩戴') {
+                if (excludeValues.includes('不可佩戴')) {
+                    return fieldValue === true;
+                }
+            }
+            return !excludeValues.some(v => (fieldValue || '').includes(v));
+        case '前几名':
+        case '后几名':
+            // 这些需要在过滤后整体处理，这里返回 true
+            return true;
+        default:
+            return true;
+    }
 }
 
 function filterBySubcategory(products, conditions) {
