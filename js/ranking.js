@@ -1,28 +1,27 @@
 /**
  * 排品功能模块
  * ========================================
- * 数据：从 ranking_data + inventory_data + product_id_data 汇总
+ * 数据：从 product_ranking_view + inventory_data 汇总
+ * 新品：从 new_product_data 读取
  * 配置：从 ranking_config 表读取
  * 输出：写入 ranking_results 表
  */
 
 // ========================================
-// 数据汇总 - 从三个表读取并合并
+// 数据汇总 - 从评分视图 + 库存表读取并合并
 // ========================================
 async function loadCombinedProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行读取三个表
-    const [rankingRes, inventoryRes, productIdRes] = await Promise.all([
-        client.from('ranking_data').select('*'),
-        client.from('inventory_data').select('*'),
-        client.from('product_id_data').select('*')
+    // 并行读取评分视图和库存表
+    const [rankingViewRes, inventoryRes] = await Promise.all([
+        client.from('product_ranking_view').select('*'),
+        client.from('inventory_data').select('*')
     ]);
 
-    if (rankingRes.error) throw new Error('读取 ranking_data 失败: ' + rankingRes.error.message);
+    if (rankingViewRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingViewRes.error.message);
     if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
-    if (productIdRes.error) throw new Error('读取 product_id_data 失败: ' + productIdRes.error.message);
 
     // 以商品名称为主键合并
     const combinedMap = new Map();
@@ -35,48 +34,44 @@ async function loadCombinedProductData() {
             actual_stock: item.actual_stock || 0,
             virtual_category: item.virtual_category || '',
             product_category: item.product_category || '',
+            product_code: item.product_code || '',
             image_url: item.image_url || '',
             warehouse: item.warehouse || ''
         });
     });
 
-    // 2. 合并排名数据
-    (rankingRes.data || []).forEach(item => {
-        const existing = combinedMap.get(item.product_name) || { product_name: item.product_name };
-        combinedMap.set(item.product_name, {
-            ...existing,
-            total_score: item.total_score || 0,
-            sales_amount: item.sales_amount || 0,
-            lecture_count: item.lecture_count || 0,
-            exposure_rate: item.exposure_rate || 0,
-            conversion_rate: item.conversion_rate || 0
-        });
-    });
-
-    // 3. 合并商品ID数据
-    (productIdRes.data || []).forEach(item => {
-        const existing = combinedMap.get(item.product_name) || { product_name: item.product_name };
-        combinedMap.set(item.product_name, {
-            ...existing,
-            product_id: item.product_id || '',
-            store_category: item.store_category || '',
-            product_price: item.product_price || 0
-        });
-    });
-
-    // 转为数组并计算评分排名
-    const products = Array.from(combinedMap.values());
-
-    // 按 total_score 降序排序，计算排名（分数越高排名越前）
-    const sortedByScore = [...products].sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
-    sortedByScore.forEach((p, idx) => {
-        const product = products.find(x => x.product_name === p.product_name);
-        if (product) {
-            product.rating_rank = idx + 1;  // 排名从1开始
+    // 2. 合并评分视图数据（包含评分和排名）
+    (rankingViewRes.data || []).forEach(item => {
+        const existing = combinedMap.get(item.product_name);
+        if (existing) {
+            // 只更新已存在于库存表中的商品
+            Object.assign(existing, {
+                total_score: item.total_score || 0,
+                rating_rank: item.rating_rank || 999999,
+                sales_amount: item.sales_amount || 0,
+                lecture_count: item.lecture_count || 0,
+                exposure_rate: item.exposure_rate || 0,
+                conversion_rate: item.conversion_rate || 0,
+                product_id: item.product_id || ''
+            });
         }
     });
 
+    // 转为数组，只保留有评分数据的商品（可排品商品）
+    const products = Array.from(combinedMap.values());
+
     return products;
+}
+
+// 读取新品数据
+async function loadNewProductData() {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { data, error } = await client.from('new_product_data').select('*');
+    if (error) throw new Error('读取 new_product_data 失败: ' + error.message);
+
+    return data || [];
 }
 
 // ========================================
@@ -344,19 +339,19 @@ function generateRankingPage() {
         <div class="ranking-page">
             <div class="page-intro">
                 <h2>📋 排品计算</h2>
-                <p>从三个数据表汇总商品数据，按配置规则进行排品计算</p>
+                <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
             </div>
             
             <div class="upload-blocks-grid">
                 <!-- 数据加载区块 -->
                 <div class="upload-block" id="block-ranking-data">
                     <div class="upload-block-header">
-                        <h3>📦 数据汇总 <span class="db-table-tag">ranking_data + inventory_data + product_id_data</span></h3>
+                        <h3>📦 数据汇总 <span class="db-table-tag">product_ranking_view + inventory_data</span></h3>
                     </div>
                     
                     <div class="ranking-stats" id="rankingStats">
                         <div class="stat-item">
-                            <span class="stat-label">排名数据</span>
+                            <span class="stat-label">评分数据</span>
                             <span class="stat-value" id="statRanking">--</span>
                         </div>
                         <div class="stat-item">
@@ -364,12 +359,12 @@ function generateRankingPage() {
                             <span class="stat-value" id="statInventory">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">商品ID</span>
-                            <span class="stat-value" id="statProductId">--</span>
+                            <span class="stat-label">可排品商品</span>
+                            <span class="stat-value" id="statCombined">--</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">汇总商品</span>
-                            <span class="stat-value" id="statCombined">--</span>
+                            <span class="stat-label">新品数据</span>
+                            <span class="stat-value" id="statNewProduct">--</span>
                         </div>
                     </div>
                     
@@ -452,8 +447,9 @@ function generateRankingSettingsPage() {
 // ========================================
 // 初始化
 // ========================================
-let cachedProducts = [];
-let cachedResults = [];
+let cachedProducts = [];      // 库存+评分汇总数据
+let cachedNewProducts = [];   // 新品数据
+let cachedResults = [];       // 排品结果
 
 async function initRankingPage() {
     const btnLoadData = document.getElementById('btnLoadData');
@@ -469,21 +465,26 @@ async function initRankingPage() {
                 // 获取各表统计
                 const client = window.supabaseClient;
                 const [r1, r2, r3] = await Promise.all([
-                    client.from('ranking_data').select('*', { count: 'exact', head: true }),
+                    client.from('product_ranking_view').select('*', { count: 'exact', head: true }),
                     client.from('inventory_data').select('*', { count: 'exact', head: true }),
-                    client.from('product_id_data').select('*', { count: 'exact', head: true })
+                    client.from('new_product_data').select('*', { count: 'exact', head: true })
                 ]);
 
                 document.getElementById('statRanking').textContent = r1.count || 0;
                 document.getElementById('statInventory').textContent = r2.count || 0;
-                document.getElementById('statProductId').textContent = r3.count || 0;
+                document.getElementById('statNewProduct').textContent = r3.count || 0;
 
-                // 汇总数据
+                // 汇总商品数据（库存 + 评分）
                 cachedProducts = await loadCombinedProductData();
-                document.getElementById('statCombined').textContent = cachedProducts.length;
+                // 只计算有评分数据的商品作为可排品商品
+                const rankableCount = cachedProducts.filter(p => p.rating_rank && p.rating_rank < 999999).length;
+                document.getElementById('statCombined').textContent = rankableCount;
+
+                // 加载新品数据
+                cachedNewProducts = await loadNewProductData();
 
                 btnCalculate.disabled = false;
-                window.AppUtils?.showToast?.('数据加载完成', 'success');
+                window.AppUtils?.showToast?.(`数据加载完成：可排品 ${rankableCount} 个，新品 ${cachedNewProducts.length} 个`, 'success');
             } catch (error) {
                 console.error('加载失败:', error);
                 window.AppUtils?.showToast?.('加载失败: ' + error.message, 'error');
