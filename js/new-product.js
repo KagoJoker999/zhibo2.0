@@ -1228,30 +1228,38 @@ async function saveNumberingRules(rules) {
 function assignSampleNumbers(records, rules) {
     if (!rules || rules.length === 0) return records;
     const sortedRules = [...rules].sort((a, b) => a.range_start - b.range_start);
+
+    // 1. 先按商品编码从小到大排序
+    const sortedRecords = [...records].sort((a, b) => {
+        const codeA = a.product_code || '';
+        const codeB = b.product_code || '';
+        return codeA.localeCompare(codeB, 'zh-CN', { numeric: true });
+    });
+
+    // 2. 按排序后的顺序分配序号（同名商品共享序号）
     const nameToNumber = new Map();
     let currentCount = 1;
 
-    return records.map(record => {
+    sortedRecords.forEach(record => {
         const name = record.product_name;
         if (nameToNumber.has(name)) {
-            return { ...record, sample_number: nameToNumber.get(name) };
-        }
-
-        let targetRule = sortedRules.find(r => currentCount >= r.range_start && currentCount <= r.range_end);
-        let sampleNum = '';
-        if (targetRule) {
-            const offset = currentCount - targetRule.range_start;
-            const numVal = parseInt(targetRule.start_num) + (offset * parseInt(targetRule.step));
-            sampleNum = (targetRule.prefix || '') + String(numVal).padStart(2, '0');
+            record.sample_number = nameToNumber.get(name);
         } else {
-            // 默认不做处理或留空
-            sampleNum = '';
+            let targetRule = sortedRules.find(r => currentCount >= r.range_start && currentCount <= r.range_end);
+            let sampleNum = '';
+            if (targetRule) {
+                const offset = currentCount - targetRule.range_start;
+                const numVal = parseInt(targetRule.start_num) + (offset * parseInt(targetRule.step));
+                sampleNum = (targetRule.prefix || '') + String(numVal).padStart(2, '0');
+            }
+            nameToNumber.set(name, sampleNum);
+            record.sample_number = sampleNum;
+            currentCount++;
         }
-
-        nameToNumber.set(name, sampleNum);
-        currentCount++;
-        return { ...record, sample_number: sampleNum };
     });
+
+    // 3. 返回原始顺序的records（但已经带上了sample_number）
+    return records;
 }
 
 function initNumberingRulesLogic() {
