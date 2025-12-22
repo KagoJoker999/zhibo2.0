@@ -250,12 +250,6 @@ async function saveListingCategoryMapping(items) {
 function generateNewProductPage() {
     return `
         <div class="new-product-page">
-            <div class="page-tabs" style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border-color);">
-                <button class="tab-item active" data-target="upload" style="padding:0.75rem 0.5rem; cursor:pointer; border:none; background:none; border-bottom:2px solid var(--primary-color); font-weight:600; color:var(--text-primary);">数据上传</button>
-                <button class="tab-item" data-target="rules" style="padding:0.75rem 0.5rem; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; color:var(--text-secondary);">序号分配</button>
-            </div>
-
-            <div id="view-upload" class="tab-view">
             <div class="upload-blocks-grid">
                 <!-- 上传区块 -->
                 <div class="upload-block" id="block-new-product">
@@ -375,13 +369,17 @@ function generateNewProductPage() {
                     <p class="text-muted">点击刷新加载数据</p>
                 </div>
             </div>
-            </div> <!-- End view-upload -->
-
-            <div id="view-rules" class="tab-view" style="display:none;">
-                ${generateNumberingRulesUI()}
             </div>
         </div>
     `;
+}
+
+function generateNewProductRulesPage() {
+    return generateNumberingRulesUI();
+}
+
+function initNewProductRules() {
+    initNumberingRulesLogic();
 }
 
 function generateNumberingRulesUI() {
@@ -537,26 +535,7 @@ function initNewProductUpload() {
 
     let selectedFile = null;
 
-    // Tabs Logic
-    const tabs = document.querySelectorAll('.new-product-page .tab-item');
-    const views = document.querySelectorAll('.new-product-page .tab-view');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const target = tab.dataset.target;
-            tabs.forEach(t => {
-                t.classList.remove('active');
-                t.style.borderBottomColor = 'transparent';
-                t.style.color = 'var(--text-secondary)';
-            });
-            views.forEach(v => v.style.display = 'none');
-            tab.classList.add('active');
-            tab.style.borderBottomColor = 'var(--primary-color)';
-            tab.style.color = 'var(--text-primary)';
-            document.getElementById('view-' + target).style.display = 'block';
-        });
-    });
-
-    // Init Rules Logic
+    // Init Rules Logic (This is kept as it's part of the upload process, not UI tab logic)
     initNumberingRulesLogic();
 
     uploadZone.addEventListener('click', () => fileInput.click());
@@ -1395,6 +1374,12 @@ window.loadNewProductPage = function (pageId) {
         return {
             html: generateNewProductSettingsPage(),
             init: initNewProductSettings
+        };
+    }
+    if (pageId === 'new-product-rules') {
+        return {
+            html: generateNewProductRulesPage(),
+            init: initNewProductRules
         };
     }
     return null;
