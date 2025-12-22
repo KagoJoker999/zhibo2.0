@@ -1757,3 +1757,161 @@ select:focus {
     background: var(--bg-secondary);
     border-radius: var(--border-radius-sm);
 }
+
+/* ========================================
+   排品功能页面样式
+   ======================================== */
+.ranking-page,
+.ranking-settings-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.page-intro {
+    margin-bottom: 1.5rem;
+}
+
+.page-intro h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-intro p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* 数据统计 */
+.ranking-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    background: var(--bg-secondary);
+    padding: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* 排品结果 */
+.result-category {
+    margin-bottom: 1rem;
+}
+
+.result-category h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.375rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.result-category .count {
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+.result-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8125rem;
+}
+
+.result-item .sample-number {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 2.5rem;
+}
+
+.result-item .product-name {
+    color: var(--text-primary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 设置页面 */
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.setting-hint {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.sortable-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sortable-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 0.5rem;
+    cursor: grab;
+    transition: background var(--transition-fast);
+}
+
+.sortable-item:hover {
+    background: var(--bg-hover);
+}
+
+.sortable-item .drag-handle {
+    color: var(--text-muted);
+    cursor: grab;
+}
+
+.sortable-item .category-name {
+    flex: 1;
+    font-size: 0.875rem;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .ranking-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

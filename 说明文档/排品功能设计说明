@@ -1,0 +1,454 @@
+# 商品自动排品 Web 程序技术规格
+
+> **目标**: 本文档为 Web 程序提供完整的技术规格，基于 Supabase 数据库实现商品自动排品功能。
+
+---
+
+## 一、核心功能逻辑
+
+### 1.1 程序概述
+
+| 项目 | 描述 |
+|------|------|
+| **程序名称** | 商品自动排品工具（Web版） |
+| **技术栈** | HTML/CSS/JavaScript + Supabase |
+| **核心功能** | 从 Supabase 三表汇总商品数据 → 按规则筛选分类 → 分配样品序号 → 写回 Supabase |
+
+### 1.2 核心输入/处理/输出
+
+```mermaid
+flowchart LR
+    subgraph 输入 - Supabase
+        A[ranking_data] --> D[数据汇总]
+        B[inventory_data] --> D
+        C[product_id_data] --> D
+        E[ranking_config] --> F[筛选规则配置]
+    end
+    
+    subgraph 处理
+        D --> G[排除过滤]
+        F --> H[分类筛选]
+        G --> H
+        H --> I[样品序号分配]
+    end
+    
+    subgraph 输出 - Supabase
+        I --> J[ranking_results 表]
+    end
+```
+
+---
+
+
+## 二、业务流程图
+
+### 2.1 主流程
+
+```mermaid
+flowchart TD
+    START([页面加载]) --> LOAD[加载设置/ranking_config]
+    LOAD --> MENU{操作选择}
+    
+    MENU -->|1.加载商品数据| READ[从三表汇总数据]
+    READ --> FILTER_NEW{是否包含新品?}
+    FILTER_NEW -->|否| EXCLUDE[排除新品/不可佩戴/标记商品]
+    FILTER_NEW -->|是| SKIP_EXCLUDE[跳过新品排除]
+    EXCLUDE --> STORE[显示商品列表]
+    SKIP_EXCLUDE --> STORE
+    STORE --> MENU
+    
+    MENU -->|2.计算排品结果| CALC[执行分类筛选]
+    CALC --> ASSIGN[分配样品序号]
+    ASSIGN --> PREVIEW[预览排品结果]
+    PREVIEW --> MENU
+    
+    MENU -->|3.保存结果| CLEAR[清空 ranking_results]
+    CLEAR --> WRITE[批量写入排品结果]
+    WRITE --> DONE([完成提示]]
+```
+
+### 2.2 筛选分类流程
+
+```mermaid
+flowchart TD
+    START([开始筛选]) --> LOAD[加载分类排序配置]
+    LOAD --> LOOP{遍历每个分类}
+    
+    LOOP --> GET[获取可用商品<br/>排除已使用的]
+    GET --> TYPE{分类类型}
+    
+    TYPE -->|普通筛选| NORMAL[应用筛选条件<br/>数值/文本/包含/排除]
+    TYPE -->|子分类筛选| SUB[按子分类分别筛选<br/>每子分类选可用数最大1个]
+    TYPE -->|库存品筛选| INV[从未参与排品商品中<br/>按可用数取前N名]
+    
+    NORMAL --> SORT[排序并取前/后N名]
+    SUB --> MARK[标记为已使用]
+    INV --> MARK
+    SORT --> MARK
+    
+    MARK --> LOOP
+    LOOP -->|完成| END([返回筛选结果])
+```
+
+---
+
+## 三、数据源配置
+
+### 3.1 Supabase 数据表
+
+| 表名 | 用途 | 关键字段 |
+|------|------|----------|
+| `ranking_data` | 排名数据 | product_name, total_score, sales_amount |
+| `inventory_data` | 库存数据 | product_name, available_qty, actual_stock, virtual_category, product_category |
+| `product_id_data` | 商品ID | product_name, product_id, store_category |
+| `ranking_results` | 排品结果输出 | product_name, ranking_result, sample_number |
+| `ranking_config` | 筛选配置 | config_key, config_value (JSONB) |
+
+### 3.2 数据汇总逻辑
+
+以 **商品名称**（product_name）为主键，将三个表数据合并：
+
+```javascript
+// 汇总后的商品数据结构
+{
+  product_name: string,        // 商品名称（主键）
+  product_id: string,          // 来自 product_id_data
+  total_score: number,         // 来自 ranking_data
+  sales_amount: number,        // 来自 ranking_data
+  available_qty: number,       // 来自 inventory_data
+  actual_stock: number,        // 来自 inventory_data
+  virtual_category: string,    // 来自 inventory_data
+  product_category: string,    // 来自 inventory_data
+  store_category: string       // 来自 product_id_data
+}
+```
+
+---
+
+## 四、数据结构定义
+
+### 4.1 商品数据结构（从源表读取）
+
+```typescript
+interface Product {
+  record_id: string;           // 飞书记录ID（对应Supabase主键）
+  商品ID: string;              // 商品唯一标识
+  商品名称: string;            // 商品名称
+  可用数: number;              // 可用库存数量
+  评分排名: number;            // 评分排名（越小越好）
+  实际库存数: number;          // 实际库存数量
+  虚拟分类: string;            // 如 "可预售"
+  是否可佩戴: string;          // 如 "是" / "不可佩戴"
+  商品分类: string;            // 如 "发圈" / "周边 - 项链"
+  新品验证: string;            // 新品标记
+  新品不参与排品: string;      // 新品排除标记
+  "【不参与排品】标记": string; // 手动排除标记
+}
+```
+
+### 4.2 筛选配置结构
+
+```typescript
+interface FilterConfig {
+  分类排序: string[];          // 筛选顺序，如 ["评分品A筛选条件", "佩戴品筛选条件", ...]
+  结果映射: Record<string, string>;  // 分类名 -> 结果标签，如 {"评分品A筛选条件": "1.评分品A"}
+  筛选条件: Record<string, CategoryCondition>;
+}
+
+interface CategoryCondition {
+  [fieldName: string]: FieldCondition;
+  按子分类分别筛选?: boolean;  // 是否按子分类分别筛选
+  子分类字段?: string;         // 子分类字段名
+}
+
+interface FieldCondition {
+  启用: boolean;
+  大于等于?: number;
+  小于等于?: number;
+  等于?: string | string[];
+  包含?: string | string[];
+  排除?: string | string[];
+  前几名?: number;
+  后几名?: number;
+}
+```
+
+### 4.3 样品序号分配规则
+
+```typescript
+interface SampleNumberRule {
+  prefix: string;    // 前缀，如 "A", "P", "Z", "B"
+  start: number;     // 起始数字
+  step: number;      // 步长
+  format: string;    // 格式化模板，如 "{}{:02d}"
+}
+
+// 预设规则
+const sampleNumberRules = {
+  "1.评分品A": { prefix: "A", start: 2,  step: 2, format: "{}{:02d}" },  // A02, A04, A06...
+  "2.佩戴品":  { prefix: "P", start: 1,  step: 1, format: "{}{:02d}" },  // P01, P02, P03...
+  "3.周边品":  { prefix: "Z", start: 1,  step: 1, format: "{}{:02d}" },  // Z01, Z02, Z03...
+  "4.评分品B": { prefix: "B", start: 1,  step: 1, format: "{}{:02d}" },  // B01, B02, B03...
+  "5.库存品":  { prefix: "A", start: 22, step: 2, format: "{}{:02d}" },  // A22, A24, A26...
+};
+```
+
+### 4.4 输出数据结构（写入目标表）
+
+```typescript
+interface OutputRecord {
+  record_id: string;           // 记录ID
+  自动计算排品结果: string;     // 如 "1.评分品A"
+  样品序号: string;            // 如 "A02"
+}
+```
+
+---
+
+## 五、核心筛选逻辑详解
+
+### 5.1 商品排除规则（在读取阶段执行）
+
+| 条件 | 排除逻辑 |
+|------|---------|
+| `新品不参与排品` 包含 "新品" | 排除（可选择包含） |
+| `是否可佩戴` 包含 "不可佩戴" | 排除 |
+| `【不参与排品】标记` 有内容 | 排除 |
+
+### 5.2 筛选条件类型
+
+| 条件类型 | 说明 | 示例 |
+|---------|------|------|
+| `大于等于` | 数值比较 | `实际库存数 >= 1` |
+| `小于等于` | 数值比较 | `评分排名 <= 100` |
+| `等于` | 精确匹配（支持数组） | `虚拟分类 == ["可预售"]` |
+| `包含` | 包含匹配（支持数组） | `商品分类 包含 ["发圈", "发夹"]` |
+| `排除` | 排除匹配（支持数组） | `是否可佩戴 不包含 ["不可佩戴"]` |
+| `前几名` | 排序后取前N | `评分排名 前10名` |
+| `后几名` | 排序后取后N | — |
+
+### 5.3 特殊筛选逻辑
+
+#### 按子分类分别筛选
+- 条件: `按子分类分别筛选: true`
+- 逻辑: 按 `子分类字段` 的每个值分组，每组选择 `可用数` 最大的 1 个商品
+
+#### 库存品筛选
+- 条件: 分类名包含 `库存品`
+- 逻辑: 从未被任何分类选中的商品中，按 `可用数` 降序排列，取前 N 名
+
+### 5.4 商品互斥规则
+
+> **重要**: 已被某分类选中的商品不会参与后续分类筛选（通过 `used_products` Set 实现）
+
+---
+
+## 六、配置文件示例
+
+```json
+{
+  "分类排序": [
+    "评分品A筛选条件",
+    "佩戴品筛选条件",
+    "周边品筛选条件",
+    "评分品B筛选条件",
+    "库存品筛选条件"
+  ],
+  "结果映射": {
+    "评分品A筛选条件": "1.评分品A",
+    "佩戴品筛选条件": "2.佩戴品",
+    "周边品筛选条件": "3.周边品",
+    "评分品B筛选条件": "4.评分品B",
+    "库存品筛选条件": "5.库存品"
+  },
+  "筛选条件": {
+    "评分品A筛选条件": {
+      "虚拟分类": { "等于": ["可预售"], "启用": true },
+      "实际库存数": { "大于等于": 1, "启用": true },
+      "评分排名": { "前几名": 10, "启用": true }
+    },
+    "佩戴品筛选条件": {
+      "是否可佩戴": { "排除": ["不可佩戴"], "启用": true },
+      "商品分类": { 
+        "包含": ["发圈", "发夹 - 鸭嘴夹", "周边 - 项链", "周边 - 戒指", "周边 - 手链", "周边 - 耳钉", "周边 - 胸针"],
+        "启用": true
+      },
+      "可用数": { "大于等于": 3, "启用": true },
+      "按子分类分别筛选": true,
+      "子分类字段": "商品分类"
+    },
+    "周边品筛选条件": {
+      "商品分类": { "包含": ["周边"], "启用": true },
+      "可用数": { "前几名": 4, "启用": true }
+    },
+    "评分品B筛选条件": {
+      "可用数": { "大于等于": 1, "启用": true },
+      "评分排名": { "前几名": 15, "启用": true }
+    },
+    "库存品筛选条件": {
+      "可用数": { "前几名": 10, "启用": true }
+    }
+  }
+}
+```
+
+---
+
+## 七、Supabase 迁移建议
+
+### 7.1 数据库表设计
+
+```sql
+-- 商品表（对应飞书读取表）
+CREATE TABLE products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id TEXT NOT NULL,           -- 商品ID
+  product_name TEXT NOT NULL,         -- 商品名称
+  available_count INTEGER DEFAULT 0,  -- 可用数
+  rating_rank INTEGER DEFAULT 999999, -- 评分排名
+  actual_stock INTEGER DEFAULT 0,     -- 实际库存数
+  virtual_category TEXT,              -- 虚拟分类
+  is_wearable TEXT,                   -- 是否可佩戴
+  product_category TEXT,              -- 商品分类
+  new_product_verify TEXT,            -- 新品验证
+  exclude_new_product TEXT,           -- 新品不参与排品
+  exclude_mark TEXT,                  -- 不参与排品标记
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 排品结果表（对应飞书写入表）
+CREATE TABLE ranking_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID REFERENCES products(id),
+  product_name TEXT NOT NULL,
+  ranking_result TEXT,                -- 自动计算排品结果
+  sample_number TEXT,                 -- 样品序号
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 筛选配置表
+CREATE TABLE filter_configs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  config_name TEXT NOT NULL,
+  config_data JSONB NOT NULL,         -- 存储完整配置JSON
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 7.2 API 映射
+
+| CLI 功能 | Supabase 操作 |
+|---------|--------------|
+| 读取商品数据 | `supabase.from('products').select('*')` |
+| 读取排品结果表 | `supabase.from('ranking_results').select('*')` |
+| 批量更新排品结果 | `supabase.from('ranking_results').upsert([...])` |
+| 清空排品结果 | `supabase.from('ranking_results').update({ ranking_result: null, sample_number: null })` |
+| 加载配置 | `supabase.from('filter_configs').select('*').eq('is_active', true)` |
+
+---
+
+## 八、Web 程序架构建议
+
+### 8.1 技术栈推荐
+
+| 层级 | 技术选择 |
+|------|---------|
+| 前端框架 | Next.js / Vite + React |
+| UI 组件库 | Arco Design (已有经验) |
+| 状态管理 | React Context / Zustand |
+| 后端 API | Supabase Edge Functions 或 Next.js API Routes |
+| 数据库 | Supabase PostgreSQL |
+| 实时更新 | Supabase Realtime |
+
+### 8.2 功能模块划分
+
+```
+/web-app
+├── /components
+│   ├── ProductTable.tsx        # 商品数据表格
+│   ├── FilterConfig.tsx        # 筛选配置编辑器
+│   ├── RankingResult.tsx       # 排品结果展示
+│   └── SampleNumberEditor.tsx  # 样品序号规则编辑
+├── /hooks
+│   ├── useProducts.ts          # 商品数据 Hook
+│   ├── useFilterConfig.ts      # 筛选配置 Hook
+│   └── useRanking.ts           # 排品计算 Hook
+├── /lib
+│   ├── supabase.ts             # Supabase 客户端
+│   ├── filterEngine.ts         # 筛选引擎（核心算法）
+│   └── sampleNumberAssigner.ts # 样品序号分配器
+└── /pages
+    ├── index.tsx               # 首页/仪表盘
+    ├── products.tsx            # 商品管理
+    ├── ranking.tsx             # 排品计算
+    └── config.tsx              # 配置管理
+```
+
+### 8.3 核心算法移植
+
+筛选引擎核心逻辑（JavaScript/TypeScript 版本）：
+
+```typescript
+class ProductFilter {
+  private config: FilterConfig;
+  private usedProducts: Set<string> = new Set();
+  
+  filterProducts(products: Product[]): Record<string, Product[]> {
+    const results: Record<string, Product[]> = {};
+    
+    for (const category of this.config.分类排序) {
+      const conditions = this.config.筛选条件[category];
+      let available = products.filter(p => !this.usedProducts.has(p.商品名称));
+      
+      if (category === "库存品筛选条件") {
+        available = this.filterInventoryProducts(available, conditions);
+      } else if (conditions.按子分类分别筛选) {
+        available = this.filterBySubcategory(available, conditions);
+      } else {
+        available = this.applyFilters(available, conditions);
+      }
+      
+      available.forEach(p => this.usedProducts.add(p.商品名称));
+      results[category] = available;
+    }
+    
+    return results;
+  }
+  
+  // ... 其余方法实现
+}
+```
+
+---
+
+## 九、关键注意事项
+
+> [!IMPORTANT]
+> 1. **商品互斥**: 已选商品不参与后续分类，必须维护 `usedProducts` 集合
+> 2. **分类顺序**: 必须按 `分类排序` 数组顺序执行筛选
+> 3. **配置热更新**: Web 版应支持配置实时编辑和预览
+
+> [!WARNING]
+> 1. **飞书字段格式**: 部分字段是 `[{text: "值", type: "text"}]` 格式，需要解析
+> 2. **批量操作限制**: 飞书 API 每批最多 500 条，Supabase 也应考虑分批
+
+> [!CAUTION]
+> 1. **数据一致性**: 写入前先清空，确保无残留数据
+> 2. **并发安全**: Web 多用户场景需考虑锁机制
+
+---
+
+## 十、测试用例建议
+
+| 测试场景 | 预期结果 |
+|---------|---------|
+| 商品排除 | 新品/不可佩戴/标记商品被正确排除 |
+| 基础筛选 | 数值和文本条件正确执行 |
+| 子分类筛选 | 每子分类选出可用数最大的1个 |
+| 库存品筛选 | 从剩余商品中按可用数排序取前N |
+| 样品序号 | 按规则正确分配序号格式 |
+| 商品互斥 | 已选商品不重复出现在其他分类 |

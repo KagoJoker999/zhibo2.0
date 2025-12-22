@@ -236,6 +236,25 @@ function loadPage(page) {
             }
         }
 
+        // 检查是否有排品功能页面加载器
+        if (window.loadRankingPage) {
+            let rankingPageId = null;
+            if (page === 'arrangement' || page === 'arrangement-main') {
+                rankingPageId = 'ranking';
+            } else if (page === 'arrangement-settings') {
+                rankingPageId = 'ranking-settings';
+            }
+            if (rankingPageId) {
+                const rankingPage = window.loadRankingPage(rankingPageId);
+                if (rankingPage) {
+                    DOM.pageContainer.innerHTML = rankingPage.html;
+                    setTimeout(() => rankingPage.init(), 50);
+                    AppState.currentPage = page;
+                    return;
+                }
+            }
+        }
+
         // 其他页面显示占位内容
         DOM.pageContainer.innerHTML = `
             <div class="placeholder-content">
