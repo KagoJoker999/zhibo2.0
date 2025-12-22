@@ -717,7 +717,32 @@ function generateRankingPage() {
             </div>
             
             <!-- 上部分：数据统计 + 选项 + 按钮（横向排列） -->
-            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 1.5rem; border-radius: var(--border-radius); flex-wrap: wrap;">
+            <style>
+                .hover-zoom-container {
+                    position: relative;
+                    width: 48px;
+                    height: 48px;
+                }
+                .hover-zoom-img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    border-radius: 6px;
+                    cursor: zoom-in;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    z-index: 1;
+                }
+                .hover-zoom-img:hover {
+                    transform: scale(3);
+                    z-index: 1000;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                    border-radius: 4px;
+                }
+            </style>
+            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 1.5rem; border-radius: var(--border-radius); white-space: nowrap; overflow-x: auto;">
                 <!-- 统计数据（横向排列） -->
                 <div class="ranking-stats-inline" style="display: flex; gap: 1.5rem; flex: 1;">
                     <div class="stat-item-inline">
@@ -1224,8 +1249,11 @@ function renderRankingResults(results) {
 
     let html = `
         <div class="ranking-result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-            <span style="font-size: 0.875rem; color: var(--text-secondary);">共 ${results.length} 个商品</span>
-            <button class="btn btn-sm btn-secondary" onclick="undoDeleteRankingItem()" style="font-size: 0.75rem;" ${deletedItems.length === 0 ? 'disabled' : ''}>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📊 排品结果</h3>
+                <span style="font-size: 0.875rem; color: var(--text-secondary);">共 ${results.length} 个商品</span>
+            </div>
+            <button class="btn btn-sm" onclick="undoDeleteRankingItem()" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;" ${deletedItems.length === 0 ? 'disabled' : ''}>
                 ↩ 撤回 (${deletedItems.length})
             </button>
         </div>
@@ -1251,9 +1279,9 @@ function renderRankingResults(results) {
                             <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">图片</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">序号</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left;">商品名称</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 160px;">商品编码</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品ID</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 220px;">商品名称</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 200px;">商品ID</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
                             </tr>
                         </thead>
@@ -1267,10 +1295,10 @@ function renderRankingResults(results) {
             const imageUrl = item.image_url || '';
             // 处理图片URL，可能包含多个逗号分隔的URL
             const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
-            // 添加 referrerpolicy 解决防盗链问题
+            // 使用 .hover-zoom-container 和 .hover-zoom-img 实现悬浮放大
             const imageHtml = firstImageUrl
-                ? `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);"><img src="${firstImageUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'"></div>`
-                : '<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>';
+                ? `<div class="hover-zoom-container"><img src="${firstImageUrl}" class="hover-zoom-img" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'"></div>`
+                : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
             const productCode = item.product_code || '--';
             const codeDisplay = productCode !== '--'
                 ? `${productCode} <button onclick="copyToClipboard('${productCode}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
@@ -1284,7 +1312,7 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary);">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
