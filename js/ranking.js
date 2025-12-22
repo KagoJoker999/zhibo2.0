@@ -38,20 +38,20 @@ const FILTERABLE_FIELDS = [
 ];
 
 // ========================================
-// 数据汇总 - 从 ranking_data + inventory_data 读取并融合
+// 数据汇总 - 从 product_ranking_view + inventory_data 读取并融合
 // ========================================
 async function loadCombinedProductData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行读取排名数据、库存表和不可佩戴品列表
+    // 并行读取排名数据（视图）、库存表和不可佩戴品列表
     const [rankingRes, inventoryRes, nonWearableRes] = await Promise.all([
-        client.from('ranking_data').select('*'),
+        client.from('product_ranking_view').select('*'),
         client.from('inventory_data').select('*'),
         client.from('excluded_non_wearables').select('product_name')
     ]);
 
-    if (rankingRes.error) throw new Error('读取 ranking_data 失败: ' + rankingRes.error.message);
+    if (rankingRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingRes.error.message);
     if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
 
     // 步骤1：构建排名数据 Map，计算总分
@@ -708,7 +708,7 @@ function generateRankingPage() {
                 <!-- 数据加载区块 -->
                 <div class="upload-block" id="block-ranking-data">
                     <div class="upload-block-header">
-                        <h3>📦 数据汇总 <span class="db-table-tag">ranking_data + inventory_data + new_product_data</span></h3>
+                        <h3>📦 数据汇总 <span class="db-table-tag">product_ranking_view + inventory_data + new_product_data</span></h3>
                     </div>
                     
                     <div class="ranking-stats" id="rankingStats" style="display:flex; flex-direction:column; gap:1.5rem;">
@@ -974,7 +974,7 @@ async function initRankingPage() {
                 // 获取各表统计
                 const client = window.supabaseClient;
                 const [r1, r2, r3] = await Promise.all([
-                    client.from('ranking_data').select('*', { count: 'exact', head: true }),
+                    client.from('product_ranking_view').select('*', { count: 'exact', head: true }),
                     client.from('inventory_data').select('*', { count: 'exact', head: true }),
                     client.from('new_product_data').select('*', { count: 'exact', head: true })
                 ]);
