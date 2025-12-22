@@ -1135,17 +1135,7 @@ async function initRankingSettings() {
             
             <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
             
-            <!-- 全局子分类设置 -->
-            <div class="settings-group">
-                 <label class="checkbox-label" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:500;">
-                    <input type="checkbox" id="checkSubFilter" ${rules.按子分类分别筛选 ? 'checked' : ''}>
-                    <span>按子分类分别筛选 (每个子分类取Top1)</span>
-                 </label>
-                 <div id="subFieldGroup" style="display:${rules.按子分类分别筛选 ? 'block' : 'none'}; margin-top:0.5rem; padding-left:1.5rem;">
-                    <label style="font-size:0.85rem; color:var(--text-muted);">子分类字段名</label>
-                    <input type="text" class="input settings-input" id="inputSubField" value="${rules.子分类字段 || '商品分类'}" placeholder="默认为 商品分类" style="font-size:0.9rem; padding:0.3rem;">
-                </div>
-            </div>
+            <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
 
             <div style="border-top:1px solid var(--border-color); margin:1rem 0;"></div>
             
@@ -1206,6 +1196,10 @@ async function initRankingSettings() {
                                 <option value="升序" ${ruleData.排序方式 === '升序' ? 'selected' : ''}>升序 (数值小优先)</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="form-row" style="margin-top:0.5rem;">
+                        <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配)</label>
+                        <input type="number" class="input settings-input rule-input" data-op="等于" value="${ruleData.等于 !== undefined ? ruleData.等于 : ''}" placeholder="例如: 1">
                     </div>
                 `;
             } else if (type === 'boolean') {
@@ -1329,20 +1323,7 @@ async function initRankingSettings() {
             }
         });
 
-        const checkSubFilter = document.getElementById('checkSubFilter');
-        const subFieldGroup = document.getElementById('subFieldGroup');
-        const inputSubField = document.getElementById('inputSubField');
 
-        checkSubFilter.addEventListener('change', (e) => {
-            config.筛选条件[category].按子分类分别筛选 = e.target.checked;
-            subFieldGroup.style.display = e.target.checked ? 'block' : 'none';
-            saveConfigQuietly();
-        });
-
-        inputSubField.addEventListener('change', (e) => {
-            config.筛选条件[category].子分类字段 = e.target.value.trim();
-            saveConfigQuietly();
-        });
 
         const btnAddRule = document.getElementById('btnAddRule');
         const selectNewRuleField = document.getElementById('selectNewRuleField');
