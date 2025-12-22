@@ -669,13 +669,7 @@ function assignSampleNumbers(rankingResults, config) {
                 ranking_result: category,
                 sample_number: sampleNumber
             });
-
-            // 特殊规则：新品分类且序号>=41时，强制步长为1
-            if (category === '新品' && num >= 41) {
-                num += 1;
-            } else {
-                num += rule.step;
-            }
+            num += rule.step;
         });
     }
 
@@ -879,45 +873,15 @@ function generateRankingAssignmentPage() {
                 <button class="btn btn-primary" id="btnSaveAssignment">保存规则</button>
             </div>
 
-            <div class="settings-split-container" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+            <div class="settings-split-container">
                 <!-- 左侧：分类序号规则 -->
-                <div class="card settings-split-left" style="height:auto;">
+                <div class="card settings-split-left" style="height:auto; width: 100%;">
                     <div class="card-header">
                         <h3>分类序号规则</h3>
                     </div>
                      <div class="card-body">
                          <div id="sampleRulesContainer" style="display:grid; grid-template-columns: 1fr; gap:1rem;">
                             <p>加载中...</p>
-                         </div>
-                     </div>
-                </div>
-
-                <!-- 右侧：新品序号规则 -->
-                <div class="card settings-split-right" style="height:auto;">
-                    <div class="card-header">
-                         <h3>新品序号规则</h3>
-                    </div>
-                     <div class="card-body">
-                         <div id="newProductRulesContainer">
-                            <div class="rules-card" style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--border-radius-sm);">
-                                <div style="display:flex; gap:1rem; margin-bottom:0.5rem; align-items:center;">
-                                    <strong style="width:100px;">新品</strong>
-                                </div>
-                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
-                                    <div class="input-group-vertical">
-                                        <label style="font-size:0.8rem; color:var(--text-muted);">前缀</label>
-                                        <input type="text" class="input input-sm new-rule-input" data-field="prefix" placeholder="例如: N">
-                                    </div>
-                                    <div class="input-group-vertical">
-                                        <label style="font-size:0.8rem; color:var(--text-muted);">起始号</label>
-                                        <input type="number" class="input input-sm new-rule-input" data-field="start" placeholder="未配置">
-                                    </div>
-                                    <div class="input-group-vertical">
-                                        <label style="font-size:0.8rem; color:var(--text-muted);">步长</label>
-                                        <input type="number" class="input input-sm new-rule-input" data-field="step" placeholder="未配置">
-                                    </div>
-                                </div>
-                            </div>
                          </div>
                      </div>
                 </div>
