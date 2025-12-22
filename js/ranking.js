@@ -1286,7 +1286,7 @@ async function initRankingSettings() {
                     <option value="小于等于">小于等于</option>
                     <option value="等于">等于</option>
                     <option value="前几名">前几名</option>
-                    <option value="后几名">后几名</option>
+                    <option value="后几名">后几名（分越大越靠前）</option>
                 `;
             } else if (fieldType === 'boolean') {
                 return `<option value="排除">排除</option>`;
