@@ -155,14 +155,16 @@ function initNavigation() {
 }
 
 function navigateTo(page) {
-    // 更新 URL hash
-    window.location.hash = page;
-
-    // 更新导航状态
-    updateNavState(page);
-
-    // 加载页面内容
-    loadPage(page);
+    // 只更新 URL hash，让 hashchange 事件来处理页面加载
+    // 避免重复调用 loadPage
+    if (window.location.hash.slice(1) === page) {
+        // 如果 hash 没变，手动加载一次
+        updateNavState(page);
+        loadPage(page);
+    } else {
+        // hash 变化会触发 hashchange 事件，由 handleHashChange 处理
+        window.location.hash = page;
+    }
 
     // 移动端关闭侧边栏
     if (window.innerWidth <= 768) {
