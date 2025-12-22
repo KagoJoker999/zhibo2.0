@@ -1266,6 +1266,10 @@ async function initRankingSettings() {
 
         const fieldOptions = FILTERABLE_FIELDS.map(key => `<option value="${key}">${key}</option>`).join('');
 
+        // 获取当前的按子分类筛选设置
+        const isSubcategoryFilter = config.筛选条件[category].按子分类分别筛选 === true;
+        const subcategoryField = config.筛选条件[category].子分类字段 || '商品分类';
+
         // 构建 HTML
         filterContainer.innerHTML = `
             <div class="settings-group" style="margin-bottom:1.5rem;">
@@ -1274,6 +1278,28 @@ async function initRankingSettings() {
             </div>
             
             <div style="border-top:1px solid var(--border-color); margin:1.5rem 0;"></div>
+
+            <!-- 按子分类分别筛选 -->
+            <div class="settings-group" style="margin-bottom:1.5rem; padding:1rem; background:var(--bg-tertiary); border-radius:var(--border-radius); border:1px solid var(--border-color);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <div>
+                        <label style="font-weight:500; display:block;">按子分类分别筛选</label>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">每个子分类取可用数最大的1个</span>
+                    </div>
+                    <label class="switch" style="position:relative; display:inline-block; width:50px; height:26px;">
+                        <input type="checkbox" id="toggleSubcategoryFilter" ${isSubcategoryFilter ? 'checked' : ''} style="opacity:0; width:0; height:0;">
+                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:${isSubcategoryFilter ? 'var(--primary-color)' : 'var(--bg-secondary)'}; border-radius:26px; transition:0.3s; border:1px solid var(--border-color);">
+                            <span style="position:absolute; content:''; height:20px; width:20px; left:${isSubcategoryFilter ? '26px' : '2px'}; bottom:2px; background:white; border-radius:50%; transition:0.3s;"></span>
+                        </span>
+                    </label>
+                </div>
+                <div id="subcategoryFieldContainer" style="display:${isSubcategoryFilter ? 'block' : 'none'}; margin-top:0.75rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem; display:block;">子分类字段</label>
+                    <select id="selectSubcategoryField" class="input" style="width:100%;">
+                        ${FILTERABLE_FIELDS.filter(f => getFieldType(f) === 'string').map(f => `<option value="${f}" ${f === subcategoryField ? 'selected' : ''}>${f}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                 <h4 style="margin:0;">筛选规则列表</h4>
@@ -1519,6 +1545,22 @@ async function initRankingSettings() {
                     renderCategories();
                     saveConfigQuietly();
                 }
+                return;
+            }
+
+            // 按子分类筛选开关
+            if (target.id === 'toggleSubcategoryFilter') {
+                config.筛选条件[category].按子分类分别筛选 = target.checked;
+                // 重新渲染以更新开关视觉状态和显示/隐藏字段选择
+                renderFilterSettings(category);
+                saveConfigQuietly();
+                return;
+            }
+
+            // 子分类字段选择
+            if (target.id === 'selectSubcategoryField') {
+                config.筛选条件[category].子分类字段 = target.value;
+                saveConfigQuietly();
                 return;
             }
 
