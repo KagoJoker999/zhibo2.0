@@ -77,10 +77,31 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('📡 直播辅助工具已启动');
 });
 
-// 查询数据库空间使用情况
+// 查询数据库空间使用情况（每24小时刷新一次）
 async function updateDbUsage() {
     const dbUsageText = document.getElementById('dbUsageText');
     if (!dbUsageText || !window.supabaseClient) return;
+
+    const CACHE_KEY = 'db_usage_cache';
+    const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时（毫秒）
+    const totalMB = 500;
+
+    // 检查缓存
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { usedMB, timestamp } = JSON.parse(cached);
+            const now = Date.now();
+            if (now - timestamp < CACHE_DURATION) {
+                // 缓存未过期，使用缓存值
+                const remainMB = (totalMB - usedMB).toFixed(0);
+                dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
+                return;
+            }
+        }
+    } catch (e) {
+        // 缓存读取失败，继续查询
+    }
 
     try {
         // 统计各表的记录数来估算空间（实际数据库大小难以直接获取）
@@ -96,9 +117,18 @@ async function updateDbUsage() {
 
         // 估算：每条记录约 0.5KB，计算使用量
         const usedKB = totalRecords * 0.5;
-        const totalMB = 500;
         const usedMB = (usedKB / 1024).toFixed(1);
         const remainMB = (totalMB - usedMB).toFixed(0);
+
+        // 保存到缓存
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                usedMB: usedMB,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            // 缓存写入失败，忽略
+        }
 
         dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
     } catch (e) {
