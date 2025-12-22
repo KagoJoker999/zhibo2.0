@@ -499,26 +499,33 @@ function generateRankingPage() {
                         <h3>📦 数据汇总 <span class="db-table-tag">ranking_data + inventory_data + new_product_data</span></h3>
                     </div>
                     
-                    <div class="ranking-stats" id="rankingStats">
-                        <div class="stat-item">
-                            <span class="stat-label">排名数据</span>
-                            <span class="stat-value" id="statRanking">--</span>
+                    <div class="ranking-stats" id="rankingStats" style="display:flex; flex-direction:column; gap:1.5rem;">
+                        <!-- 第一行 -->
+                        <div class="stats-row" style="display:flex; justify-content:space-around; gap:1rem;">
+                            <div class="stat-item">
+                                <span class="stat-label">排名数据</span>
+                                <span class="stat-value" id="statRanking">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">库存数据</span>
+                                <span class="stat-value" id="statInventory">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">新品数据</span>
+                                <span class="stat-value" id="statNewProduct">--</span>
+                            </div>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">库存数据</span>
-                            <span class="stat-value" id="statInventory">--</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">新品数据</span>
-                            <span class="stat-value" id="statNewProduct">--</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">排除商品</span>
-                            <span class="stat-value" id="statExcluded">--</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">参与排品</span>
-                            <span class="stat-value" id="statCombined">--</span>
+                        
+                        <!-- 第二行 -->
+                        <div class="stats-row" style="display:flex; justify-content:space-between; padding:0 10%; gap:1rem;">
+                            <div class="stat-item">
+                                <span class="stat-label">排除商品</span>
+                                <span class="stat-value" id="statExcluded">--</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">参与排品</span>
+                                <span class="stat-value" id="statCombined">--</span>
+                            </div>
                         </div>
                     </div>
                     
