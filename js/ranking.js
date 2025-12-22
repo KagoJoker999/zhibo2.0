@@ -669,7 +669,13 @@ function assignSampleNumbers(rankingResults, config) {
                 ranking_result: category,
                 sample_number: sampleNumber
             });
-            num += rule.step;
+
+            // 特殊规则：新品分类且序号>=41时，强制步长为1
+            if (category === '新品' && num >= 41) {
+                num += 1;
+            } else {
+                num += rule.step;
+            }
         });
     }
 
