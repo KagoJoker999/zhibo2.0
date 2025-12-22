@@ -37,35 +37,50 @@ function processNewProductData(rows) {
 
 // ========================================
 // 名称生成器
-// 公式：「初始名称」+ 产地词 + 热卖词 + 分类词汇
+// 支持自定义符号和公式顺序
 // 示例：「明星系列-许妍马尾」韩国25秋冬百搭香蕉夹
 // ========================================
 async function generateProductNames(records) {
     const settings = await loadNameFormulaSettings();
     const categoryWords = await loadCategoryWords();
 
+    // 解析公式顺序
+    let order = ['name', 'origin', 'hot', 'category'];
+    try {
+        order = JSON.parse(settings.formula_order || '["name", "origin", "hot", "category"]');
+    } catch (e) {
+        console.warn('公式顺序解析失败，使用默认顺序');
+    }
+
+    const prefix = settings.name_prefix || '「';
+    const suffix = settings.name_suffix || '」';
+
     return records.map(record => {
-        // 「初始名称」+ 产地词 + 热卖词 + 分类词汇
-        let newName = `「${record.original_name}」`;
+        let nameParts = [];
 
-        // 产地词
-        if (settings.origin_word) {
-            newName += settings.origin_word;
-        }
-
-        // 热卖词
-        if (settings.hot_word) {
-            newName += settings.hot_word;
-        }
-
-        // 分类词汇
-        if (record.category && categoryWords[record.category]) {
-            newName += categoryWords[record.category];
-        }
+        // 按顺序生成各部分
+        order.forEach(key => {
+            switch (key) {
+                case 'name':
+                    nameParts.push(`${prefix}${record.original_name}${suffix}`);
+                    break;
+                case 'origin':
+                    if (settings.origin_word) nameParts.push(settings.origin_word);
+                    break;
+                case 'hot':
+                    if (settings.hot_word) nameParts.push(settings.hot_word);
+                    break;
+                case 'category':
+                    if (record.category && categoryWords[record.category]) {
+                        nameParts.push(categoryWords[record.category]);
+                    }
+                    break;
+            }
+        });
 
         return {
             ...record,
-            product_name: newName
+            product_name: nameParts.join('')
         };
     });
 }
@@ -89,6 +104,14 @@ async function generateListingCategories(records) {
 // 设置读取函数
 // ========================================
 async function loadNameFormulaSettings() {
+    const defaultSettings = {
+        origin_word: '韩国',
+        hot_word: '',
+        name_prefix: '「',
+        name_suffix: '」',
+        formula_order: '["name", "origin", "hot", "category"]'
+    };
+
     try {
         const { data, error } = await window.supabaseClient
             .from('name_formula_settings')
@@ -97,11 +120,12 @@ async function loadNameFormulaSettings() {
             .single();
 
         if (error || !data) {
-            return { origin_word: '韩国', hot_word: '' };
+            return defaultSettings;
         }
-        return data;
+        // 合并默认值和数据库值
+        return { ...defaultSettings, ...data };
     } catch (e) {
-        return { origin_word: '韩国', hot_word: '' };
+        return defaultSettings;
     }
 }
 
@@ -283,11 +307,12 @@ function generateNewProductPage() {
                 </div>
                 
                 <!-- 处理结果区块 -->
-                <div class="upload-block" id="block-result">
+                <div class="upload-block upload-block-scrollable" id="block-result">
                     <div class="upload-block-header">
-                        <h3>📊 处理说明 & 结果</h3>
+                        <h3>📊 处理说明 & 结果 <span class="db-table-tag">→ new_product_data</span></h3>
                     </div>
                     
+                    <div class="scrollable-content">
                     <!-- 处理流程说明 -->
                     <div class="process-info">
                         <div class="process-section">
@@ -325,6 +350,7 @@ function generateNewProductPage() {
                     <div id="result-content" class="result-content">
                         <p class="text-muted">上传数据后显示处理结果</p>
                     </div>
+                    </div><!-- end scrollable-content -->
 
                 </div>
             </div>
@@ -358,21 +384,70 @@ function generateNewProductSettingsPage() {
                 <div class="settings-header">
                     <h3>📝 名称公式设置</h3>
                 </div>
-                <p class="settings-hint">公式：初始名称 + 分类词汇 + 产地词 + 热卖词</p>
                 
-                <div class="settings-group">
-                    <label>产地词</label>
-                    <div class="inline-edit-field">
-                        <input type="text" id="originWord" placeholder="如：韩国" class="settings-input">
-                        <button class="btn-icon save-inline" id="saveOriginWord" title="保存">✓</button>
+                <!-- 符号设置 -->
+                <div class="settings-subsection">
+                    <h4>🔤 符号设置</h4>
+                    <div class="symbol-settings">
+                        <div class="settings-group">
+                            <label>前缀符号</label>
+                            <div class="inline-edit-field">
+                                <input type="text" id="namePrefix" placeholder="「" class="settings-input symbol-input" maxlength="5">
+                                <button class="btn-icon save-inline" id="saveNamePrefix" title="保存">✓</button>
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <label>后缀符号</label>
+                            <div class="inline-edit-field">
+                                <input type="text" id="nameSuffix" placeholder="」" class="settings-input symbol-input" maxlength="5">
+                                <button class="btn-icon save-inline" id="saveNameSuffix" title="保存">✓</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="settings-group">
-                    <label>热卖词</label>
-                    <div class="inline-edit-field">
-                        <input type="text" id="hotWord" placeholder="如：26新年百搭" class="settings-input">
-                        <button class="btn-icon save-inline" id="saveHotWord" title="保存">✓</button>
+                <!-- 公式顺序设置 -->
+                <div class="settings-subsection">
+                    <h4>📐 公式顺序</h4>
+                    <p class="settings-hint-sm">拖拽调整各元素在生成名称中的顺序</p>
+                    <ul class="formula-order-list" id="formulaOrderList">
+                        <li data-key="name" class="formula-item">
+                            <span class="drag-handle">☰</span>
+                            <span class="formula-label">原名称（含符号）</span>
+                        </li>
+                        <li data-key="origin" class="formula-item">
+                            <span class="drag-handle">☰</span>
+                            <span class="formula-label">产地词</span>
+                        </li>
+                        <li data-key="hot" class="formula-item">
+                            <span class="drag-handle">☰</span>
+                            <span class="formula-label">热卖词</span>
+                        </li>
+                        <li data-key="category" class="formula-item">
+                            <span class="drag-handle">☰</span>
+                            <span class="formula-label">分类词汇</span>
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary btn-sm" id="saveFormulaOrder" style="width:100%;margin-top:0.5rem">💾 保存公式顺序</button>
+                </div>
+                
+                <!-- 词汇设置 -->
+                <div class="settings-subsection">
+                    <h4>✏️ 词汇设置</h4>
+                    <div class="settings-group">
+                        <label>产地词</label>
+                        <div class="inline-edit-field">
+                            <input type="text" id="originWord" placeholder="如：韩国" class="settings-input">
+                            <button class="btn-icon save-inline" id="saveOriginWord" title="保存">✓</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <label>热卖词</label>
+                        <div class="inline-edit-field">
+                            <input type="text" id="hotWord" placeholder="如：26新年百搭" class="settings-input">
+                            <button class="btn-icon save-inline" id="saveHotWord" title="保存">✓</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -709,18 +784,25 @@ function initNewProductUpload() {
 async function initNewProductSettings() {
     const originWordInput = document.getElementById('originWord');
     const hotWordInput = document.getElementById('hotWord');
+    const namePrefixInput = document.getElementById('namePrefix');
+    const nameSuffixInput = document.getElementById('nameSuffix');
+    const formulaOrderList = document.getElementById('formulaOrderList');
     const categoryTable = document.getElementById('categoryWordsTable');
     const listingTable = document.getElementById('listingCategoryTable');
     const addCategoryBtn = document.getElementById('addCategoryWord');
     const addListingBtn = document.getElementById('addListingCategory');
     const saveOriginBtn = document.getElementById('saveOriginWord');
     const saveHotBtn = document.getElementById('saveHotWord');
+    const saveNamePrefixBtn = document.getElementById('saveNamePrefix');
+    const saveNameSuffixBtn = document.getElementById('saveNameSuffix');
+    const saveFormulaOrderBtn = document.getElementById('saveFormulaOrder');
     const saveCategoryWordBtn = document.getElementById('saveCategoryWordBtn');
     const saveListingCategoryBtn = document.getElementById('saveListingCategoryBtn');
 
     // 数据存储
     let categoryWordsData = [];
     let listingCategoryData = [];
+    let currentFormulaOrder = ['name', 'origin', 'hot', 'category'];
 
     // 加载数据
     await loadAllData();
@@ -730,6 +812,16 @@ async function initNewProductSettings() {
         const settings = await loadNameFormulaSettings();
         originWordInput.value = settings.origin_word || '';
         hotWordInput.value = settings.hot_word || '';
+        namePrefixInput.value = settings.name_prefix || '「';
+        nameSuffixInput.value = settings.name_suffix || '」';
+
+        // 加载公式顺序
+        try {
+            currentFormulaOrder = JSON.parse(settings.formula_order || '["name", "origin", "hot", "category"]');
+        } catch (e) {
+            currentFormulaOrder = ['name', 'origin', 'hot', 'category'];
+        }
+        renderFormulaOrderList();
 
         // 加载分类词汇
         const categoryWords = await loadCategoryWords();
@@ -744,6 +836,123 @@ async function initNewProductSettings() {
             id: item.id || idx, source_category: item.source_category, listing_category: item.listing_category
         }));
         renderListingTable();
+    }
+
+    // 渲染公式顺序列表
+    function renderFormulaOrderList() {
+        const labels = {
+            name: '原名称（含符号）',
+            origin: '产地词',
+            hot: '热卖词',
+            category: '分类词汇'
+        };
+
+        formulaOrderList.innerHTML = currentFormulaOrder.map(key => `
+            <li data-key="${key}" class="formula-item">
+                <span class="drag-handle">☰</span>
+                <span class="formula-label">${labels[key] || key}</span>
+            </li>
+        `).join('');
+
+        // 启用拖拽排序
+        initDragSort();
+    }
+
+    // 拖拽排序
+    function initDragSort() {
+        const items = formulaOrderList.querySelectorAll('.formula-item');
+        let dragItem = null;
+
+        items.forEach(item => {
+            item.setAttribute('draggable', 'true');
+
+            item.addEventListener('dragstart', (e) => {
+                dragItem = item;
+                setTimeout(() => item.classList.add('dragging'), 0);
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                dragItem = null;
+                // 更新顺序数据
+                currentFormulaOrder = Array.from(formulaOrderList.querySelectorAll('.formula-item'))
+                    .map(el => el.dataset.key);
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(formulaOrderList, e.clientY);
+                if (afterElement == null) {
+                    formulaOrderList.appendChild(dragItem);
+                } else {
+                    formulaOrderList.insertBefore(dragItem, afterElement);
+                }
+            });
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.formula-item:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // 保存前缀符号
+    saveNamePrefixBtn?.addEventListener('click', async () => {
+        try {
+            await saveNameFormulaSetting('name_prefix', namePrefixInput.value || '「');
+            window.AppUtils?.showToast?.('前缀符号已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
+        }
+    });
+
+    // 保存后缀符号
+    saveNameSuffixBtn?.addEventListener('click', async () => {
+        try {
+            await saveNameFormulaSetting('name_suffix', nameSuffixInput.value || '」');
+            window.AppUtils?.showToast?.('后缀符号已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
+        }
+    });
+
+    // 保存公式顺序
+    saveFormulaOrderBtn?.addEventListener('click', async () => {
+        try {
+            await saveNameFormulaSetting('formula_order', JSON.stringify(currentFormulaOrder));
+            window.AppUtils?.showToast?.('公式顺序已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
+        }
+    });
+
+    // 保存单个设置字段
+    async function saveNameFormulaSetting(field, value) {
+        const { data: existing } = await window.supabaseClient
+            .from('name_formula_settings')
+            .select('id')
+            .order('id', { ascending: true });
+
+        if (existing && existing.length > 0) {
+            const { error } = await window.supabaseClient
+                .from('name_formula_settings')
+                .update({ [field]: value, updated_at: new Date().toISOString() })
+                .eq('id', existing[0].id);
+            if (error) throw error;
+        } else {
+            const { error } = await window.supabaseClient
+                .from('name_formula_settings')
+                .insert({ [field]: value });
+            if (error) throw error;
+        }
     }
 
     // 渲染分类词汇表格

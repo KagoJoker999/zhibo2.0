@@ -247,7 +247,7 @@ function generateUploadBlock(key, config) {
     return `
         <div class="upload-block" id="block-${key}">
             <div class="upload-block-header">
-                <h3>${config.title}</h3>
+                <h3>${config.title} <span class="db-table-tag">→ ${config.tableName}</span></h3>
             </div>
             
             <div class="upload-zone" id="uploadZone-${key}">
