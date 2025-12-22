@@ -26,6 +26,17 @@ const FIELD_MAPPING = {
     "价格": "price"
 };
 
+// 可用于筛选的字段（排除：价格、颜色规格、图片网址、商品名称、商品编码、仓位）
+const FILTERABLE_FIELDS = [
+    "虚拟分类",      // 文本
+    "实际库存数",    // 数值
+    "评分排名",      // 数值
+    "是否可佩戴",    // 布尔
+    "商品分类",      // 文本
+    "可用数",        // 数值
+    "商品标签"       // 文本
+];
+
 // ========================================
 // 数据汇总 - 从 ranking_data + inventory_data 读取并融合
 // ========================================
@@ -476,6 +487,19 @@ function applyFilters(products, conditions) {
                 filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
             }
             filtered = filtered.slice(0, condition.前几名);
+        }
+        if (condition.后几名) {
+            // 后几名：与前几名相反，取排序后的末尾N个
+            const ascending = condition.排序方式 === '升序' || key === '评分排名';
+
+            if (ascending) {
+                // 升序排列，取最后N个（即数值最大的N个）
+                filtered = filtered.sort((a, b) => (a[field] ?? 999999) - (b[field] ?? 999999));
+            } else {
+                // 降序排列，取最后N个（即数值最小的N个）
+                filtered = filtered.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+            }
+            filtered = filtered.slice(-condition.后几名);
         }
     }
 
@@ -1124,7 +1148,7 @@ async function initRankingSettings() {
             return 'string';
         }
 
-        const fieldOptions = Object.keys(FIELD_MAPPING).map(key => `<option value="${key}">${key}</option>`).join('');
+        const fieldOptions = FILTERABLE_FIELDS.map(key => `<option value="${key}">${key}</option>`).join('');
 
         // HTML 结构构建
         let html = `
@@ -1190,16 +1214,22 @@ async function initRankingSettings() {
                             <input type="number" class="input settings-input rule-input" data-op="前几名" value="${ruleData.前几名 || ''}">
                         </div>
                         <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:var(--text-muted);">后几名 (Bottom N)</label>
+                            <input type="number" class="input settings-input rule-input" data-op="后几名" value="${ruleData.后几名 || ''}">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                        <div style="flex:1;">
                             <label style="font-size:0.8rem; color:var(--text-muted);">排序方式</label>
                             <select class="input settings-input rule-input" data-op="排序方式">
                                 <option value="降序" ${ruleData.排序方式 !== '升序' ? 'selected' : ''}>降序 (数值大优先)</option>
                                 <option value="升序" ${ruleData.排序方式 === '升序' ? 'selected' : ''}>升序 (数值小优先)</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row" style="margin-top:0.5rem;">
-                        <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配)</label>
-                        <input type="number" class="input settings-input rule-input" data-op="等于" value="${ruleData.等于 !== undefined ? ruleData.等于 : ''}" placeholder="例如: 1">
+                        <div style="flex:1;">
+                            <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配)</label>
+                            <input type="number" class="input settings-input rule-input" data-op="等于" value="${ruleData.等于 !== undefined ? ruleData.等于 : ''}" placeholder="例如: 1">
+                        </div>
                     </div>
                 `;
             } else if (type === 'boolean') {
@@ -1210,18 +1240,14 @@ async function initRankingSettings() {
                     </div>
                 `;
             } else {
-                // String
+                // String - 只保留包含和等于
                 inputsHtml = `
                     <div class="form-row" style="margin-top:0.5rem;">
                         <label style="font-size:0.8rem; color:var(--text-muted);">包含 (逗号分隔)</label>
                         <input type="text" class="input settings-input rule-input" data-op="包含" value="${(ruleData.包含 || []).join ? ruleData.包含.join(',') : (ruleData.包含 || '')}">
                     </div>
-                    <div class="form-row" style="margin-top:0.5rem;">
-                        <label style="font-size:0.8rem; color:var(--text-muted);">排除 (逗号分隔)</label>
-                        <input type="text" class="input settings-input rule-input" data-op="排除" value="${(ruleData.排除 || []).join ? ruleData.排除.join(',') : (ruleData.排除 || '')}">
-                    </div>
                      <div class="form-row" style="margin-top:0.5rem;">
-                        <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配)</label>
+                        <label style="font-size:0.8rem; color:var(--text-muted);">等于 (精确匹配，逗号分隔)</label>
                         <input type="text" class="input settings-input rule-input" data-op="等于" value="${(ruleData.等于 || []).join ? ruleData.等于.join(',') : (ruleData.等于 || '')}">
                     </div>
                 `;
