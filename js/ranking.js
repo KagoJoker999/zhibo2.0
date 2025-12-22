@@ -1119,15 +1119,19 @@ async function initRankingSettings() {
         });
     }
 
+    // ========== 用于管理事件监听器的 AbortController ==========
+    let filterEventsController = null;
+
     // 渲染右侧筛选条件
     function renderFilterSettings(category) {
         if (!filterContainer) return;
 
-        // ========== 关键修复：清除旧的事件监听器 ==========
-        // 通过克隆并替换节点来移除所有旧的事件监听器
-        const newContainer = filterContainer.cloneNode(false); // 浅克隆，不复制子节点和事件
-        filterContainer.parentNode.replaceChild(newContainer, filterContainer);
-        filterContainer = newContainer; // 更新引用
+        // 取消之前的事件监听器
+        if (filterEventsController) {
+            filterEventsController.abort();
+        }
+        filterEventsController = new AbortController();
+        const signal = filterEventsController.signal;
 
         if (!category) {
             if (filterTitle) filterTitle.textContent = '筛选条件设置';
@@ -1358,7 +1362,7 @@ async function initRankingSettings() {
                 }
                 return;
             }
-        });
+        }, { signal });
 
         // 输入变更事件委托
         filterContainer.addEventListener('change', (e) => {
@@ -1425,7 +1429,7 @@ async function initRankingSettings() {
                     saveConfigQuietly();
                 }
             }
-        });
+        }, { signal });
     }
 
     async function saveConfigQuietly() {
