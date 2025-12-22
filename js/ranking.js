@@ -1147,6 +1147,47 @@ async function initRankingSettings() {
         if (!config.筛选条件) config.筛选条件 = {};
         if (!config.筛选条件[category]) config.筛选条件[category] = {};
 
+        // ========== 加载文本字段的唯一值（用于下拉选择） ==========
+        let fieldUniqueValues = {};
+
+        async function loadFieldUniqueValues() {
+            const client = window.supabaseClient;
+            if (!client) return;
+
+            try {
+                // 从 inventory_data 表读取虚拟分类和商品分类的唯一值
+                const { data: inventoryData } = await client.from('inventory_data').select('virtual_category, product_category');
+
+                const virtualCategories = new Set();
+                const productCategories = new Set();
+
+                (inventoryData || []).forEach(item => {
+                    if (item.virtual_category) virtualCategories.add(item.virtual_category);
+                    if (item.product_category) productCategories.add(item.product_category);
+                });
+
+                fieldUniqueValues['虚拟分类'] = Array.from(virtualCategories).sort();
+                fieldUniqueValues['商品分类'] = Array.from(productCategories).sort();
+
+                // 从 new_product_data 读取商品标签
+                const { data: newProductData } = await client.from('new_product_data').select('product_tag');
+                const productTags = new Set();
+                (newProductData || []).forEach(item => {
+                    if (item.product_tag) productTags.add(item.product_tag);
+                });
+                fieldUniqueValues['商品标签'] = Array.from(productTags).sort();
+
+            } catch (e) {
+                console.warn('加载字段唯一值失败:', e);
+            }
+        }
+
+        // 立即加载
+        loadFieldUniqueValues().then(() => {
+            // 加载完成后重新渲染规则列表
+            reloadRules();
+        });
+
         // 辅助函数：推断字段类型
         function getFieldType(key) {
             if (['实际库存数', '评分排名', '可用数'].includes(key)) return 'numeric';
@@ -1201,6 +1242,31 @@ async function initRankingSettings() {
         function renderConditionRow(condition, condIndex, ruleIndex) {
             const fieldType = getFieldType(condition.field || FILTERABLE_FIELDS[0]);
             const operatorOpts = getOperatorOptions(fieldType);
+            const fieldName = condition.field || FILTERABLE_FIELDS[0];
+
+            // 根据字段类型生成不同的值输入控件
+            let valueHtml = '';
+            const currentValue = Array.isArray(condition.value) ? condition.value : (condition.value ? [condition.value] : []);
+
+            if (fieldType === 'string' && fieldUniqueValues[fieldName] && fieldUniqueValues[fieldName].length > 0) {
+                // 文本字段且有唯一值选项：显示多选下拉框
+                const options = fieldUniqueValues[fieldName];
+                valueHtml = `
+                    <select class="input condition-value" style="flex:1.5; min-width:120px;" multiple size="1" title="按住 Cmd/Ctrl 多选">
+                        ${options.map(opt => `<option value="${opt}" ${currentValue.includes(opt) ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                `;
+            } else if (fieldType === 'boolean') {
+                // 布尔字段
+                valueHtml = `
+                    <select class="input condition-value" style="flex:1; min-width:80px;">
+                        <option value="不可佩戴" ${currentValue.includes('不可佩戴') ? 'selected' : ''}>不可佩戴</option>
+                    </select>
+                `;
+            } else {
+                // 数值字段或无选项的文本字段：显示输入框
+                valueHtml = `<input type="text" class="input condition-value" style="flex:1; min-width:80px;" value="${currentValue.join(',')}" placeholder="值">`;
+            }
 
             return `
                 <div class="condition-row" data-rule-index="${ruleIndex}" data-cond-index="${condIndex}" style="display:flex; gap:0.5rem; align-items:center; padding:0.75rem; background:var(--bg-tertiary); border-radius:var(--border-radius-sm); margin-bottom:0.5rem;">
@@ -1210,7 +1276,7 @@ async function initRankingSettings() {
                     <select class="input condition-operator" style="flex:1; min-width:80px;">
                         ${operatorOpts.replace(`value="${condition.operator}"`, `value="${condition.operator}" selected`)}
                     </select>
-                    <input type="text" class="input condition-value" style="flex:1; min-width:80px;" value="${Array.isArray(condition.value) ? condition.value.join(',') : (condition.value || '')}" placeholder="值">
+                    ${valueHtml}
                     <button class="btn-icon btn-delete-condition" title="删除条件" style="color:var(--error-color); font-size:1.2rem; cursor:pointer; padding:0.25rem;">×</button>
                 </div>
             `;
@@ -1416,12 +1482,20 @@ async function initRankingSettings() {
                     } else if (target.classList.contains('condition-operator')) {
                         ruleData.conditions[condIndex].operator = target.value;
                     } else if (target.classList.contains('condition-value')) {
-                        let val = target.value;
-                        // 如果包含逗号，转为数组
-                        if (val.includes(',') || val.includes('，')) {
-                            val = val.split(/[,，]/).map(s => s.trim()).filter(s => s);
-                        } else if (!isNaN(parseFloat(val)) && isFinite(val)) {
-                            val = parseFloat(val);
+                        let val;
+                        // 检测是否是多选下拉框
+                        if (target.tagName === 'SELECT' && target.multiple) {
+                            val = Array.from(target.selectedOptions).map(opt => opt.value);
+                        } else if (target.tagName === 'SELECT') {
+                            val = target.value;
+                        } else {
+                            val = target.value;
+                            // 如果包含逗号，转为数组
+                            if (val.includes(',') || val.includes('，')) {
+                                val = val.split(/[,，]/).map(s => s.trim()).filter(s => s);
+                            } else if (!isNaN(parseFloat(val)) && isFinite(val)) {
+                                val = parseFloat(val);
+                            }
                         }
                         ruleData.conditions[condIndex].value = val;
                     }
