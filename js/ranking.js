@@ -998,6 +998,20 @@ async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
 
+    // 尝试加载缓存的结果
+    const cached = loadCachedResults();
+    if (cached && cached.results && cached.results.length > 0) {
+        cachedResults = cached.results;
+        cachedProductIds = cached.productIds || {};
+        renderRankingResults(cachedResults);
+        btnSaveResults.disabled = false;
+
+        // 显示缓存时间
+        const cacheTime = new Date(cached.timestamp);
+        const timeStr = cacheTime.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        window.AppUtils?.showToast?.(`已加载 ${timeStr} 的缓存结果（48小时内有效）`, 'info');
+    }
+
     if (btnLoadAndCalculate) {
         btnLoadAndCalculate.addEventListener('click', async () => {
             try {
@@ -1161,6 +1175,14 @@ function renderRankingResults(results) {
         grouped[r.ranking_result].push(r);
     });
 
+    // 缓存结果到localStorage（48小时有效）
+    const cacheData = {
+        results: results,
+        productIds: cachedProductIds,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('rankingResultsCache', JSON.stringify(cacheData));
+
     let html = `
         <div class="ranking-result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
             <span style="font-size: 0.875rem; color: var(--text-secondary);">共 ${results.length} 个商品</span>
@@ -1175,36 +1197,38 @@ function renderRankingResults(results) {
             <div class="result-category">
                 <h4>${category} <span class="count">(${items.length})</span></h4>
                 <div class="result-items-table">
-                    <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.8125rem;">
+                    <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
                             <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
-                                <th style="padding: 0.5rem; text-align: center; width: 40px;">图片</th>
-                                <th style="padding: 0.5rem; text-align: center; width: 50px;">序号</th>
-                                <th style="padding: 0.5rem; text-align: left;">商品名称</th>
-                                <th style="padding: 0.5rem; text-align: left; width: 120px;">商品编码</th>
-                                <th style="padding: 0.5rem; text-align: left; width: 100px;">商品ID</th>
-                                <th style="padding: 0.5rem; text-align: center; width: 40px;">操作</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">图片</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">序号</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">商品名称</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 120px;">商品编码</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 140px;">商品ID</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${items.map(item => {
             const productId = cachedProductIds[item.product_name];
-            const idDisplay = productId ? productId : '<span style="color: var(--warning-color); font-size: 0.75rem;">疑似未上架</span>';
+            const idDisplay = productId ? productId : '<span style="color: var(--warning-color);">疑似未上架</span>';
             const imageUrl = item.image_url || '';
-            const imageHtml = imageUrl
-                ? `<img src="${imageUrl.split(',')[0].trim()}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">`
-                : '<span style="color: var(--text-muted); font-size: 0.625rem;">无图</span>';
+            // 处理图片URL，可能包含多个逗号分隔的URL
+            const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
+            const imageHtml = firstImageUrl
+                ? `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);"><img src="${firstImageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'"></div>`
+                : '<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>';
             const productCode = item.product_code || '--';
 
             return `
                                     <tr style="border-bottom: 1px solid var(--border-color);">
-                                        <td style="padding: 0.375rem; text-align: center;">${imageHtml}</td>
-                                        <td style="padding: 0.375rem; text-align: center; font-weight: 600; color: var(--primary-color);">${item.sample_number}</td>
-                                        <td style="padding: 0.375rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
-                                        <td style="padding: 0.375rem; font-size: 0.75rem; color: var(--text-secondary);">${productCode}</td>
-                                        <td style="padding: 0.375rem; font-size: 0.75rem;">${idDisplay}</td>
-                                        <td style="padding: 0.375rem; text-align: center;">
-                                            <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 0.875rem;">✕</button>
+                                        <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
+                                        <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
+                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary);">${productCode}</td>
+                                        <td style="padding: 0.75rem 0.5rem;">${idDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; text-align: center;">
+                                            <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 1rem; padding: 0.25rem;">✕</button>
                                         </td>
                                     </tr>
                                 `;
@@ -1217,6 +1241,27 @@ function renderRankingResults(results) {
     }
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
+}
+
+// 加载缓存的结果（48小时内有效）
+function loadCachedResults() {
+    try {
+        const cached = localStorage.getItem('rankingResultsCache');
+        if (!cached) return null;
+
+        const data = JSON.parse(cached);
+        const CACHE_DURATION = 48 * 60 * 60 * 1000; // 48小时
+
+        if (Date.now() - data.timestamp > CACHE_DURATION) {
+            localStorage.removeItem('rankingResultsCache');
+            return null;
+        }
+
+        return data;
+    } catch (e) {
+        console.warn('加载缓存失败:', e);
+        return null;
+    }
 }
 
 async function initRankingSettings() {
