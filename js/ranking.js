@@ -1088,18 +1088,18 @@ function renderRankingResults(results) {
 async function initRankingSettings() {
     let config = await loadRankingConfig();
 
-    // 预加载商品分类选项（从 inventory_data 表获取）
+    // 预加载商品分类选项（从 listing_category_mapping 表获取）
     let productCategoryOptions = [];
     try {
         const client = window.supabaseClient;
         if (client) {
             const { data, error } = await client
-                .from('inventory_data')
-                .select('product_category')
-                .not('product_category', 'is', null);
+                .from('listing_category_mapping')
+                .select('source_category')
+                .not('source_category', 'is', null);
             if (!error && data) {
                 // 去重并排序
-                productCategoryOptions = [...new Set(data.map(d => d.product_category).filter(Boolean))].sort();
+                productCategoryOptions = [...new Set(data.map(d => d.source_category).filter(Boolean))].sort();
             }
         }
     } catch (e) {
