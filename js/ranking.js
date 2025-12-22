@@ -399,7 +399,7 @@ function getDefaultRankingConfig() {
 // ========================================
 // 排品计算引擎
 // ========================================
-function calculateRanking(products, config) {
+function calculateRanking(products, config, categoryExcludedMap = {}) {
     const usedProducts = new Set();
     const results = {};
 
@@ -415,6 +415,17 @@ function calculateRanking(products, config) {
 
         // 获取未使用的商品
         let available = products.filter(p => !usedProducts.has(p.product_name));
+
+        // 获取该分类映射后的结果标签，用于查找排除列表
+        const resultLabel = config.结果映射[category] || category;
+
+        // 排除该分类下被删除的商品（结果标签匹配）
+        const excludedInCategory = categoryExcludedMap[resultLabel] || [];
+        if (excludedInCategory.length > 0) {
+            available = available.filter(p => !excludedInCategory.includes(p.product_name));
+            console.log(`[排品调试] ${category}: 排除已删除商品 ${excludedInCategory.length} 个`);
+        }
+
         console.log(`[排品调试] ${category}: 可用商品数=${available.length}, 按子分类筛选=${conditions.按子分类分别筛选}, 选中子分类=${JSON.stringify(conditions.选中子分类)}`);
 
         // 应用筛选条件
@@ -438,8 +449,7 @@ function calculateRanking(products, config) {
         // 标记为已使用
         available.forEach(p => usedProducts.add(p.product_name));
 
-        // 存储结果
-        const resultLabel = config.结果映射[category] || category;
+        // 存储结果（resultLabel已在前面定义）
         results[resultLabel] = available;
     }
 
@@ -950,6 +960,8 @@ let cachedExcluded = [];      // 排除商品列表
 let cachedResults = [];       // 排品结果
 let cachedProductIds = {};    // 商品ID映射 { product_name: product_id }
 let deletedItems = [];        // 已删除的项（用于撤回）
+let categoryExcluded = {};    // 每个分类的排除商品列表 { category: [productName1, productName2] }
+let cachedConfig = null;      // 缓存的配置
 
 // 加载商品ID映射
 async function loadProductIdMapping() {
@@ -1094,11 +1106,14 @@ async function initRankingPage() {
                 // === 自动执行计算 ===
                 btnLoadAndCalculate.textContent = '计算中...';
 
-                // 加载配置
+                // 加载配置并重置排除列表
                 const config = await loadRankingConfig();
+                cachedConfig = config;  // 缓存配置用于删除后重新计算
+                categoryExcluded = {};  // 重置分类排除列表
+                deletedItems = [];      // 重置删除记录
 
                 // 执行排品计算
-                const rankingResults = calculateRanking(cachedProducts, config);
+                const rankingResults = calculateRanking(cachedProducts, config, categoryExcluded);
 
                 // 分配样品序号
                 cachedResults = assignSampleNumbers(rankingResults, config);
@@ -1137,31 +1152,55 @@ async function initRankingPage() {
     }
 }
 
-// 删除排品项（从当前分类移除，但可在其他分类出现）
-function removeRankingItem(category, productName) {
+// 删除排品项（从当前分类移除，重新计算补充新商品）
+async function removeRankingItem(category, productName) {
+    // 将商品加入该分类的排除列表
+    if (!categoryExcluded[category]) {
+        categoryExcluded[category] = [];
+    }
+    categoryExcluded[category].push(productName);
+
     // 记录删除（用于撤回）
-    const itemIndex = cachedResults.findIndex(r => r.ranking_result === category && r.product_name === productName);
-    if (itemIndex !== -1) {
-        deletedItems.push({
-            item: cachedResults[itemIndex],
-            index: itemIndex
-        });
-        cachedResults.splice(itemIndex, 1);
+    deletedItems.push({
+        category: category,
+        productName: productName
+    });
+
+    // 重新计算排品（使用缓存的数据和配置）
+    if (cachedProducts.length > 0 && cachedConfig) {
+        const rankingResults = calculateRanking(cachedProducts, cachedConfig, categoryExcluded);
+        cachedResults = assignSampleNumbers(rankingResults, cachedConfig);
         renderRankingResults(cachedResults);
-        window.AppUtils?.showToast?.('已删除，可点击撤回恢复', 'info');
+        window.AppUtils?.showToast?.(`已从"${category}"删除并补充新商品，可点击撤回恢复`, 'info');
+    } else {
+        window.AppUtils?.showToast?.('删除成功，但无法重新计算（请重新加载数据）', 'warning');
     }
 }
 
 // 撤回删除
-function undoDeleteRankingItem() {
+async function undoDeleteRankingItem() {
     if (deletedItems.length === 0) {
         window.AppUtils?.showToast?.('没有可撤回的操作', 'warning');
         return;
     }
+
     const last = deletedItems.pop();
-    cachedResults.splice(last.index, 0, last.item);
-    renderRankingResults(cachedResults);
-    window.AppUtils?.showToast?.('已撤回删除', 'success');
+
+    // 从分类排除列表中移除
+    if (categoryExcluded[last.category]) {
+        const idx = categoryExcluded[last.category].indexOf(last.productName);
+        if (idx !== -1) {
+            categoryExcluded[last.category].splice(idx, 1);
+        }
+    }
+
+    // 重新计算排品
+    if (cachedProducts.length > 0 && cachedConfig) {
+        const rankingResults = calculateRanking(cachedProducts, cachedConfig, categoryExcluded);
+        cachedResults = assignSampleNumbers(rankingResults, cachedConfig);
+        renderRankingResults(cachedResults);
+        window.AppUtils?.showToast?.('已撤回删除', 'success');
+    }
 }
 
 function renderRankingResults(results) {
