@@ -54,23 +54,23 @@ async function loadCombinedProductData() {
     if (rankingRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingRes.error.message);
     if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
 
-    // 步骤1：构建排名数据 Map，计算总分
+    // 步骤1：构建排名数据 Map（从视图读取已计算好的产品总分）
+    // 视图字段为中文：产品名称、讲解次数、成交金额、产品总分等
     const rankingMap = new Map();
     (rankingRes.data || []).forEach(item => {
-        if (!item.product_name) return;
-        // 计算总分（根据业务规则调整权重）
-        const totalScore =
-            (item.sales_amount || 0) * 0.4 +
-            (item.lecture_count || 0) * 0.2 +
-            (item.exposure_rate || 0) * 100 * 0.2 +
-            (item.conversion_rate || 0) * 100 * 0.2;
+        // 视图使用中文字段名
+        const productName = item['产品名称'] || item.product_name;
+        if (!productName) return;
 
-        rankingMap.set(item.product_name, {
+        // 直接使用视图中已计算好的产品总分
+        const totalScore = parseFloat(item['产品总分']) || 0;
+
+        rankingMap.set(productName, {
             total_score: totalScore,
-            sales_amount: item.sales_amount || 0,
-            lecture_count: item.lecture_count || 0,
-            exposure_rate: item.exposure_rate || 0,
-            conversion_rate: item.conversion_rate || 0
+            sales_amount: parseFloat(item['成交金额']) || 0,
+            lecture_count: parseInt(item['讲解次数']) || 0,
+            performance_score: parseFloat(item['表现得分']) || 0,
+            potential_score: parseFloat(item['潜力得分']) || 0
         });
     });
 
