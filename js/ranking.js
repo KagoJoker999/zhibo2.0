@@ -816,7 +816,9 @@ async function initRankingSettings() {
 
         orderList.innerHTML = config.分类排序.map((cat, idx) => `
             <li class="sortable-item" data-category="${cat}" data-index="${idx}">
-                <span class="drag-handle" title="拖拽排序">☰</span>
+                <div class="order-input-container" style="margin-right:0.5rem;">
+                    <input type="number" class="order-input" value="${idx + 1}" min="1" max="${config.分类排序.length}" style="width:3rem; padding:0.25rem; text-align:center; background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:var(--border-radius-sm);">
+                </div>
                 <span class="category-name-container" style="flex:1; display:flex; align-items:center;">
                     <span class="category-name">${config.结果映射[cat] || cat}</span>
                 </span>
@@ -826,6 +828,32 @@ async function initRankingSettings() {
                 </div>
             </li>
         `).join('');
+
+        // 绑定序号变更事件
+        orderList.querySelectorAll('.order-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                let newOrder = parseInt(e.target.value);
+                const li = e.target.closest('.sortable-item');
+                const oldIndex = parseInt(li.dataset.index);
+
+                // 验证范围
+                if (isNaN(newOrder) || newOrder < 1) newOrder = 1;
+                if (newOrder > config.分类排序.length) newOrder = config.分类排序.length;
+
+                // 如果序号没变，或计算后位置没变
+                if (newOrder - 1 === oldIndex) return;
+
+                // 调整数组顺序
+                const newIndex = newOrder - 1;
+                const item = config.分类排序.splice(oldIndex, 1)[0];
+                config.分类排序.splice(newIndex, 0, item);
+
+                // 重新渲染并保存
+                renderCategories();
+                saveConfigQuietly();
+                window.AppUtils?.showToast?.('顺序已更新', 'success');
+            });
+        });
 
         // 绑定编辑按钮事件
         orderList.querySelectorAll('.btn-edit').forEach(btn => {
