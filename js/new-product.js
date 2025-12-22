@@ -585,7 +585,9 @@ function initNewProductUpload() {
             updateStatus('分配序号...', 55);
             try {
                 const rules = await loadNumberingRules();
+                console.log('加载到的规则:', rules);
                 records = assignSampleNumbers(records, rules);
+                console.log('分配后的第一条记录:', records[0]);
             } catch (e) { console.warn('序号分配失败', e); }
 
             if (isFullMode) {
