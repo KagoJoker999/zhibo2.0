@@ -544,6 +544,8 @@ function applyFilters(products, conditions) {
 // 辅助函数：应用单个条件
 function applyCondition(product, field, operator, value, fieldName) {
     const fieldValue = product[field];
+    // 转换为字符串用于包含/排除判断
+    const fieldValueStr = String(fieldValue ?? '');
 
     switch (operator) {
         case '大于等于':
@@ -557,7 +559,7 @@ function applyCondition(product, field, operator, value, fieldName) {
             return fieldValue == value;
         case '包含':
             const containValues = Array.isArray(value) ? value : [value];
-            return containValues.some(v => (fieldValue || '').includes(v));
+            return containValues.some(v => fieldValueStr.includes(String(v)));
         case '排除':
             const excludeValues = Array.isArray(value) ? value : [value];
             if (fieldName === '是否可佩戴') {
@@ -565,7 +567,7 @@ function applyCondition(product, field, operator, value, fieldName) {
                     return fieldValue === true;
                 }
             }
-            return !excludeValues.some(v => (fieldValue || '').includes(v));
+            return !excludeValues.some(v => fieldValueStr.includes(String(v)));
         case '前几名':
         case '后几名':
             // 这些需要在过滤后整体处理，这里返回 true
