@@ -693,7 +693,11 @@ async function saveRankingResults(results) {
         ranking_result: r.ranking_result,
         sample_number: r.sample_number,
         image_url: r.image_url || null,
-        product_code: r.product_code || null
+        product_code: r.product_code || null,
+        warehouse: r.warehouse || null,
+        total_score: r.total_score || 0,
+        rating_rank: r.rating_rank || null,
+        is_wearable: r.is_wearable !== undefined ? r.is_wearable : null
     }));
 
     // 批量插入
