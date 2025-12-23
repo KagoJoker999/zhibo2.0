@@ -532,7 +532,7 @@ async function loadMappingHistoryForSubRanking() {
         const { data, error } = await client
             .from('sub_ranking_results')
             .select('*')
-            .order('updated_at', { ascending: false })
+            .order('sample_number', { ascending: true })
             .limit(100);
 
         if (error) throw error;
