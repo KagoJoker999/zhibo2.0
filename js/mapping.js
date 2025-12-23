@@ -158,13 +158,23 @@ function mergeAndDeduplicate(rankingData, newProductData) {
         }
     });
 
-    // 转换为数组并按序号排序
+    // 转换为数组并按序号排序（先按字母前缀，再按数字）
     const result = Array.from(productMap.values());
     result.sort((a, b) => {
-        // 只按样品序号排序（如 "A02" 提取数字 2）
-        const aSeqNum = parseInt(a.sample_number?.replace(/\D/g, '')) || 999;
-        const bSeqNum = parseInt(b.sample_number?.replace(/\D/g, '')) || 999;
-        return aSeqNum - bSeqNum;
+        const aSeq = a.sample_number || '';
+        const bSeq = b.sample_number || '';
+
+        // 提取字母前缀（如 "A02" → "A"）
+        const aPrefix = aSeq.replace(/[0-9]/g, '') || 'Z';
+        const bPrefix = bSeq.replace(/[0-9]/g, '') || 'Z';
+
+        // 先按字母排序
+        if (aPrefix !== bPrefix) return aPrefix.localeCompare(bPrefix);
+
+        // 再按数字排序
+        const aNum = parseInt(aSeq.replace(/\D/g, '')) || 999;
+        const bNum = parseInt(bSeq.replace(/\D/g, '')) || 999;
+        return aNum - bNum;
     });
 
     return result;
