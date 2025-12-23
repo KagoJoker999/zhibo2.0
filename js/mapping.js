@@ -156,12 +156,18 @@ function mergeAndDeduplicate(rankingData, newProductData) {
         }
     });
 
-    // 转换为数组并按分类排序
+    // 转换为数组并排序（先按分类，再按序号）
     const result = Array.from(productMap.values());
     result.sort((a, b) => {
-        const aNum = parseInt(a.ranking_result) || 999;
-        const bNum = parseInt(b.ranking_result) || 999;
-        return aNum - bNum;
+        // 先按分类序号排序（如 "1.评分品A" 取第一个数字）
+        const aCatNum = parseInt(a.ranking_result) || 999;
+        const bCatNum = parseInt(b.ranking_result) || 999;
+        if (aCatNum !== bCatNum) return aCatNum - bCatNum;
+
+        // 再按样品序号排序（如 "A02" 提取数字 2）
+        const aSeqNum = parseInt(a.sample_number?.replace(/\D/g, '')) || 999;
+        const bSeqNum = parseInt(b.sample_number?.replace(/\D/g, '')) || 999;
+        return aSeqNum - bSeqNum;
     });
 
     return result;
