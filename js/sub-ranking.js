@@ -66,16 +66,26 @@ async function saveSubRankingConfig(config) {
 
 function getDefaultSubConfig() {
     return {
-        "分类排序": ["可用数最多", "可用数最少"],
+        "分类排序": ["优先筛选", "可用数最多", "可用数最少"],
         "结果映射": {
+            "优先筛选": "0.优先品",
             "可用数最多": "1.库存多",
             "可用数最少": "2.库存少"
         },
         "样品序号规则": {
+            "0.优先品": { "prefix": "P", "start": 1, "step": 1 },
             "1.库存多": { "prefix": "H", "start": 1, "step": 1 },
             "2.库存少": { "prefix": "L", "start": 1, "step": 1 }
         },
         "筛选条件": {
+            "优先筛选": {
+                "filterBy": "available_qty",
+                "min": 3,
+                "max": 15,
+                "sortBy": "available_qty",
+                "sortOrder": "desc",
+                "limit": 40
+            },
             "可用数最多": {
                 "sortBy": "available_qty",
                 "sortOrder": "desc",
@@ -170,13 +180,23 @@ function calculateSubRanking(products, config) {
         // 筛选未使用的商品
         let candidates = products.filter(p => !usedProducts.has(p.product_name));
 
-        // 排序逻辑（支持 sortBy + sortOrder + limit）
+        // 筛选逻辑（支持 min/max 范围过滤 + sortBy + limit）
+        if (conditions.filterBy && (conditions.min !== undefined || conditions.max !== undefined)) {
+            const field = conditions.filterBy;
+            candidates = candidates.filter(p => {
+                const val = parseFloat(p[field]) || 0;
+                if (conditions.min !== undefined && val < conditions.min) return false;
+                if (conditions.max !== undefined && val > conditions.max) return false;
+                return true;
+            });
+        }
+
         if (conditions.sortBy && conditions.limit) {
             const field = conditions.sortBy;
             const order = conditions.sortOrder === 'asc' ? 1 : -1;
             candidates.sort((a, b) => ((a[field] || 0) - (b[field] || 0)) * order);
             candidates = candidates.slice(0, conditions.limit);
-        } else {
+        } else if (!conditions.filterBy) {
             // 旧版条件筛选逻辑
             candidates = candidates.filter(p => checkConditions(p, conditions));
         }
@@ -400,6 +420,7 @@ function renderSubRankingResults(container, results) {
 
     // 中国复古色系
     const categoryColors = {
+        '0.优先品': 'rgba(138, 43, 226, 0.15)',  // 紫罗兰
         '1.库存多': 'rgba(34, 139, 34, 0.15)',   // 翠绿
         '2.库存少': 'rgba(255, 140, 0, 0.15)'   // 琥珀橙
     };
