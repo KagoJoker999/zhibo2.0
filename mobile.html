@@ -157,10 +157,9 @@
         .product-name {
             font-size: 14px;
             line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
             cursor: pointer;
         }
 
@@ -179,6 +178,7 @@
         .meta-item {
             display: flex;
             flex-direction: column;
+            min-width: 50px;
         }
 
         .meta-label {
@@ -360,6 +360,10 @@
                                 <div class="meta-item">
                                     <span class="meta-label">仓位</span>
                                     <span class="meta-value">${item.warehouse || '--'}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">样品仓</span>
+                                    <span class="meta-value">${item.sample_warehouse || '--'}</span>
                                 </div>
                                 <div class="meta-item">
                                     <span class="meta-label">编码</span>
