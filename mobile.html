@@ -253,6 +253,17 @@
             object-fit: contain;
         }
 
+        .image-modal.loading::before {
+            content: '加载中...';
+            color: #fff;
+            font-size: 16px;
+            position: absolute;
+        }
+
+        .image-modal.loading img {
+            opacity: 0;
+        }
+
         /* Toast 提示 */
         .toast {
             position: fixed;
@@ -407,10 +418,6 @@
                                     <span class="meta-value">${item.sample_warehouse || '--'}</span>
                                 </div>
                                 <div class="meta-item">
-                                    <span class="meta-label">编码</span>
-                                    <span class="meta-value product-code" data-code="${safeCode}">${item.product_code || '--'}</span>
-                                </div>
-                                <div class="meta-item">
                                     <span class="meta-label">实际库存数</span>
                                     <span class="meta-value">${item.actual_stock ?? '--'}</span>
                                 </div>
@@ -465,20 +472,25 @@
                         copyText(this.dataset.name || this.textContent.trim(), '商品名称');
                     });
                 });
-
-                container.querySelectorAll('.product-code').forEach(el => {
-                    el.addEventListener('click', function () {
-                        copyText(this.dataset.code || this.textContent.trim(), '商品编码');
-                    });
-                });
             }
 
             // 显示大图
             function showImage(url) {
                 const modal = document.getElementById('imageModal');
                 const img = document.getElementById('modalImage');
+
+                // 立即显示加载状态
+                modal.classList.add('active', 'loading');
+                img.src = '';
+
+                // 加载图片
+                img.onload = function () {
+                    modal.classList.remove('loading');
+                };
+                img.onerror = function () {
+                    modal.classList.remove('loading');
+                };
                 img.src = url;
-                modal.classList.add('active');
             }
 
             // 关闭大图
