@@ -29,7 +29,58 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
+        }
+
+        /* 选择页面 */
+        .select-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .select-page h1 {
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+
+        .select-btn {
+            width: 100%;
+            max-width: 280px;
+            padding: 20px;
+            margin: 10px 0;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .select-btn:active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .select-btn .icon {
+            font-size: 28px;
+        }
+
+        /* 列表页面 */
+        .list-page {
+            display: none;
             padding-bottom: 80px;
+        }
+
+        .list-page.active {
+            display: block;
         }
 
         /* 顶部栏 */
@@ -48,59 +99,37 @@
         }
 
         .header h1 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
 
-        .refresh-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
-        .refresh-btn:active {
+        .action-btn.primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .action-btn:active {
             opacity: 0.8;
-        }
-
-        /* 分页标签 */
-        .tabs {
-            position: fixed;
-            top: 56px;
-            left: 0;
-            right: 0;
-            background: var(--bg-card);
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 99;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
         }
 
         /* 内容区 */
         .content {
-            padding-top: 112px;
+            padding-top: 60px;
             padding-bottom: 20px;
         }
 
@@ -126,7 +155,7 @@
             object-fit: cover;
             flex-shrink: 0;
             cursor: pointer;
-            transition: transform 0.2s;
+            background: #333;
         }
 
         .card-info {
@@ -281,22 +310,31 @@
 </head>
 
 <body>
-    <!-- 顶部栏 -->
-    <header class="header">
+    <!-- 选择页面 -->
+    <div class="select-page" id="selectPage">
         <h1>📦 排品速查</h1>
-        <button class="refresh-btn" id="refreshBtn">🔄 刷新</button>
-    </header>
-
-    <!-- 分页标签 -->
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="main">大号排品</button>
-        <button class="tab-btn" data-tab="sub">小号排品</button>
+        <button class="select-btn" data-type="main">
+            <span class="icon">📋</span>
+            <span>大号排品</span>
+        </button>
+        <button class="select-btn" data-type="sub">
+            <span class="icon">📦</span>
+            <span>小号排品</span>
+        </button>
     </div>
 
-    <!-- 内容区 -->
-    <div class="content">
-        <div id="mainContent" class="card-list"></div>
-        <div id="subContent" class="card-list" style="display: none;"></div>
+    <!-- 列表页面 -->
+    <div class="list-page" id="listPage">
+        <header class="header">
+            <h1 id="pageTitle">排品列表</h1>
+            <div class="header-actions">
+                <button class="action-btn" id="switchBtn">🔀 切换</button>
+                <button class="action-btn primary" id="refreshBtn">🔄 刷新</button>
+            </div>
+        </header>
+        <div class="content">
+            <div id="cardList" class="card-list"></div>
+        </div>
     </div>
 
     <!-- 图片放大模态框 -->
@@ -316,11 +354,9 @@
             const SUPABASE_URL = 'https://ugadhdhwixrejzfcwugj.supabase.co';
             const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54';
 
-            // 初始化 Supabase 客户端
             const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-            // 当前选中的分页
-            let currentTab = 'main';
+            let currentType = null;
 
             // 显示 Toast
             function showToast(msg) {
@@ -380,9 +416,9 @@
             }
 
             // 加载数据
-            async function loadData(tab) {
-                const container = document.getElementById(tab === 'main' ? 'mainContent' : 'subContent');
-                const tableName = tab === 'main' ? 'mapping_history' : 'sub_ranking_results';
+            async function loadData(type) {
+                const container = document.getElementById('cardList');
+                const tableName = type === 'main' ? 'mapping_history' : 'sub_ranking_results';
 
                 container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中...</div>';
 
@@ -410,7 +446,6 @@
 
             // 绑定卡片事件
             function bindCardEvents(container) {
-                // 图片点击
                 container.querySelectorAll('.card-image').forEach(img => {
                     img.addEventListener('click', function () {
                         const url = this.dataset.url || this.src;
@@ -420,14 +455,12 @@
                     });
                 });
 
-                // 商品名称点击复制
                 container.querySelectorAll('.product-name').forEach(el => {
                     el.addEventListener('click', function () {
                         copyText(this.dataset.name || this.textContent.trim());
                     });
                 });
 
-                // 商品编码点击复制
                 container.querySelectorAll('.product-code').forEach(el => {
                     el.addEventListener('click', function () {
                         copyText(this.dataset.code || this.textContent.trim());
@@ -448,33 +481,34 @@
                 this.classList.remove('active');
             });
 
-            // 分页切换
-            document.querySelectorAll('.tab-btn').forEach(btn => {
+            // 进入列表页
+            function showListPage(type) {
+                currentType = type;
+                document.getElementById('selectPage').style.display = 'none';
+                document.getElementById('listPage').classList.add('active');
+                document.getElementById('pageTitle').textContent = type === 'main' ? '📋 大号排品' : '📦 小号排品';
+                loadData(type);
+            }
+
+            // 选择按钮
+            document.querySelectorAll('.select-btn').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-
-                    currentTab = this.dataset.tab;
-
-                    document.getElementById('mainContent').style.display = currentTab === 'main' ? 'flex' : 'none';
-                    document.getElementById('subContent').style.display = currentTab === 'sub' ? 'flex' : 'none';
-
-                    // 如果该分页还没加载过数据，则加载
-                    const container = document.getElementById(currentTab === 'main' ? 'mainContent' : 'subContent');
-                    if (!container.querySelector('.product-card')) {
-                        loadData(currentTab);
-                    }
+                    showListPage(this.dataset.type);
                 });
+            });
+
+            // 切换按钮（刷新页面回到选择页）
+            document.getElementById('switchBtn').addEventListener('click', function () {
+                location.reload();
             });
 
             // 刷新按钮
             document.getElementById('refreshBtn').addEventListener('click', function () {
-                loadData(currentTab);
-                showToast('刷新中...');
+                if (currentType) {
+                    loadData(currentType);
+                    showToast('刷新中...');
+                }
             });
-
-            // 初始加载
-            loadData('main');
         });
     </script>
 </body>
