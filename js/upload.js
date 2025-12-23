@@ -268,19 +268,6 @@ function generateUploadBlock(key, config) {
                 </label>
             </div>
             
-            <details class="rules-details">
-                <summary>📋 处理规则</summary>
-                <ul>${config.rules.map(r => `<li>${r}</li>`).join('')}</ul>
-            </details>
-            
-            <details class="mapping-details">
-                <summary>🔗 字段映射</summary>
-                <table class="mapping-table">
-                    <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
-                    <tbody>${mappingRows}</tbody>
-                </table>
-            </details>
-            
             <div class="upload-status" id="status-${key}" style="display:none">
                 <div class="status-text" id="statusText-${key}">准备中...</div>
                 <div class="progress-bar"><div class="progress-fill" id="progress-${key}"></div></div>
@@ -288,6 +275,25 @@ function generateUploadBlock(key, config) {
             </div>
             
             <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
+            
+            <details class="upload-info-details" style="margin-top: 1rem;">
+                <summary>📖 上传说明</summary>
+                <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm); margin-top: 0.5rem;">
+                    <div style="margin-bottom: 0.75rem;">
+                        <strong style="color: var(--text-secondary);">📋 处理规则</strong>
+                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0; font-size: 0.85rem; color: var(--text-muted);">
+                            ${config.rules.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <strong style="color: var(--text-secondary);">🔗 字段映射</strong>
+                        <table class="mapping-table" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                            <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
+                            <tbody>${mappingRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </details>
         </div>
     `;
 }
