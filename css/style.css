@@ -950,12 +950,22 @@ select:focus {
 
 .upload-block .upload-zone {
     padding: 1.5rem;
-    min-height: 120px;
+    min-height: 100px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .upload-block .upload-zone-icon {
     font-size: 2rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.upload-block .upload-zone p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
 }
 
 .upload-block .upload-options {
