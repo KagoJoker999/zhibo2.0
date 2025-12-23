@@ -311,134 +311,167 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // Supabase 配置
-        const SUPABASE_URL = 'https://cqoepkdwxktxwirwaowz.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxb2Vwa2R3eGt0eHdpcndhb3d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQwOTIzNzAsImV4cCI6MjA0OTY2ODM3MH0.z95wnnftK2aEEH7Lhkgr2BFGV5p-9H-vVjGzO9hxMvU';
+        document.addEventListener('DOMContentLoaded', function () {
+            // Supabase 配置
+            const SUPABASE_URL = 'https://cqoepkdwxktxwirwaowz.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxb2Vwa2R3eGt0eHdpcndhb3d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQwOTIzNzAsImV4cCI6MjA0OTY2ODM3MH0.z95wnnftK2aEEH7Lhkgr2BFGV5p-9H-vVjGzO9hxMvU';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            // 初始化 Supabase 客户端
+            const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 当前选中的分页
-        let currentTab = 'main';
+            // 当前选中的分页
+            let currentTab = 'main';
 
-        // 显示 Toast
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        // 复制文本
-        async function copyText(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-                showToast('已复制');
-            } catch {
-                showToast('复制失败');
+            // 显示 Toast
+            function showToast(msg) {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
             }
-        }
 
-        // 渲染商品卡片
-        function renderCard(item) {
-            const imageUrl = item.image_url || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23333" width="100" height="100"/><text fill="%23666" x="50" y="55" text-anchor="middle" font-size="12">无图</text></svg>';
+            // 复制文本
+            window.copyText = async function (text) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast('已复制');
+                } catch {
+                    showToast('复制失败');
+                }
+            };
 
-            return `
-                <div class="product-card">
-                    <img class="card-image" src="${imageUrl}" alt="" onclick="showImage('${imageUrl}')" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23333%22 width=%22100%22 height=%22100%22/><text fill=%22%23666%22 x=%2250%22 y=%2255%22 text-anchor=%22middle%22 font-size=%2212%22>无图</text></svg>'">
-                    <div class="card-info">
-                        <div class="card-header">
-                            <span class="sample-number">${item.sample_number || '--'}</span>
-                        </div>
-                        <div class="product-name" onclick="copyText('${(item.product_name || '').replace(/'/g, "\\'")}')">
-                            ${item.product_name || '未知商品'}
-                        </div>
-                        <div class="card-meta">
-                            <div class="meta-item">
-                                <span class="meta-label">仓位</span>
-                                <span class="meta-value">${item.warehouse || '--'}</span>
+            // 渲染商品卡片
+            function renderCard(item) {
+                const imageUrl = item.image_url || '';
+                const safeName = (item.product_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeCode = (item.product_code || '').replace(/'/g, "\\'");
+
+                return `
+                    <div class="product-card">
+                        <img class="card-image" src="${imageUrl}" alt="" data-url="${imageUrl}" onerror="this.style.background='#333';this.alt='无图'">
+                        <div class="card-info">
+                            <div class="card-header">
+                                <span class="sample-number">${item.sample_number || '--'}</span>
                             </div>
-                            <div class="meta-item">
-                                <span class="meta-label">编码</span>
-                                <span class="meta-value product-code" onclick="copyText('${item.product_code || ''}')">${item.product_code || '--'}</span>
+                            <div class="product-name" data-name="${safeName}">
+                                ${item.product_name || '未知商品'}
                             </div>
-                            <div class="meta-item">
-                                <span class="meta-label">库存</span>
-                                <span class="meta-value">${item.actual_stock ?? '--'}</span>
+                            <div class="card-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">仓位</span>
+                                    <span class="meta-value">${item.warehouse || '--'}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">编码</span>
+                                    <span class="meta-value product-code" data-code="${safeCode}">${item.product_code || '--'}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">库存</span>
+                                    <span class="meta-value">${item.actual_stock ?? '--'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-        }
-
-        // 加载数据
-        async function loadData(tab) {
-            const container = document.getElementById(tab === 'main' ? 'mainContent' : 'subContent');
-            const tableName = tab === 'main' ? 'ranking_results' : 'sub_ranking_results';
-
-            container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中...</div>';
-
-            try {
-                const { data, error } = await supabase
-                    .from(tableName)
-                    .select('*')
-                    .order('sample_number', { ascending: true })
-                    .limit(200);
-
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>';
-                    return;
-                }
-
-                container.innerHTML = data.map(renderCard).join('');
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>加载失败</p></div>`;
+                `;
             }
-        }
 
-        // 显示大图
-        function showImage(url) {
-            const modal = document.getElementById('imageModal');
-            const img = document.getElementById('modalImage');
-            img.src = url;
-            modal.classList.add('active');
-        }
+            // 加载数据
+            async function loadData(tab) {
+                const container = document.getElementById(tab === 'main' ? 'mainContent' : 'subContent');
+                const tableName = tab === 'main' ? 'ranking_results' : 'sub_ranking_results';
 
-        // 关闭大图
-        document.getElementById('imageModal').addEventListener('click', function () {
-            this.classList.remove('active');
-        });
+                container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中...</div>';
 
-        // 分页切换
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+                try {
+                    const { data, error } = await supabaseClient
+                        .from(tableName)
+                        .select('*')
+                        .order('sample_number', { ascending: true })
+                        .limit(200);
 
-                currentTab = this.dataset.tab;
+                    if (error) throw error;
 
-                document.getElementById('mainContent').style.display = currentTab === 'main' ? 'flex' : 'none';
-                document.getElementById('subContent').style.display = currentTab === 'sub' ? 'flex' : 'none';
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>';
+                        return;
+                    }
 
-                // 如果该分页还没加载过数据，则加载
-                const container = document.getElementById(currentTab === 'main' ? 'mainContent' : 'subContent');
-                if (!container.querySelector('.product-card')) {
-                    loadData(currentTab);
+                    container.innerHTML = data.map(renderCard).join('');
+                    bindCardEvents(container);
+                } catch (err) {
+                    console.error('加载失败:', err);
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>加载失败: ' + err.message + '</p></div>';
                 }
+            }
+
+            // 绑定卡片事件
+            function bindCardEvents(container) {
+                // 图片点击
+                container.querySelectorAll('.card-image').forEach(img => {
+                    img.addEventListener('click', function () {
+                        const url = this.dataset.url || this.src;
+                        if (url && !url.includes('无图')) {
+                            showImage(url);
+                        }
+                    });
+                });
+
+                // 商品名称点击复制
+                container.querySelectorAll('.product-name').forEach(el => {
+                    el.addEventListener('click', function () {
+                        copyText(this.dataset.name || this.textContent.trim());
+                    });
+                });
+
+                // 商品编码点击复制
+                container.querySelectorAll('.product-code').forEach(el => {
+                    el.addEventListener('click', function () {
+                        copyText(this.dataset.code || this.textContent.trim());
+                    });
+                });
+            }
+
+            // 显示大图
+            function showImage(url) {
+                const modal = document.getElementById('imageModal');
+                const img = document.getElementById('modalImage');
+                img.src = url;
+                modal.classList.add('active');
+            }
+
+            // 关闭大图
+            document.getElementById('imageModal').addEventListener('click', function () {
+                this.classList.remove('active');
             });
-        });
 
-        // 刷新按钮
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            loadData(currentTab);
-            showToast('刷新中...');
-        });
+            // 分页切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
 
-        // 初始加载
-        loadData('main');
+                    currentTab = this.dataset.tab;
+
+                    document.getElementById('mainContent').style.display = currentTab === 'main' ? 'flex' : 'none';
+                    document.getElementById('subContent').style.display = currentTab === 'sub' ? 'flex' : 'none';
+
+                    // 如果该分页还没加载过数据，则加载
+                    const container = document.getElementById(currentTab === 'main' ? 'mainContent' : 'subContent');
+                    if (!container.querySelector('.product-card')) {
+                        loadData(currentTab);
+                    }
+                });
+            });
+
+            // 刷新按钮
+            document.getElementById('refreshBtn').addEventListener('click', function () {
+                loadData(currentTab);
+                showToast('刷新中...');
+            });
+
+            // 初始加载
+            loadData('main');
+        });
     </script>
 </body>
 
