@@ -235,10 +235,12 @@ function generateMappingPage() {
                 <p>合并显示排品结果和新品数据，自动计算样品仓位</p>
             </div>
             
-            <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center;">
+            <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnRefreshMapping">🔄 刷新数据</button>
+                <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
                 <button class="btn btn-secondary" id="btnSaveHistory">💾 保存到历史</button>
-                <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
+                <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ mapping_history</span>
+                <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
             <div class="mapping-content" style="padding: 0 1.5rem 1.5rem;">
@@ -365,7 +367,7 @@ function generateMappingHistoryPage() {
     return `
         <div class="mapping-history-page">
             <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
-                <h2>📜 历史记录</h2>
+                <h2>📜 历史记录 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; vertical-align: middle;">mapping_history</span></h2>
                 <p>显示上一次保存的对照结果</p>
             </div>
             
