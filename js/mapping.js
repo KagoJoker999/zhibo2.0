@@ -142,11 +142,13 @@ function mergeAndDeduplicate(rankingData, newProductData) {
             if (!existing.image_url && item.image_url) existing.image_url = item.image_url;
             if (!existing.ranking_result && item.ranking_result) existing.ranking_result = item.ranking_result;
             if (!existing.sample_number && item.sample_number) existing.sample_number = item.sample_number;
+            // 如果仍然没有分类，设置为"新品"
+            if (!existing.ranking_result) existing.ranking_result = '新品';
         } else {
             productMap.set(name, {
                 product_name: name,
                 product_id: item.product_id || '',
-                ranking_result: item.ranking_result || '',
+                ranking_result: item.ranking_result || '新品',  // 默认分类为"新品"
                 sample_number: item.sample_number || '',
                 image_url: item.image_url || '',
                 warehouse: item.warehouse || '',
