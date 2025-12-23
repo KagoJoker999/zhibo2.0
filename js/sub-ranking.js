@@ -64,6 +64,45 @@ async function saveSubRankingConfig(config) {
     if (error) throw new Error('保存配置失败: ' + error.message);
 }
 
+// 序号分配配置（含排序设置）
+function getDefaultNumberConfig() {
+    return {
+        sortField: 'product_code',  // 排序字段
+        sortOrder: 'desc',          // 排序方式
+        prefixes: ['A', 'B'],       // 字母前缀序列
+        countPerPrefix: 42          // 每个前缀分配的数量
+    };
+}
+
+async function loadNumberConfig() {
+    const client = window.supabaseClient;
+    if (!client) return getDefaultNumberConfig();
+
+    const { data, error } = await client
+        .from('sub_ranking_config')
+        .select('*')
+        .eq('config_key', 'number_config')
+        .single();
+
+    if (error) return getDefaultNumberConfig();
+    return data?.config_value || getDefaultNumberConfig();
+}
+
+async function saveNumberConfig(config) {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { error } = await client
+        .from('sub_ranking_config')
+        .upsert({
+            config_key: 'number_config',
+            config_value: config,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'config_key' });
+
+    if (error) throw new Error('保存序号配置失败: ' + error.message);
+}
+
 function getDefaultSubConfig() {
     return {
         "分类排序": ["区间内最多", "区间内最少"],
@@ -158,13 +197,19 @@ async function loadSubRankingData() {
 // ========================================
 // 筛选计算（支持 topN/bottomN 排序）
 // ========================================
-function calculateSubRanking(products, config) {
+function calculateSubRanking(products, config, numberConfig = null) {
     const results = [];
     const usedProducts = new Set();
     const categoryOrder = config['分类排序'] || [];
     const resultMapping = config['结果映射'] || {};
     const filterConditions = config['筛选条件'] || {};
-    const sampleRules = config['样品序号规则'] || {};
+
+    // 使用序号配置或默认值
+    const numConfig = numberConfig || getDefaultNumberConfig();
+    const prefixes = numConfig.prefixes || ['A', 'B'];
+    const countPerPrefix = numConfig.countPerPrefix || 42;
+    const sortField = numConfig.sortField || 'product_code';
+    const sortOrder = numConfig.sortOrder || 'desc';
 
     categoryOrder.forEach(categoryKey => {
         const rankingResult = resultMapping[categoryKey];
@@ -197,19 +242,34 @@ function calculateSubRanking(products, config) {
             candidates = candidates.filter(p => checkConditions(p, conditions));
         }
 
-        // 分配样品序号
-        const rule = sampleRules[rankingResult] || { prefix: 'S', start: 1, step: 1 };
-        let seq = rule.start;
-
+        // 添加分类结果（暂不分配序号）
         candidates.forEach(p => {
             results.push({
                 ...p,
                 ranking_result: rankingResult,
-                sample_number: `${rule.prefix}${String(seq).padStart(2, '0')}`
+                sample_number: '' // 后续统一分配
             });
             usedProducts.add(p.product_name);
-            seq += rule.step;
         });
+    });
+
+    // 根据配置排序
+    const orderMultiplier = sortOrder === 'asc' ? 1 : -1;
+    results.sort((a, b) => {
+        const valA = a[sortField] || '';
+        const valB = b[sortField] || '';
+        if (typeof valA === 'number' && typeof valB === 'number') {
+            return (valA - valB) * orderMultiplier;
+        }
+        return String(valA).localeCompare(String(valB)) * orderMultiplier;
+    });
+
+    // 分配序号（A01-A42, B01-B42...）
+    results.forEach((item, idx) => {
+        const prefixIdx = Math.floor(idx / countPerPrefix);
+        const seqInPrefix = (idx % countPerPrefix) + 1;
+        const prefix = prefixes[prefixIdx] || prefixes[prefixes.length - 1] || 'X';
+        item.sample_number = `${prefix}${String(seqInPrefix).padStart(2, '0')}`;
     });
 
     return results;
@@ -345,8 +405,9 @@ async function initSubRankingPage() {
         updateStatus('加载中...');
         try {
             const config = await loadSubRankingConfig();
+            const numberConfig = await loadNumberConfig();
             const products = await loadSubRankingData();
-            currentResults = calculateSubRanking(products, config);
+            currentResults = calculateSubRanking(products, config, numberConfig);
             renderSubRankingResults(container, currentResults);
             updateStatus(`共 ${currentResults.length} 个商品`);
 
@@ -617,47 +678,160 @@ function generateSubRankingSettingsPage() {
                 <p>← sub_ranking_config | 配置筛选规则（独立于主排品）</p>
             </div>
             
-            <div class="settings-content" style="padding: 1.5rem;">
+            <div class="settings-content" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- 左侧：筛选配置 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">📋 筛选配置 (JSON)</h3>
                     <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
                         直接编辑 JSON 配置，格式与主排品设置相同
                     </p>
                     
-                    <textarea id="subConfigJson" rows="20" style="width: 100%; font-family: monospace; font-size: 0.875rem; resize: vertical;"></textarea>
+                    <textarea id="subConfigJson" rows="18" style="width: 100%; font-family: monospace; font-size: 0.875rem; resize: vertical;"></textarea>
                     
                     <div style="margin-top: 1rem; display: flex; gap: 1rem;">
                         <button class="btn btn-primary" id="btnSaveSubConfig">💾 保存配置</button>
                         <button class="btn btn-secondary" id="btnResetSubConfig">🔄 重置为默认</button>
                     </div>
                 </div>
+                
+                <!-- 右侧：序号分配设置 -->
+                <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
+                    <h3 style="margin: 0 0 1rem;">🔢 序号分配设置</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                        配置加载计算后的排序规则和序号分配
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- 排序设置 -->
+                        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--border-radius);">
+                            <p style="margin: 0 0 0.75rem; font-weight: 500;">📊 排序设置</p>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.8rem;">排序字段</label>
+                                    <select id="sortField" style="width: 100%; padding: 0.4rem; font-size: 0.875rem;">
+                                        <option value="product_code">商品编码</option>
+                                        <option value="available_qty">可用数</option>
+                                        <option value="actual_stock">库存</option>
+                                        <option value="product_name">商品名称</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.8rem;">排序方式</label>
+                                    <select id="sortOrder" style="width: 100%; padding: 0.4rem; font-size: 0.875rem;">
+                                        <option value="desc">从大到小</option>
+                                        <option value="asc">从小到大</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 序号前缀设置 -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">字母前缀序列</label>
+                            <input type="text" id="numberPrefixes" placeholder="A,B,C" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" />
+                            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">用逗号分隔，如：A,B,C</p>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">每个前缀分配数量</label>
+                            <input type="number" id="numberCount" min="1" max="99" value="42" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" />
+                            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">如设置42，则分配 A01-A42</p>
+                        </div>
+                        
+                        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--border-radius);">
+                            <p style="margin: 0; font-size: 0.875rem;"><strong>预览：</strong></p>
+                            <p id="numberPreview" style="margin: 0.5rem 0 0; color: var(--text-muted); font-size: 0.875rem;">A01-A42, B01-B42</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" id="btnSaveNumberConfig">💾 保存配置</button>
+                        <button class="btn btn-secondary" id="btnResetNumberConfig">🔄 重置为默认</button>
+                    </div>
+                </div>
             </div>
-        </div >
+        </div>
     `;
 }
 
 async function initSubRankingSettingsPage() {
     const textarea = document.getElementById('subConfigJson');
+    const prefixInput = document.getElementById('numberPrefixes');
+    const countInput = document.getElementById('numberCount');
+    const sortFieldSelect = document.getElementById('sortField');
+    const sortOrderSelect = document.getElementById('sortOrder');
+    const previewEl = document.getElementById('numberPreview');
 
-    // 加载配置
+    // 更新预览
+    const updatePreview = () => {
+        const prefixes = prefixInput.value.split(',').map(p => p.trim()).filter(p => p);
+        const count = parseInt(countInput.value) || 42;
+        if (prefixes.length === 0) {
+            previewEl.textContent = '请输入前缀';
+            return;
+        }
+        const preview = prefixes.map(p => `${p}01-${p}${String(count).padStart(2, '0')}`).join(', ');
+        previewEl.textContent = preview;
+    };
+
+    // 加载筛选配置
     const config = await loadSubRankingConfig();
     textarea.value = JSON.stringify(config, null, 2);
 
-    // 保存配置
+    // 加载序号配置
+    const numberConfig = await loadNumberConfig();
+    prefixInput.value = (numberConfig.prefixes || ['A', 'B']).join(',');
+    countInput.value = numberConfig.countPerPrefix || 42;
+    sortFieldSelect.value = numberConfig.sortField || 'product_code';
+    sortOrderSelect.value = numberConfig.sortOrder || 'desc';
+    updatePreview();
+
+    // 监听输入变化更新预览
+    prefixInput.addEventListener('input', updatePreview);
+    countInput.addEventListener('input', updatePreview);
+
+    // 保存筛选配置
     document.getElementById('btnSaveSubConfig')?.addEventListener('click', async () => {
         try {
             const newConfig = JSON.parse(textarea.value);
             await saveSubRankingConfig(newConfig);
-            window.AppUtils?.showToast?.('配置已保存', 'success');
+            window.AppUtils?.showToast?.('筛选配置已保存', 'success');
         } catch (error) {
             window.AppUtils?.showToast?.('配置无效: ' + error.message, 'error');
         }
     });
 
-    // 重置配置
+    // 重置筛选配置
     document.getElementById('btnResetSubConfig')?.addEventListener('click', () => {
         textarea.value = JSON.stringify(getDefaultSubConfig(), null, 2);
         window.AppUtils?.showToast?.('已重置为默认配置', 'info');
+    });
+
+    // 保存序号配置
+    document.getElementById('btnSaveNumberConfig')?.addEventListener('click', async () => {
+        try {
+            const newNumberConfig = {
+                sortField: sortFieldSelect.value,
+                sortOrder: sortOrderSelect.value,
+                prefixes: prefixInput.value.split(',').map(p => p.trim()).filter(p => p),
+                countPerPrefix: parseInt(countInput.value) || 42
+            };
+            await saveNumberConfig(newNumberConfig);
+            window.AppUtils?.showToast?.('序号配置已保存', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
+
+    // 重置序号配置
+    document.getElementById('btnResetNumberConfig')?.addEventListener('click', () => {
+        const defaultConfig = getDefaultNumberConfig();
+        prefixInput.value = defaultConfig.prefixes.join(',');
+        countInput.value = defaultConfig.countPerPrefix;
+        sortFieldSelect.value = defaultConfig.sortField;
+        sortOrderSelect.value = defaultConfig.sortOrder;
+        updatePreview();
+        window.AppUtils?.showToast?.('已重置为默认序号配置', 'info');
     });
 }
 
