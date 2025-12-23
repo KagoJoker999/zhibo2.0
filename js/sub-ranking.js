@@ -669,7 +669,7 @@ async function loadMappingHistoryForSubRanking() {
                         <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
                         <th style="padding: 0.75rem; text-align: center; width: 80px;">样品仓</th>
                         <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
-                        <th style="padding: 0.75rem; text-align: center; width: 60px;">库存</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 75px;">实际库存数</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -741,7 +741,7 @@ function renderSubRankingResults(container, results) {
                     <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
                     <th style="padding: 0.75rem; text-align: center; width: 80px;">样品仓</th>
                     <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 60px;">库存</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 75px;">实际库存数</th>
                 </tr>
             </thead>
             <tbody>
