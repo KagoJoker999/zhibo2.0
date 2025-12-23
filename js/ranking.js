@@ -807,6 +807,19 @@ function generateRankingPage() {
                     </button>
                 </div>
             </div>
+            
+            <!-- 已保存排品结果（从数据库读取） -->
+            <div class="upload-block" id="block-saved-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 200px;">
+                <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span></h3>
+                    <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
+                </div>
+                <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 500px; overflow-y: auto;">
+                    <div class="placeholder-content">
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -1013,6 +1026,22 @@ function setNewProductMode(include) {
 async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
+    const btnRefreshSavedResults = document.getElementById('btnRefreshSavedResults');
+
+    // 自动读取数据库中已保存的排品结果
+    await loadAndRenderSavedResults();
+
+    // 绑定刷新按钮事件
+    if (btnRefreshSavedResults) {
+        btnRefreshSavedResults.addEventListener('click', async () => {
+            btnRefreshSavedResults.disabled = true;
+            btnRefreshSavedResults.textContent = '刷新中...';
+            await loadAndRenderSavedResults();
+            btnRefreshSavedResults.disabled = false;
+            btnRefreshSavedResults.textContent = '🔄 刷新';
+            window.AppUtils?.showToast?.('已刷新', 'success');
+        });
+    }
 
     // 尝试加载缓存的结果
     const cached = loadCachedResults();
@@ -1325,6 +1354,107 @@ function copyToClipboard(text) {
         console.error('复制失败:', err);
         window.AppUtils?.showToast?.('复制失败', 'error');
     });
+}
+
+// 从数据库读取并渲染已保存的排品结果
+async function loadAndRenderSavedResults() {
+    const container = document.getElementById('savedRankingResultContent');
+    if (!container) return;
+
+    const client = window.supabaseClient;
+    if (!client) {
+        container.innerHTML = '<p class="placeholder">数据库连接失败</p>';
+        return;
+    }
+
+    try {
+        // 从 ranking_results 表读取数据
+        const { data, error } = await client
+            .from('ranking_results')
+            .select('*')
+            .order('ranking_result', { ascending: true })
+            .order('sample_number', { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="placeholder-content"><p>暂无已保存的数据</p></div>';
+            return;
+        }
+
+        // 加载商品ID映射
+        const savedProductIds = await loadProductIdMapping();
+
+        // 按分类分组
+        const grouped = {};
+        data.forEach(r => {
+            if (!grouped[r.ranking_result]) grouped[r.ranking_result] = [];
+            grouped[r.ranking_result].push(r);
+        });
+
+        let html = `
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                共 ${data.length} 个商品
+            </div>
+        `;
+
+        for (const [category, items] of Object.entries(grouped)) {
+            html += `
+                <div class="result-category" style="margin-bottom: 1.5rem;">
+                    <h4 style="margin: 0 0 0.5rem 0;">${category} <span class="count" style="font-size: 0.85rem; color: var(--text-muted);">(${items.length})</span></h4>
+                    <div class="result-items-table">
+                        <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
+                                    <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">图片</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left; width: 250px;">商品名称</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left; width: 200px;">商品ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${items.map(item => {
+                const productId = savedProductIds[item.product_name];
+                const idDisplay = productId
+                    ? productId
+                    : '<span style="color: var(--warning-color);">疑似未上架</span>';
+                const imageUrl = item.image_url || '';
+                const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
+                const imageHtml = firstImageUrl
+                    ? `<div class="hover-zoom-container">
+                           <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'">
+                           <img src="${firstImageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
+                       </div>`
+                    : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
+                const productCode = item.product_code || '--';
+                const hasNoId = !productId;
+                const rowStyle = hasNoId
+                    ? 'border-bottom: 1px solid var(--border-color); background: rgba(239, 68, 68, 0.15);'
+                    : 'border-bottom: 1px solid var(--border-color);';
+
+                return `
+                                        <tr style="${rowStyle}">
+                                            <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
+                                            <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number || '--'}</td>
+                                            <td style="padding: 0.75rem 0.5rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
+                                            <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${productCode}</td>
+                                            <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
+                                        </tr>
+                                    `;
+            }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('读取已保存排品结果失败:', error);
+        container.innerHTML = `<div class="placeholder-content"><p>读取失败: ${error.message}</p></div>`;
+    }
 }
 
 // 加载缓存的结果（48小时内有效）
