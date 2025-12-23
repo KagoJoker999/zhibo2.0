@@ -64,6 +64,52 @@ async function saveSubRankingConfig(config) {
     if (error) throw new Error('保存配置失败: ' + error.message);
 }
 
+// ========================================
+// 对照配置和仓位转换（用于生成样品仓位）
+// ========================================
+async function loadMappingConfigForSubRanking() {
+    const client = window.supabaseClient;
+    if (!client) return { rules: [] };
+
+    const { data, error } = await client
+        .from('mapping_config')
+        .select('*')
+        .eq('config_key', 'warehouse_rules')
+        .single();
+
+    if (error) return { rules: [] };
+    return data?.config_value || { rules: [] };
+}
+
+function calculateSampleWarehouseForSubRanking(warehouse, rules) {
+    if (!warehouse || !rules || rules.length === 0) return warehouse || '';
+
+    // 处理多个仓位（用逗号分隔）
+    const warehouses = warehouse.split(',').map(w => w.trim());
+    const converted = warehouses.map(w => convertSingleWarehouseForSubRanking(w, rules));
+    return converted.join(',');
+}
+
+function convertSingleWarehouseForSubRanking(warehouse, rules) {
+    // 解析仓位格式：X-Y-Z
+    const parts = warehouse.split('-');
+    if (parts.length !== 3) return warehouse;
+
+    const [first, second, third] = parts;
+    const firstNum = parseInt(first);
+    if (isNaN(firstNum)) return warehouse;
+
+    // 查找匹配的规则
+    for (const rule of rules) {
+        if (firstNum >= rule.start && firstNum <= rule.end) {
+            // 应用转换规则，格式：前缀-第二段-第三段
+            return `${rule.prefix}-${second}-${third}`;
+        }
+    }
+
+    return warehouse;
+}
+
 // 序号分配配置（含排序设置）
 function getDefaultNumberConfig() {
     return {
@@ -315,6 +361,7 @@ async function saveSubRankingResults(results) {
         image_url: r.image_url || '',
         product_code: r.product_code || '',
         warehouse: r.warehouse || '',
+        sample_warehouse: r.sample_warehouse || '',
         available_qty: r.available_qty || 0,
         actual_stock: r.actual_stock || 0,
         total_score: r.total_score || 0
@@ -473,6 +520,14 @@ async function initSubRankingPage() {
             cachedNumberConfig = await loadNumberConfig();
             const products = await loadSubRankingData();
             currentResults = calculateSubRanking(products, config, cachedNumberConfig);
+
+            // 加载对照配置并生成样品仓位
+            const mappingConfig = await loadMappingConfigForSubRanking();
+            const warehouseRules = mappingConfig?.rules || [];
+            currentResults.forEach(item => {
+                item.sample_warehouse = calculateSampleWarehouseForSubRanking(item.warehouse, warehouseRules);
+            });
+
             renderSubRankingResults(container, currentResults);
             updateStatus(`共 ${currentResults.length} 个商品`);
             bindIdInputListeners();
@@ -612,6 +667,7 @@ async function loadMappingHistoryForSubRanking() {
                         <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
                         <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
                         <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 80px;">样品仓</th>
                         <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
                         <th style="padding: 0.75rem; text-align: center; width: 60px;">库存</th>
                     </tr>
@@ -631,7 +687,8 @@ async function loadMappingHistoryForSubRanking() {
                             <td style="padding: 0.4rem; text-align: center; font-family: monospace; font-size: 0.8rem;">${productId || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.ranking_result || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.sample_number || '--'}</td>
-                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.sample_warehouse || item.warehouse || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.warehouse || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.sample_warehouse || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.available_qty || 0}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.actual_stock || 0}</td>
                         </tr>
@@ -682,6 +739,7 @@ function renderSubRankingResults(container, results) {
                     <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
                     <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 80px;">样品仓</th>
                     <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">库存</th>
                 </tr>
@@ -714,6 +772,7 @@ function renderSubRankingResults(container, results) {
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.ranking_result || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.sample_number || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.warehouse || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.sample_warehouse || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.available_qty || 0}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.actual_stock || 0}</td>
                         </tr>
