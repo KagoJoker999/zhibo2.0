@@ -356,6 +356,7 @@ function generateSubRankingPage() {
                 <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
                     <button class="btn btn-secondary" id="btnSubSave">💾 保存结果</button>
+                    <button class="btn btn-secondary" id="btnCopyUnmatched">📋 复制未匹配</button>
                     <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
                     <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
                 </div>
@@ -399,44 +400,102 @@ async function initSubRankingPage() {
         if (statusSpan) statusSpan.textContent = text;
     };
 
+    // 存储 numberConfig 供重排序使用
+    let cachedNumberConfig = null;
+
+    // 重排序并重新分配序号的函数
+    const resortAndReassign = () => {
+        if (!cachedNumberConfig || currentResults.length === 0) return;
+
+        const sortField = cachedNumberConfig.sortField || 'product_code';
+        const sortOrder = cachedNumberConfig.sortOrder || 'desc';
+        const prefixes = cachedNumberConfig.prefixes || ['A', 'B'];
+        const countPerPrefix = cachedNumberConfig.countPerPrefix || 42;
+
+        // 根据配置排序
+        const orderMultiplier = sortOrder === 'asc' ? 1 : -1;
+        currentResults.sort((a, b) => {
+            const valA = a[sortField] || '';
+            const valB = b[sortField] || '';
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                return (valA - valB) * orderMultiplier;
+            }
+            return String(valA).localeCompare(String(valB)) * orderMultiplier;
+        });
+
+        // 重新分配序号
+        currentResults.forEach((item, idx) => {
+            const prefixIdx = Math.floor(idx / countPerPrefix);
+            const seqInPrefix = (idx % countPerPrefix) + 1;
+            const prefix = prefixes[prefixIdx] || prefixes[prefixes.length - 1] || 'X';
+            item.sample_number = `${prefix}${String(seqInPrefix).padStart(2, '0')}`;
+        });
+
+        // 重新渲染
+        renderSubRankingResults(container, currentResults);
+        bindIdInputListeners();
+        updateStatus(`共 ${currentResults.length} 个商品`);
+    };
+
+    // 绑定ID输入监听器
+    const bindIdInputListeners = () => {
+        container.querySelectorAll('.sub-ranking-id-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.idx);
+                if (!isNaN(idx) && currentResults[idx]) {
+                    currentResults[idx].product_id = e.target.value;
+
+                    // 如果填写了ID，立即重排序
+                    if (e.target.value) {
+                        // 使用 debounce，避免频繁重排
+                        clearTimeout(input._debounceTimer);
+                        input._debounceTimer = setTimeout(() => {
+                            resortAndReassign();
+                        }, 500);
+                    } else {
+                        // 只更新行背景色
+                        const row = e.target.closest('tr');
+                        if (row) {
+                            row.style.background = 'rgba(255, 0, 0, 0.15)';
+                            row.classList.add('sub-ranking-unmatched');
+                        }
+                    }
+                }
+            });
+        });
+    };
+
     // 加载并计算
     document.getElementById('btnSubCalculate')?.addEventListener('click', async () => {
         updateStatus('加载中...');
         try {
             const config = await loadSubRankingConfig();
-            const numberConfig = await loadNumberConfig();
+            cachedNumberConfig = await loadNumberConfig();
             const products = await loadSubRankingData();
-            currentResults = calculateSubRanking(products, config, numberConfig);
+            currentResults = calculateSubRanking(products, config, cachedNumberConfig);
             renderSubRankingResults(container, currentResults);
             updateStatus(`共 ${currentResults.length} 个商品`);
-
-            // 监听ID输入变化，更新数据并动态改变行背景色
-            container.querySelectorAll('.sub-ranking-id-input').forEach(input => {
-                input.addEventListener('input', (e) => {
-                    const idx = parseInt(e.target.dataset.idx);
-                    if (!isNaN(idx) && currentResults[idx]) {
-                        currentResults[idx].product_id = e.target.value;
-
-                        // 动态更新行背景色
-                        const row = e.target.closest('tr');
-                        if (row) {
-                            const hasId = !!e.target.value;
-                            const categoryColors = {
-                                '1.库存多': 'rgba(34, 139, 34, 0.15)',
-                                '2.库存少': 'rgba(255, 140, 0, 0.15)'
-                            };
-                            const rankResult = currentResults[idx].ranking_result;
-                            row.style.background = hasId ? (categoryColors[rankResult] || 'transparent') : 'rgba(255, 0, 0, 0.15)';
-                            row.classList.toggle('sub-ranking-unmatched', !hasId);
-                        }
-                    }
-                });
-            });
+            bindIdInputListeners();
         } catch (error) {
             console.error(error);
             container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
             updateStatus('加载失败');
         }
+    });
+
+    // 复制未匹配商品名称
+    document.getElementById('btnCopyUnmatched')?.addEventListener('click', () => {
+        const unmatched = currentResults.filter(r => !r.product_id).map(r => r.product_name);
+        if (unmatched.length === 0) {
+            window.AppUtils?.showToast?.('所有商品都已匹配ID', 'info');
+            return;
+        }
+        const text = unmatched.join(',');
+        navigator.clipboard.writeText(text).then(() => {
+            window.AppUtils?.showToast?.(`已复制 ${unmatched.length} 个未匹配商品名称`, 'success');
+        }).catch(() => {
+            window.AppUtils?.showToast?.('复制失败', 'error');
+        });
     });
 
     // 保存结果
