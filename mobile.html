@@ -367,12 +367,13 @@
             }
 
             // 复制文本
-            window.copyText = async function (text) {
+            window.copyText = async function (text, label) {
                 try {
                     await navigator.clipboard.writeText(text);
-                    showToast('已复制');
+                    const shortText = text.length > 15 ? text.substring(0, 15) + '...' : text;
+                    showToast(`✅ 已复制${label || ''}: ${shortText}`);
                 } catch {
-                    showToast('复制失败');
+                    showToast('❌ 复制失败');
                 }
             };
 
@@ -457,13 +458,13 @@
 
                 container.querySelectorAll('.product-name').forEach(el => {
                     el.addEventListener('click', function () {
-                        copyText(this.dataset.name || this.textContent.trim());
+                        copyText(this.dataset.name || this.textContent.trim(), '商品名称');
                     });
                 });
 
                 container.querySelectorAll('.product-code').forEach(el => {
                     el.addEventListener('click', function () {
-                        copyText(this.dataset.code || this.textContent.trim());
+                        copyText(this.dataset.code || this.textContent.trim(), '商品编码');
                     });
                 });
             }
