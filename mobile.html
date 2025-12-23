@@ -151,7 +151,7 @@
         }
 
         .card-image {
-            width: 80px;
+            width: 120px;
             min-height: 100%;
             object-fit: cover;
             flex-shrink: 0;
@@ -535,6 +535,10 @@
                 document.getElementById('selectPage').style.display = 'none';
                 document.getElementById('listPage').classList.add('active');
                 document.getElementById('pageTitle').textContent = type === 'main' ? '📋 大号排品' : '📦 小号排品';
+
+                // 显示加载提示
+                showToast('图片加载缓慢，请不要关闭页面，等待加载。。。');
+
                 loadData(type);
             }
 
