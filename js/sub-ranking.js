@@ -317,6 +317,7 @@ function generateSubRankingPage() {
                     <button class="btn btn-outline" id="btnHistoryCopy2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 21-40</button>
                     <button class="btn btn-outline" id="btnHistoryCopy3" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 41-60</button>
                     <button class="btn btn-outline" id="btnHistoryCopy4" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 61-80</button>
+                    <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
                 <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
                     <div id="mappingHistoryContainer" class="data-table-container">
@@ -448,7 +449,13 @@ async function initSubRankingPage() {
     document.getElementById('btnHistoryCopy3')?.addEventListener('click', () => copyHistoryLinks(40, 60));
     document.getElementById('btnHistoryCopy4')?.addEventListener('click', () => copyHistoryLinks(60, 80));
 
-    // 自动加载 mapping_history 历史记录
+    // 刷新按钮
+    document.getElementById('btnHistoryRefresh')?.addEventListener('click', () => {
+        loadMappingHistoryForSubRanking();
+        window.AppUtils?.showToast?.('已刷新历史记录', 'success');
+    });
+
+    // 自动加载历史记录
     loadMappingHistoryForSubRanking();
 }
 
