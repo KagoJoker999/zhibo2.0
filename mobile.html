@@ -379,13 +379,17 @@
 
             // 渲染商品卡片
             function renderCard(item) {
-                const imageUrl = item.image_url || '';
+                // 处理图片URL（可能有多个，取第一个）
+                let imageUrl = item.image_url || '';
+                if (imageUrl && imageUrl.includes(',')) {
+                    imageUrl = imageUrl.split(',')[0].trim();
+                }
                 const safeName = (item.product_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const safeCode = (item.product_code || '').replace(/'/g, "\\'");
 
                 return `
                     <div class="product-card">
-                        <img class="card-image" src="${imageUrl}" alt="" data-url="${imageUrl}" onerror="this.style.background='#333';this.alt='无图'">
+                        <img class="card-image" src="${imageUrl}" alt="" data-url="${imageUrl}" referrerpolicy="no-referrer" onerror="this.style.background='#333';this.alt='无图'">
                         <div class="card-info">
                             <div class="card-header">
                                 <span class="sample-number">${item.sample_number || '--'}</span>
