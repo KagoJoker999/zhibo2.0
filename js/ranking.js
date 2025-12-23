@@ -691,7 +691,9 @@ async function saveRankingResults(results) {
         product_name: r.product_name,
         product_id: cachedProductIds[r.product_name] || r.product_id || '',
         ranking_result: r.ranking_result,
-        sample_number: r.sample_number
+        sample_number: r.sample_number,
+        image_url: r.image_url || null,
+        product_code: r.product_code || null
     }));
 
     // 批量插入
