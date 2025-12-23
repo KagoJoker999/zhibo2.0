@@ -358,7 +358,7 @@ function generateNewProductPage() {
             <!-- 数据库数据表格 -->
             <div class="data-table-section">
                 <div class="data-table-header">
-                    <h3>📋 数据库新品列表 <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
+                    <h3>📋 数据库新品列表 <span class="db-table-tag">← new_product_data</span> <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
                     <div class="header-buttons">
                         <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 重命名表格下载</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
