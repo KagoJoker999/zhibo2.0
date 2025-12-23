@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>排品速查</title>
     <style>
         :root {
@@ -400,7 +400,7 @@
                     bindCardEvents(container);
                 } catch (err) {
                     console.error('加载失败:', err);
-                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>加载失败: ' + err.message + '</p></div>';
+                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>网络错误，请点击重试</p><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;font-size:14px;background:#4a90d9;color:#fff;border:none;border-radius:8px;cursor:pointer;">🔄 重试</button></div>';
                 }
             }
 
