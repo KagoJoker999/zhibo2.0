@@ -57,14 +57,15 @@ function convertSingleWarehouse(warehouse, rules) {
     const parts = warehouse.split('-');
     if (parts.length !== 3) return warehouse;
 
-    const secondNum = parseInt(parts[1]);
+    const [first, second, third] = parts;
+    const secondNum = parseInt(second);
     if (isNaN(secondNum)) return warehouse;
 
     // 查找匹配的规则
     for (const rule of rules) {
         if (secondNum >= rule.range_start && secondNum <= rule.range_end) {
-            // sample_value 是完整的样品仓位字符串，直接返回
-            return rule.sample_value;
+            // 保留第一位和第三位，用 sample_value 替换第二位
+            return `${first}-${rule.sample_value}-${third}`;
         }
     }
 
