@@ -709,6 +709,7 @@ function generateSubRankingSettingsPage() {
                                 <div>
                                     <label style="display: block; margin-bottom: 0.25rem; font-size: 0.8rem;">排序字段</label>
                                     <select id="sortField" style="width: 100%; padding: 0.4rem; font-size: 0.875rem;">
+                                        <option value="product_id">商品ID</option>
                                         <option value="product_code">商品编码</option>
                                         <option value="available_qty">可用数</option>
                                         <option value="actual_stock">库存</option>
