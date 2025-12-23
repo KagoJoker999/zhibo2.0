@@ -287,7 +287,7 @@ function generateSubRankingPage() {
                     🔄 加载计算
                 </button>
                 <button class="tab-btn" id="tabHistory" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer;">
-                    📜 历史记录 <span class="db-table-tag" style="font-size: 0.65rem; background: var(--bg-secondary); padding: 0.1rem 0.3rem; border-radius: 3px;">mapping_history</span>
+                    📜 历史记录 <span class="db-table-tag" style="font-size: 0.65rem; background: var(--bg-secondary); padding: 0.1rem 0.3rem; border-radius: 3px;">sub_ranking_results</span>
                 </button>
             </div>
             
@@ -452,7 +452,7 @@ async function initSubRankingPage() {
     loadMappingHistoryForSubRanking();
 }
 
-// 加载并显示 mapping_history 数据
+// 加载并显示 sub_ranking_results 数据
 async function loadMappingHistoryForSubRanking() {
     const historyContainer = document.getElementById('mappingHistoryContainer');
     if (!historyContainer) return;
@@ -462,9 +462,9 @@ async function loadMappingHistoryForSubRanking() {
         if (!client) throw new Error('Supabase 未初始化');
 
         const { data, error } = await client
-            .from('mapping_history')
+            .from('sub_ranking_results')
             .select('*')
-            .order('generated_at', { ascending: false })
+            .order('updated_at', { ascending: false })
             .limit(100);
 
         if (error) throw error;
