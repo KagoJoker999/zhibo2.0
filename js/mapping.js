@@ -57,15 +57,14 @@ function convertSingleWarehouse(warehouse, rules) {
     const parts = warehouse.split('-');
     if (parts.length !== 3) return warehouse;
 
-    const [first, second, third] = parts;
-    const secondNum = parseInt(second);
-
+    const secondNum = parseInt(parts[1]);
     if (isNaN(secondNum)) return warehouse;
 
     // 查找匹配的规则
     for (const rule of rules) {
         if (secondNum >= rule.range_start && secondNum <= rule.range_end) {
-            return `${first}-${rule.sample_value}-${third}`;
+            // sample_value 是完整的样品仓位字符串，直接返回
+            return rule.sample_value;
         }
     }
 
@@ -398,14 +397,15 @@ function generateMappingSettingsPage() {
                 <p>配置仓位到样品仓位的映射规则</p>
             </div>
             
-            <div class="settings-content" style="padding: 1.5rem;">
+            <div class="settings-content" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- 左侧：仓位映射规则 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">📦 仓位映射规则</h3>
                     <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
-                        仓位格式为 X-Y-Z，第二位 Y 将根据规则替换为样品仓位值
+                        仓位格式为 X-Y-Z，第二位 Y 在区间内时替换为对应样品仓位
                     </p>
                     
-                    <div class="rule-editor" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: end; margin-bottom: 1rem;">
+                    <div class="rule-editor" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">区间起始</label>
                             <input type="number" id="ruleRangeStart" value="1" min="1" style="width: 100%;">
@@ -415,8 +415,10 @@ function generateMappingSettingsPage() {
                             <input type="number" id="ruleRangeEnd" value="10" min="1" style="width: 100%;">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">样品仓位值</label>
-                            <input type="number" id="ruleSampleValue" value="10" min="1" style="width: 100%;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">样品仓位</label>
+                            <select id="ruleSampleValue" style="width: 100%; height: 38px;">
+                                <option value="">请选择</option>
+                            </select>
                         </div>
                         <button class="btn btn-primary" id="btnAddRule" style="height: 38px;">➕ 添加</button>
                     </div>
@@ -427,7 +429,26 @@ function generateMappingSettingsPage() {
                     </div>
                     
                     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <button class="btn btn-primary" id="btnSaveConfig">💾 保存设置</button>
+                        <button class="btn btn-primary" id="btnSaveConfig">💾 保存规则</button>
+                    </div>
+                </div>
+                
+                <!-- 右侧：样品仓位选项设置 -->
+                <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
+                    <h3 style="margin: 0 0 1rem;">📋 样品仓位选项</h3>
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                        每行一个选项，保存后可在左侧下拉栏选择
+                    </p>
+                    
+                    <textarea id="sampleOptions" rows="10" style="width: 100%; font-family: monospace; resize: vertical;" placeholder="例如：
+1-10-1
+1-10-2
+1-10-3
+1-10-4
+1-10-5"></textarea>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" id="btnSaveOptions">💾 保存选项</button>
                     </div>
                 </div>
             </div>
@@ -437,12 +458,26 @@ function generateMappingSettingsPage() {
 
 async function initMappingSettingsPage() {
     const rulesList = document.getElementById('rulesList');
+    const sampleSelect = document.getElementById('ruleSampleValue');
+    const optionsTextarea = document.getElementById('sampleOptions');
     let currentRules = [];
+    let sampleOptions = [];
 
     // 加载现有配置
     const config = await loadMappingConfig();
     currentRules = config?.rules || [];
+    sampleOptions = config?.sample_options || [];
+
+    // 初始化选项列表
+    optionsTextarea.value = sampleOptions.join('\n');
+    updateSelectOptions();
     renderRulesList();
+
+    function updateSelectOptions() {
+        const options = optionsTextarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+        sampleSelect.innerHTML = '<option value="">请选择</option>' +
+            options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+    }
 
     function renderRulesList() {
         if (currentRules.length === 0) {
@@ -452,7 +487,7 @@ async function initMappingSettingsPage() {
 
         rulesList.innerHTML = currentRules.map((rule, idx) => `
             <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm); margin-bottom: 0.5rem;">
-                <span style="flex: 1;">第二位 <strong>${rule.range_start}</strong> ~ <strong>${rule.range_end}</strong> → 样品仓位 <strong style="color: var(--primary-color);">${rule.sample_value}</strong></span>
+                <span style="flex: 1;">第二位 <strong>${rule.range_start}</strong> ~ <strong>${rule.range_end}</strong> → <strong style="color: var(--primary-color);">${rule.sample_value}</strong></span>
                 <button class="btn btn-sm" onclick="window._removeRule(${idx})" style="padding: 0.25rem 0.5rem; background: var(--error-color); color: white; border: none; border-radius: 4px; cursor: pointer;">删除</button>
             </div>
         `).join('');
@@ -462,10 +497,15 @@ async function initMappingSettingsPage() {
     document.getElementById('btnAddRule')?.addEventListener('click', () => {
         const start = parseInt(document.getElementById('ruleRangeStart').value);
         const end = parseInt(document.getElementById('ruleRangeEnd').value);
-        const value = parseInt(document.getElementById('ruleSampleValue').value);
+        const value = sampleSelect.value;
 
-        if (isNaN(start) || isNaN(end) || isNaN(value)) {
+        if (isNaN(start) || isNaN(end)) {
             window.AppUtils?.showToast?.('请填写有效数值', 'warning');
+            return;
+        }
+
+        if (!value) {
+            window.AppUtils?.showToast?.('请选择样品仓位', 'warning');
             return;
         }
 
@@ -484,11 +524,24 @@ async function initMappingSettingsPage() {
         renderRulesList();
     };
 
-    // 保存配置
+    // 保存规则
     document.getElementById('btnSaveConfig')?.addEventListener('click', async () => {
         try {
-            await saveMappingConfig({ rules: currentRules });
-            window.AppUtils?.showToast?.('设置已保存', 'success');
+            const options = optionsTextarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+            await saveMappingConfig({ rules: currentRules, sample_options: options });
+            window.AppUtils?.showToast?.('规则已保存', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
+
+    // 保存选项
+    document.getElementById('btnSaveOptions')?.addEventListener('click', async () => {
+        try {
+            const options = optionsTextarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+            await saveMappingConfig({ rules: currentRules, sample_options: options });
+            updateSelectOptions();
+            window.AppUtils?.showToast?.('选项已保存', 'success');
         } catch (error) {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         }
