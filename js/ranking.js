@@ -79,32 +79,65 @@ async function loadCombinedProductData() {
     // 步骤2：构建不可佩戴品 Set
     const nonWearableSet = new Set((nonWearableRes.data || []).map(i => i.product_name));
 
-    // 步骤3：构建库存数据 Map
+    // 步骤3：构建库存数据 Map（支持同名商品合并）
     const inventoryMap = new Map();
+
+    // 辅助函数：合并文本字段（去重后用逗号分隔）
+    const mergeTextField = (existing, newValue) => {
+        if (!newValue) return existing;
+        if (!existing) return newValue;
+        // 将现有值和新值拆分为数组，合并后去重
+        const existingSet = new Set(existing.split(',').map(s => s.trim()).filter(Boolean));
+        const newValues = newValue.split(',').map(s => s.trim()).filter(Boolean);
+        newValues.forEach(v => existingSet.add(v));
+        return Array.from(existingSet).join(',');
+    };
+
     (inventoryRes.data || []).forEach(item => {
         if (!item.product_name) return;
 
         // 判断是否可佩戴
         const isWearable = !nonWearableSet.has(item.product_name);
 
-        inventoryMap.set(item.product_name, {
-            product_name: item.product_name,
-            available_qty: item.available_qty || 0,
-            actual_stock: item.actual_stock || 0,
-            virtual_category: item.virtual_category || '',
-            product_category: item.product_category || '',
-            product_code: item.product_code || '',
-            image_url: item.image_url || '',
-            warehouse: item.warehouse || '',
-            is_wearable: isWearable, // 注入是否可佩戴属性
-            // 初始化评分相关字段
-            total_score: 0,
-            rating_rank: 999999,  // 默认无排名
-            sales_amount: 0,
-            lecture_count: 0,
-            exposure_rate: 0,
-            conversion_rate: 0
-        });
+        if (inventoryMap.has(item.product_name)) {
+            // 同名商品：合并数据
+            const existing = inventoryMap.get(item.product_name);
+
+            // 数值字段相加
+            existing.available_qty += item.available_qty || 0;
+            existing.actual_stock += item.actual_stock || 0;
+
+            // 文本字段去重合并
+            existing.virtual_category = mergeTextField(existing.virtual_category, item.virtual_category);
+            existing.product_category = mergeTextField(existing.product_category, item.product_category);
+            existing.product_code = mergeTextField(existing.product_code, item.product_code);
+            existing.warehouse = mergeTextField(existing.warehouse, item.warehouse);
+
+            // 图片取第一个非空值
+            if (!existing.image_url && item.image_url) {
+                existing.image_url = item.image_url;
+            }
+        } else {
+            // 新商品：创建记录
+            inventoryMap.set(item.product_name, {
+                product_name: item.product_name,
+                available_qty: item.available_qty || 0,
+                actual_stock: item.actual_stock || 0,
+                virtual_category: item.virtual_category || '',
+                product_category: item.product_category || '',
+                product_code: item.product_code || '',
+                image_url: item.image_url || '',
+                warehouse: item.warehouse || '',
+                is_wearable: isWearable,
+                // 初始化评分相关字段
+                total_score: 0,
+                rating_rank: 999999,
+                sales_amount: 0,
+                lecture_count: 0,
+                exposure_rate: 0,
+                conversion_rate: 0
+            });
+        }
     });
 
     // 步骤4：融合评分数据到库存数据
