@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>排品结果 - 移动端</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
+</head>
+
+<body>
+    <div class="mobile-app">
+        <!-- 顶部导航 -->
+        <header class="mobile-header">
+            <h1 class="page-title">排品结果</h1>
+            <button class="refresh-btn" id="refreshBtn">🔄 刷新</button>
+        </header>
+
+        <!-- 标签页切换 -->
+        <div class="tabs">
+            <button class="tab-item active" data-tab="ranking">
+                <span class="tab-label">大号排品</span>
+                <span class="tab-count" id="rankingCount">0</span>
+            </button>
+            <button class="tab-item" data-tab="sub_ranking">
+                <span class="tab-label">小号排品</span>
+                <span class="tab-count" id="subRankingCount">0</span>
+            </button>
+        </div>
+
+        <!-- 内容区域 -->
+        <main class="content-area">
+            <!-- 大号排品列表 -->
+            <div id="rankingList" class="product-list active">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+            <!-- 小号排品列表 -->
+            <div id="subRankingList" class="product-list" style="display: none;">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 图片放大查看器 -->
+    <div class="image-viewer" id="imageViewer">
+        <div class="viewer-content">
+            <img src="" alt="Preview" id="viewerImage">
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 依赖脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/mobile.js"></script>
+</body>
+
+</html>
