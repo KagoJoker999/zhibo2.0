@@ -151,7 +151,7 @@
 
         .card-image {
             width: 100px;
-            height: 100px;
+            min-height: 100%;
             object-fit: cover;
             flex-shrink: 0;
             cursor: pointer;
@@ -180,6 +180,15 @@
             border-radius: 4px;
             font-size: 13px;
             font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .ranking-tag {
+            background: #22c55e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
             flex-shrink: 0;
         }
 
@@ -404,6 +413,7 @@
                         <div class="card-info">
                             <div class="card-header">
                                 <span class="sample-number">${item.sample_number || '--'}</span>
+                                ${item.ranking_result ? `<span class="ranking-tag">${item.ranking_result}</span>` : ''}
                             </div>
                             <div class="product-name" data-name="${safeName}">
                                 ${item.product_name || '未知商品'}
