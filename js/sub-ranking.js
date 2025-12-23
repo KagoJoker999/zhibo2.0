@@ -371,12 +371,11 @@ function generateSubRankingPage() {
             
             <!-- 历史记录面板 -->
             <div id="panelHistory" class="tab-panel" style="display: none;">
-                <div class="history-actions" style="padding: 1rem 1.5rem; display: flex; gap: 0.5rem; align-items: center;">
-                    <span style="color: var(--text-muted); font-size: 0.875rem;">复制链接：</span>
-                    <button class="btn btn-outline" id="btnHistoryCopy1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 1-20</button>
-                    <button class="btn btn-outline" id="btnHistoryCopy2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 21-40</button>
-                    <button class="btn btn-outline" id="btnHistoryCopy3" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 41-60</button>
-                    <button class="btn btn-outline" id="btnHistoryCopy4" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 61-80</button>
+                <div class="history-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-secondary" id="btnHistoryCopy1">📋 1-20</button>
+                    <button class="btn btn-secondary" id="btnHistoryCopy2">📋 21-40</button>
+                    <button class="btn btn-secondary" id="btnHistoryCopy3">📋 41-60</button>
+                    <button class="btn btn-secondary" id="btnHistoryCopy4">📋 61-80</button>
                     <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
                 <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
