@@ -508,34 +508,40 @@ async function loadMappingHistoryForSubRanking() {
             return;
         }
 
-        // 渲染历史表格
+        // 渲染历史表格（与计算结果表字段一致）
         const html = `
-            <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                 <thead>
                     <tr style="background: var(--bg-secondary);">
-                        <th style="padding: 0.5rem; text-align: center; width: 50px;">图片</th>
-                        <th style="padding: 0.5rem; text-align: left;">商品名称</th>
-                        <th style="padding: 0.5rem; text-align: center; width: 80px;">分类</th>
-                        <th style="padding: 0.5rem; text-align: center; width: 60px;">序号</th>
-                        <th style="padding: 0.5rem; text-align: center; width: 80px;">样品仓位</th>
-                        <th style="padding: 0.5rem; text-align: center; width: 55px;">可用数</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 50px;">图片</th>
+                        <th style="padding: 0.75rem; text-align: left;">商品名称</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 100px;">商品编码</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 150px;">商品ID</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
+                        <th style="padding: 0.75rem; text-align: center; width: 60px;">库存</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${data.map(item => {
             const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
             const imageHtml = imageUrl
-                ? `<img src="${imageUrl}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
+                ? `<img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
                 : '<span style="color: var(--text-muted);">无</span>';
             const productId = item.product_id || '';
             return `
                         <tr style="border-bottom: 1px solid var(--border-color);" data-product-id="${productId}">
-                            <td style="padding: 0.3rem; text-align: center;">${imageHtml}</td>
-                            <td style="padding: 0.3rem; font-size: 0.75rem;">${item.product_name || '--'}</td>
-                            <td style="padding: 0.3rem; text-align: center; font-size: 0.75rem;">${item.ranking_result || '--'}</td>
-                            <td style="padding: 0.3rem; text-align: center;">${item.sample_number || '--'}</td>
-                            <td style="padding: 0.3rem; text-align: center; color: var(--primary-color);">${item.sample_warehouse || '--'}</td>
-                            <td style="padding: 0.3rem; text-align: center;">${item.available_qty || 0}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${imageHtml}</td>
+                            <td style="padding: 0.4rem; font-size: 0.8rem;">${item.product_name || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-family: monospace;">${item.product_code || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-family: monospace; font-size: 0.8rem;">${productId || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.ranking_result || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${item.sample_number || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.sample_warehouse || item.warehouse || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${item.available_qty || 0}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${item.actual_stock || 0}</td>
                         </tr>
                     `;
         }).join('')}
