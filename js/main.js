@@ -57,7 +57,8 @@ const PageConfig = {
     'mapping': { title: '排品对照功能', icon: '🔗' },
     'mapping-history': { title: '历史记录', icon: '📜' },
     'mapping-settings': { title: '对照设置', icon: '⚙️' },
-    'sub-ranking': { title: '小号排品', icon: '📦' }
+    'sub-ranking': { title: '小号排品', icon: '📦' },
+    'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' }
 };
 
 // ========================================
@@ -316,6 +317,17 @@ function loadPage(page) {
             if (mappingPage) {
                 DOM.pageContainer.innerHTML = mappingPage.html;
                 setTimeout(() => mappingPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 检查是否有小号排品页面加载器
+        if (window.loadSubRankingPage && (page === 'sub-ranking' || page.startsWith('sub-ranking-'))) {
+            const subRankingPage = window.loadSubRankingPage(page);
+            if (subRankingPage) {
+                DOM.pageContainer.innerHTML = subRankingPage.html;
+                setTimeout(() => subRankingPage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }
