@@ -91,17 +91,27 @@ function getDefaultSubConfig() {
 }
 
 // ========================================
-// 数据加载（只加载库存数据）
+// 数据加载（加载库存数据并匹配商品ID）
 // ========================================
 async function loadSubRankingData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    const { data, error } = await client
-        .from('inventory_data')
-        .select('*');
+    // 并行加载库存数据和商品ID数据
+    const [inventoryRes, productIdRes] = await Promise.all([
+        client.from('inventory_data').select('*'),
+        client.from('product_id_data').select('product_name, product_id')
+    ]);
 
-    if (error) throw new Error('读取库存数据失败: ' + error.message);
+    if (inventoryRes.error) throw new Error('读取库存数据失败: ' + inventoryRes.error.message);
+
+    // 构建商品ID映射表
+    const productIdMap = new Map();
+    (productIdRes.data || []).forEach(item => {
+        if (item.product_name && item.product_id) {
+            productIdMap.set(item.product_name, item.product_id);
+        }
+    });
 
     // 合并同名商品
     const productMap = new Map();
@@ -113,7 +123,7 @@ async function loadSubRankingData() {
         return Array.from(existingSet).join(',');
     };
 
-    (data || []).forEach(item => {
+    (inventoryRes.data || []).forEach(item => {
         if (!item.product_name) return;
         const name = item.product_name;
 
@@ -126,7 +136,13 @@ async function loadSubRankingData() {
             existing.product_category = mergeTextField(existing.product_category, item.product_category);
             if (!existing.image_url && item.image_url) existing.image_url = item.image_url;
         } else {
-            productMap.set(name, { ...item });
+            // 匹配商品ID
+            const matchedId = productIdMap.get(name) || '';
+            productMap.set(name, {
+                ...item,
+                product_id: matchedId,
+                id_matched: !!matchedId  // 标记是否匹配成功
+            });
         }
     });
 
@@ -284,6 +300,16 @@ async function initSubRankingPage() {
             currentResults = calculateSubRanking(products, config);
             renderSubRankingResults(container, currentResults);
             updateStatus(`共 ${currentResults.length} 个商品`);
+
+            // 监听ID输入变化
+            container.querySelectorAll('.sub-ranking-id-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.idx);
+                    if (!isNaN(idx) && currentResults[idx]) {
+                        currentResults[idx].product_id = e.target.value;
+                    }
+                });
+            });
         } catch (error) {
             console.error(error);
             container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
@@ -324,24 +350,35 @@ function renderSubRankingResults(container, results) {
                 <tr style="background: var(--bg-secondary);">
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">图片</th>
                     <th style="padding: 0.75rem; text-align: left;">商品名称</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 100px;">分类</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 80px;">序号</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 100px;">仓位</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 70px;">可用数</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 80px;">实际库存</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 120px;">商品ID <span style="font-size: 0.7rem; color: var(--text-muted);">(可编辑)</span></th>
+                    <th style="padding: 0.75rem; text-align: center; width: 80px;">分类</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 70px;">序号</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 90px;">仓位</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 60px;">可用数</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 70px;">实际库存</th>
                 </tr>
             </thead>
             <tbody>
-                ${results.map(item => {
+                ${results.map((item, idx) => {
         const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
         const imageHtml = imageUrl
             ? `<img src="${imageUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
             : '<span style="color: var(--text-muted);">无</span>';
         const bgColor = categoryColors[item.ranking_result] || 'transparent';
+        const idMatched = item.id_matched;
+        const idStyle = idMatched ? '' : 'border: 1px solid var(--error-color); background: rgba(255,0,0,0.1);';
         return `
-                        <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};">
+                        <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};" data-idx="${idx}">
                             <td style="padding: 0.5rem; text-align: center;">${imageHtml}</td>
                             <td style="padding: 0.5rem;">${item.product_name || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center;">
+                                <input type="text" 
+                                    class="sub-ranking-id-input" 
+                                    data-idx="${idx}" 
+                                    value="${item.product_id || ''}" 
+                                    placeholder="${idMatched ? '' : '未匹配'}"
+                                    style="width: 100%; text-align: center; padding: 0.25rem; ${idStyle}">
+                            </td>
                             <td style="padding: 0.5rem; text-align: center;">${item.ranking_result || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.sample_number || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.warehouse || '--'}</td>
@@ -382,7 +419,7 @@ function generateSubRankingSettingsPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     `;
 }
 
