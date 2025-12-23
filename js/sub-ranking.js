@@ -301,12 +301,25 @@ async function initSubRankingPage() {
             renderSubRankingResults(container, currentResults);
             updateStatus(`共 ${currentResults.length} 个商品`);
 
-            // 监听ID输入变化
+            // 监听ID输入变化，更新数据并动态改变行背景色
             container.querySelectorAll('.sub-ranking-id-input').forEach(input => {
                 input.addEventListener('input', (e) => {
                     const idx = parseInt(e.target.dataset.idx);
                     if (!isNaN(idx) && currentResults[idx]) {
                         currentResults[idx].product_id = e.target.value;
+
+                        // 动态更新行背景色
+                        const row = e.target.closest('tr');
+                        if (row) {
+                            const hasId = !!e.target.value;
+                            const categoryColors = {
+                                '1.库存多': 'rgba(34, 139, 34, 0.15)',
+                                '2.库存少': 'rgba(255, 140, 0, 0.15)'
+                            };
+                            const rankResult = currentResults[idx].ranking_result;
+                            row.style.background = hasId ? (categoryColors[rankResult] || 'transparent') : 'rgba(255, 0, 0, 0.15)';
+                            row.classList.toggle('sub-ranking-unmatched', !hasId);
+                        }
                     }
                 });
             });
@@ -338,6 +351,13 @@ function renderSubRankingResults(container, results) {
         return;
     }
 
+    // 按商品编码从大到小排序
+    results.sort((a, b) => {
+        const codeA = a.product_code || '';
+        const codeB = b.product_code || '';
+        return codeB.localeCompare(codeA);
+    });
+
     // 中国复古色系
     const categoryColors = {
         '1.库存多': 'rgba(34, 139, 34, 0.15)',   // 翠绿
@@ -348,42 +368,47 @@ function renderSubRankingResults(container, results) {
         <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
             <thead>
                 <tr style="background: var(--bg-secondary);">
-                    <th style="padding: 0.75rem; text-align: center; width: 60px;">图片</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 50px;">图片</th>
                     <th style="padding: 0.75rem; text-align: left;">商品名称</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 120px;">商品ID <span style="font-size: 0.7rem; color: var(--text-muted);">(可编辑)</span></th>
-                    <th style="padding: 0.75rem; text-align: center; width: 80px;">分类</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 70px;">序号</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 90px;">仓位</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 60px;">可用数</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 70px;">实际库存</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 100px;">商品编码</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 180px;">商品ID <span style="font-size: 0.7rem; color: var(--text-muted);">(可编辑)</span></th>
+                    <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 60px;">库存</th>
                 </tr>
             </thead>
             <tbody>
                 ${results.map((item, idx) => {
         const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
         const imageHtml = imageUrl
-            ? `<img src="${imageUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
+            ? `<img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
             : '<span style="color: var(--text-muted);">无</span>';
-        const bgColor = categoryColors[item.ranking_result] || 'transparent';
-        const idMatched = item.id_matched;
-        const idStyle = idMatched ? '' : 'border: 1px solid var(--error-color); background: rgba(255,0,0,0.1);';
+
+        // 判断ID是否匹配（有值就算匹配）
+        const hasId = !!item.product_id;
+        const bgColor = hasId ? (categoryColors[item.ranking_result] || 'transparent') : 'rgba(255, 0, 0, 0.15)';
+        const rowClass = hasId ? '' : 'sub-ranking-unmatched';
+
         return `
-                        <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};" data-idx="${idx}">
-                            <td style="padding: 0.5rem; text-align: center;">${imageHtml}</td>
-                            <td style="padding: 0.5rem;">${item.product_name || '--'}</td>
-                            <td style="padding: 0.5rem; text-align: center;">
+                        <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};" data-idx="${idx}" class="${rowClass}">
+                            <td style="padding: 0.4rem; text-align: center;">${imageHtml}</td>
+                            <td style="padding: 0.4rem; font-size: 0.8rem;">${item.product_name || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-family: monospace;">${item.product_code || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center;">
                                 <input type="text" 
                                     class="sub-ranking-id-input" 
                                     data-idx="${idx}" 
                                     value="${item.product_id || ''}" 
-                                    placeholder="${idMatched ? '' : '未匹配'}"
-                                    style="width: 100%; text-align: center; padding: 0.25rem; ${idStyle}">
+                                    placeholder="${hasId ? '' : '未匹配'}"
+                                    style="width: 100%; text-align: center; padding: 0.25rem; font-family: monospace; font-size: 0.85rem;">
                             </td>
-                            <td style="padding: 0.5rem; text-align: center;">${item.ranking_result || '--'}</td>
-                            <td style="padding: 0.5rem; text-align: center;">${item.sample_number || '--'}</td>
-                            <td style="padding: 0.5rem; text-align: center;">${item.warehouse || '--'}</td>
-                            <td style="padding: 0.5rem; text-align: center;">${item.available_qty || 0}</td>
-                            <td style="padding: 0.5rem; text-align: center;">${item.actual_stock || 0}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.ranking_result || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${item.sample_number || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.warehouse || '--'}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${item.available_qty || 0}</td>
+                            <td style="padding: 0.4rem; text-align: center;">${item.actual_stock || 0}</td>
                         </tr>
                     `;
     }).join('')}
