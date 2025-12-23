@@ -387,7 +387,10 @@ async function initSubRankingPage() {
         try {
             const count = await saveSubRankingResults(currentResults);
             window.AppUtils?.showToast?.(`已保存 ${count} 条结果`, 'success');
-        });
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
 
     // 标签页切换
     const tabCalculate = document.getElementById('tabCalculate');
