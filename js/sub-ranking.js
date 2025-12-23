@@ -265,10 +265,17 @@ function generateSubRankingPage() {
                 <p>← sub_ranking_results | 根据库存数据筛选，使用独立配置</p>
             </div>
             
-            <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center;">
+            <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
                 <button class="btn btn-secondary" id="btnSubSave">💾 保存结果</button>
                 <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
+                
+                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                    <button class="btn btn-outline" id="btnCopy1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 1-20</button>
+                    <button class="btn btn-outline" id="btnCopy2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 21-40</button>
+                    <button class="btn btn-outline" id="btnCopy3" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 41-60</button>
+                    <button class="btn btn-outline" id="btnCopy4" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 61-80</button>
+                </div>
             </div>
             
             <div class="ranking-content" style="padding: 0 1.5rem 1.5rem;">
@@ -343,6 +350,33 @@ async function initSubRankingPage() {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         }
     });
+
+    // 复制链接按钮（获取当前排序后的结果）
+    const copyLinks = (start, end) => {
+        // 从表格中读取当前输入框的值（包含手动填写的）
+        const inputs = container.querySelectorAll('.sub-ranking-id-input');
+        const ids = [];
+        for (let i = start; i < Math.min(end, inputs.length); i++) {
+            const id = inputs[i]?.value?.trim();
+            if (id) {
+                ids.push(`https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=${id}&origin_type=604`);
+            }
+        }
+        if (ids.length === 0) {
+            window.AppUtils?.showToast?.('该范围内没有商品ID', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(ids.join('\n')).then(() => {
+            window.AppUtils?.showToast?.(`已复制 ${ids.length} 条链接`, 'success');
+        }).catch(() => {
+            window.AppUtils?.showToast?.('复制失败', 'error');
+        });
+    };
+
+    document.getElementById('btnCopy1')?.addEventListener('click', () => copyLinks(0, 20));
+    document.getElementById('btnCopy2')?.addEventListener('click', () => copyLinks(20, 40));
+    document.getElementById('btnCopy3')?.addEventListener('click', () => copyLinks(40, 60));
+    document.getElementById('btnCopy4')?.addEventListener('click', () => copyLinks(60, 80));
 }
 
 function renderSubRankingResults(container, results) {
@@ -351,11 +385,16 @@ function renderSubRankingResults(container, results) {
         return;
     }
 
-    // 按商品编码从大到小排序
+    // 按商品ID排序，空ID放最上方
     results.sort((a, b) => {
-        const codeA = a.product_code || '';
-        const codeB = b.product_code || '';
-        return codeB.localeCompare(codeA);
+        const idA = a.product_id || '';
+        const idB = b.product_id || '';
+        // 空ID放在最上面
+        if (!idA && idB) return -1;
+        if (idA && !idB) return 1;
+        if (!idA && !idB) return 0;
+        // 有ID的按ID从小到大排序
+        return idA.localeCompare(idB);
     });
 
     // 中国复古色系
