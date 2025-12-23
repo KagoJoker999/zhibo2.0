@@ -66,21 +66,25 @@ async function saveSubRankingConfig(config) {
 
 function getDefaultSubConfig() {
     return {
-        "分类排序": ["小号品A筛选条件", "小号品B筛选条件"],
+        "分类排序": ["可用数最多", "可用数最少"],
         "结果映射": {
-            "小号品A筛选条件": "1.小号品A",
-            "小号品B筛选条件": "2.小号品B"
+            "可用数最多": "1.库存多",
+            "可用数最少": "2.库存少"
         },
         "样品序号规则": {
-            "1.小号品A": { "prefix": "S", "start": 1, "step": 1 },
-            "2.小号品B": { "prefix": "S", "start": 20, "step": 1 }
+            "1.库存多": { "prefix": "H", "start": 1, "step": 1 },
+            "2.库存少": { "prefix": "L", "start": 1, "step": 1 }
         },
         "筛选条件": {
-            "小号品A筛选条件": {
-                "available_qty": { "大于等于": 1, "启用": true }
+            "可用数最多": {
+                "sortBy": "available_qty",
+                "sortOrder": "desc",
+                "limit": 40
             },
-            "小号品B筛选条件": {
-                "available_qty": { "大于等于": 5, "启用": true }
+            "可用数最少": {
+                "sortBy": "available_qty",
+                "sortOrder": "asc",
+                "limit": 40
             }
         }
     };
@@ -130,7 +134,7 @@ async function loadSubRankingData() {
 }
 
 // ========================================
-// 筛选计算
+// 筛选计算（支持 topN/bottomN 排序）
 // ========================================
 function calculateSubRanking(products, config) {
     const results = [];
@@ -147,11 +151,19 @@ function calculateSubRanking(products, config) {
         const conditions = filterConditions[categoryKey];
         if (!conditions) return;
 
-        // 筛选符合条件的商品
-        let candidates = products.filter(p => {
-            if (usedProducts.has(p.product_name)) return false;
-            return checkConditions(p, conditions);
-        });
+        // 筛选未使用的商品
+        let candidates = products.filter(p => !usedProducts.has(p.product_name));
+
+        // 排序逻辑（支持 sortBy + sortOrder + limit）
+        if (conditions.sortBy && conditions.limit) {
+            const field = conditions.sortBy;
+            const order = conditions.sortOrder === 'asc' ? 1 : -1;
+            candidates.sort((a, b) => ((a[field] || 0) - (b[field] || 0)) * order);
+            candidates = candidates.slice(0, conditions.limit);
+        } else {
+            // 旧版条件筛选逻辑
+            candidates = candidates.filter(p => checkConditions(p, conditions));
+        }
 
         // 分配样品序号
         const rule = sampleRules[rankingResult] || { prefix: 'S', start: 1, step: 1 };
@@ -302,8 +314,8 @@ function renderSubRankingResults(container, results) {
 
     // 中国复古色系
     const categoryColors = {
-        '1.小号品A': 'rgba(139, 69, 19, 0.15)',
-        '2.小号品B': 'rgba(184, 134, 11, 0.15)'
+        '1.库存多': 'rgba(34, 139, 34, 0.15)',   // 翠绿
+        '2.库存少': 'rgba(255, 140, 0, 0.15)'   // 琥珀橙
     };
 
     const html = `
