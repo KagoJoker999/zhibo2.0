@@ -281,37 +281,55 @@ function generateSubRankingPage() {
                 <p>← sub_ranking_results | 根据库存数据筛选，使用独立配置</p>
             </div>
             
-            <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
-                <button class="btn btn-secondary" id="btnSubSave">💾 保存结果</button>
-                <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
-                <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
-                
-                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
-                    <button class="btn btn-outline" id="btnCopy1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 1-20</button>
-                    <button class="btn btn-outline" id="btnCopy2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 21-40</button>
-                    <button class="btn btn-outline" id="btnCopy3" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 41-60</button>
-                    <button class="btn btn-outline" id="btnCopy4" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 61-80</button>
-                </div>
+            <!-- 分页标签 -->
+            <div class="tab-container" style="padding: 1rem 1.5rem 0; border-bottom: 1px solid var(--border-color);">
+                <button class="tab-btn active" id="tabCalculate" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid var(--primary-color); color: var(--text-primary); cursor: pointer; font-weight: 500;">
+                    🔄 加载计算
+                </button>
+                <button class="tab-btn" id="tabHistory" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer;">
+                    📜 历史记录 <span class="db-table-tag" style="font-size: 0.65rem; background: var(--bg-secondary); padding: 0.1rem 0.3rem; border-radius: 3px;">mapping_history</span>
+                </button>
             </div>
             
-            <div class="ranking-content" style="padding: 0 1.5rem 1.5rem;">
-                <div id="subRankingResultContainer" class="data-table-container">
-                    <div class="placeholder-content">
-                        <p>点击"加载并计算"开始</p>
+            <!-- 加载计算面板 -->
+            <div id="panelCalculate" class="tab-panel" style="display: block;">
+                <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
+                    <button class="btn btn-secondary" id="btnSubSave">💾 保存结果</button>
+                    <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
+                    <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
+                    
+                    <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" id="btnCopy1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 1-20</button>
+                        <button class="btn btn-outline" id="btnCopy2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 21-40</button>
+                        <button class="btn btn-outline" id="btnCopy3" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 41-60</button>
+                        <button class="btn btn-outline" id="btnCopy4" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 61-80</button>
+                    </div>
+                </div>
+                
+                <div class="ranking-content" style="padding: 0 1.5rem 1.5rem;">
+                    <div id="subRankingResultContainer" class="data-table-container">
+                        <div class="placeholder-content">
+                            <p>点击"加载并计算"开始</p>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- 历史记录区域 -->
-            <div class="history-section" style="padding: 1.5rem; border-top: 1px solid var(--border-color);">
-                <h3 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    📜 排品对照历史
-                    <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">mapping_history</span>
-                </h3>
-                <div id="mappingHistoryContainer" class="data-table-container" style="max-height: 400px; overflow-y: auto;">
-                    <div class="placeholder-content">
-                        <p>正在加载历史记录...</p>
+            <!-- 历史记录面板 -->
+            <div id="panelHistory" class="tab-panel" style="display: none;">
+                <div class="history-actions" style="padding: 1rem 1.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                    <span style="color: var(--text-muted); font-size: 0.875rem;">复制链接：</span>
+                    <button class="btn btn-outline" id="btnHistoryCopy1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 1-20</button>
+                    <button class="btn btn-outline" id="btnHistoryCopy2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 21-40</button>
+                    <button class="btn btn-outline" id="btnHistoryCopy3" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 41-60</button>
+                    <button class="btn btn-outline" id="btnHistoryCopy4" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📋 61-80</button>
+                </div>
+                <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
+                    <div id="mappingHistoryContainer" class="data-table-container">
+                        <div class="placeholder-content">
+                            <p>正在加载历史记录...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -408,6 +426,62 @@ async function initSubRankingPage() {
     document.getElementById('btnCopy3')?.addEventListener('click', () => copyLinks(40, 60));
     document.getElementById('btnCopy4')?.addEventListener('click', () => copyLinks(60, 80));
 
+    // 标签页切换
+    const tabCalculate = document.getElementById('tabCalculate');
+    const tabHistory = document.getElementById('tabHistory');
+    const panelCalculate = document.getElementById('panelCalculate');
+    const panelHistory = document.getElementById('panelHistory');
+
+    const switchTab = (activeTab) => {
+        if (activeTab === 'calculate') {
+            tabCalculate.style.borderBottomColor = 'var(--primary-color)';
+            tabCalculate.style.color = 'var(--text-primary)';
+            tabHistory.style.borderBottomColor = 'transparent';
+            tabHistory.style.color = 'var(--text-muted)';
+            panelCalculate.style.display = 'block';
+            panelHistory.style.display = 'none';
+        } else {
+            tabHistory.style.borderBottomColor = 'var(--primary-color)';
+            tabHistory.style.color = 'var(--text-primary)';
+            tabCalculate.style.borderBottomColor = 'transparent';
+            tabCalculate.style.color = 'var(--text-muted)';
+            panelHistory.style.display = 'block';
+            panelCalculate.style.display = 'none';
+        }
+    };
+
+    tabCalculate?.addEventListener('click', () => switchTab('calculate'));
+    tabHistory?.addEventListener('click', () => switchTab('history'));
+
+    // 历史页复制按钮
+    const copyHistoryLinks = (start, end) => {
+        const historyContainer = document.getElementById('mappingHistoryContainer');
+        const rows = historyContainer?.querySelectorAll('tr[data-product-id]');
+        const ids = [];
+        if (rows) {
+            for (let i = start; i < Math.min(end, rows.length); i++) {
+                const id = rows[i]?.dataset?.productId?.trim();
+                if (id) {
+                    ids.push(`https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=${id}&origin_type=604`);
+                }
+            }
+        }
+        if (ids.length === 0) {
+            window.AppUtils?.showToast?.('该范围内没有商品ID', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(ids.join('\n')).then(() => {
+            window.AppUtils?.showToast?.(`已复制 ${ids.length} 条链接`, 'success');
+        }).catch(() => {
+            window.AppUtils?.showToast?.('复制失败', 'error');
+        });
+    };
+
+    document.getElementById('btnHistoryCopy1')?.addEventListener('click', () => copyHistoryLinks(0, 20));
+    document.getElementById('btnHistoryCopy2')?.addEventListener('click', () => copyHistoryLinks(20, 40));
+    document.getElementById('btnHistoryCopy3')?.addEventListener('click', () => copyHistoryLinks(40, 60));
+    document.getElementById('btnHistoryCopy4')?.addEventListener('click', () => copyHistoryLinks(60, 80));
+
     // 自动加载 mapping_history 历史记录
     loadMappingHistoryForSubRanking();
 }
@@ -453,8 +527,9 @@ async function loadMappingHistoryForSubRanking() {
             const imageHtml = imageUrl
                 ? `<img src="${imageUrl}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
                 : '<span style="color: var(--text-muted);">无</span>';
+            const productId = item.product_id || '';
             return `
-                        <tr style="border-bottom: 1px solid var(--border-color);">
+                        <tr style="border-bottom: 1px solid var(--border-color);" data-product-id="${productId}">
                             <td style="padding: 0.3rem; text-align: center;">${imageHtml}</td>
                             <td style="padding: 0.3rem; font-size: 0.75rem;">${item.product_name || '--'}</td>
                             <td style="padding: 0.3rem; text-align: center; font-size: 0.75rem;">${item.ranking_result || '--'}</td>
