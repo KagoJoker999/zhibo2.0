@@ -66,32 +66,28 @@ async function saveSubRankingConfig(config) {
 
 function getDefaultSubConfig() {
     return {
-        "分类排序": ["优先筛选", "可用数最多", "可用数最少"],
+        "分类排序": ["区间内最多", "区间内最少"],
         "结果映射": {
-            "优先筛选": "0.优先品",
-            "可用数最多": "1.库存多",
-            "可用数最少": "2.库存少"
+            "区间内最多": "1.库存多",
+            "区间内最少": "2.库存少"
         },
         "样品序号规则": {
-            "0.优先品": { "prefix": "P", "start": 1, "step": 1 },
             "1.库存多": { "prefix": "H", "start": 1, "step": 1 },
             "2.库存少": { "prefix": "L", "start": 1, "step": 1 }
         },
         "筛选条件": {
-            "优先筛选": {
+            "区间内最多": {
                 "filterBy": "available_qty",
-                "min": 3,
+                "min": 5,
                 "max": 15,
                 "sortBy": "available_qty",
                 "sortOrder": "desc",
                 "limit": 40
             },
-            "可用数最多": {
-                "sortBy": "available_qty",
-                "sortOrder": "desc",
-                "limit": 40
-            },
-            "可用数最少": {
+            "区间内最少": {
+                "filterBy": "available_qty",
+                "min": 5,
+                "max": 15,
                 "sortBy": "available_qty",
                 "sortOrder": "asc",
                 "limit": 40
@@ -498,7 +494,6 @@ function renderSubRankingResults(container, results) {
 
     // 中国复古色系
     const categoryColors = {
-        '0.优先品': 'rgba(138, 43, 226, 0.15)',  // 紫罗兰
         '1.库存多': 'rgba(34, 139, 34, 0.15)',   // 翠绿
         '2.库存少': 'rgba(255, 140, 0, 0.15)'   // 琥珀橙
     };
