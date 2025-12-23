@@ -397,6 +397,19 @@
                 }
             };
 
+            // 分类颜色映射
+            function getRankingColor(result) {
+                const colorMap = {
+                    '1.库存多': '#22c55e',      // 绿色
+                    '2.库存少': '#f59e0b',      // 橙色
+                    '评分品A': '#8b5cf6',       // 紫色
+                    '评分品B': '#06b6d4',       // 青色
+                    '预售品': '#ec4899',        // 粉色
+                    '滚动品': '#6366f1'         // 靖青色
+                };
+                return colorMap[result] || '#6b7280';  // 默认灰色
+            }
+
             // 渲染商品卡片
             function renderCard(item) {
                 // 处理图片URL（可能有多个，取第一个）
@@ -406,6 +419,7 @@
                 }
                 const safeName = (item.product_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const safeCode = (item.product_code || '').replace(/'/g, "\\'");
+                const rankingColor = getRankingColor(item.ranking_result);
 
                 return `
                     <div class="product-card">
@@ -413,7 +427,7 @@
                         <div class="card-info">
                             <div class="card-header">
                                 <span class="sample-number">${item.sample_number || '--'}</span>
-                                ${item.ranking_result ? `<span class="ranking-tag">${item.ranking_result}</span>` : ''}
+                                ${item.ranking_result ? `<span class="ranking-tag" style="background:${rankingColor}">${item.ranking_result}</span>` : ''}
                             </div>
                             <div class="product-name" data-name="${safeName}">
                                 ${item.product_name || '未知商品'}
