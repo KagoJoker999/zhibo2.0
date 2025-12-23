@@ -64,8 +64,8 @@ function convertSingleWarehouse(warehouse, rules) {
     // 查找匹配的规则
     for (const rule of rules) {
         if (secondNum >= rule.range_start && secondNum <= rule.range_end) {
-            // 保留第一位和第三位，用 sample_value 替换第二位
-            return `${first}-${rule.sample_value}-${third}`;
+            // 不显示第一位，只返回 sample_value-第三位
+            return `${rule.sample_value}-${third}`;
         }
     }
 
@@ -308,6 +308,16 @@ function renderMappingTable(container, data) {
         return;
     }
 
+    // 中国复古色系 - 根据分类分配不同背景色
+    const categoryColors = {
+        '1.评分品A': 'rgba(139, 69, 19, 0.15)',    // 朱砂棕
+        '2.佩戴品': 'rgba(0, 128, 128, 0.15)',     // 青碧
+        '3.周边品': 'rgba(128, 0, 128, 0.15)',    // 紫檀
+        '4.评分品B': 'rgba(184, 134, 11, 0.15)',  // 金琥珀
+        '5.库存品': 'rgba(85, 107, 47, 0.15)',    // 墨绿
+        '新品': 'rgba(70, 130, 180, 0.15)'         // 靛蓝
+    };
+
     const html = `
         <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
             <thead>
@@ -328,8 +338,9 @@ function renderMappingTable(container, data) {
         const imageHtml = imageUrl
             ? `<img src="${imageUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
             : '<span style="color: var(--text-muted);">无</span>';
+        const bgColor = categoryColors[item.ranking_result] || 'transparent';
         return `
-                        <tr style="border-bottom: 1px solid var(--border-color);">
+                        <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};">
                             <td style="padding: 0.5rem; text-align: center;">${imageHtml}</td>
                             <td style="padding: 0.5rem;">${item.product_name || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.ranking_result || '--'}</td>
@@ -379,6 +390,19 @@ async function initMappingHistoryPage() {
 
     try {
         const data = await loadHistoryData();
+
+        // 按与主页面相同的逻辑排序（先按字母前缀，再按数字）
+        data.sort((a, b) => {
+            const aSeq = a.sample_number || '';
+            const bSeq = b.sample_number || '';
+            const aPrefix = aSeq.replace(/[0-9]/g, '') || 'Z';
+            const bPrefix = bSeq.replace(/[0-9]/g, '') || 'Z';
+            if (aPrefix !== bPrefix) return aPrefix.localeCompare(bPrefix);
+            const aNum = parseInt(aSeq.replace(/\D/g, '')) || 999;
+            const bNum = parseInt(bSeq.replace(/\D/g, '')) || 999;
+            return aNum - bNum;
+        });
+
         if (data.length > 0 && data[0].generated_at) {
             const time = new Date(data[0].generated_at).toLocaleString('zh-CN');
             timeSpan.textContent = `生成时间: ${time}`;
