@@ -306,6 +306,19 @@ function generateSubRankingPage() {
                     </div>
                 </div>
             </div>
+            
+            <!-- 历史记录区域 -->
+            <div class="history-section" style="padding: 1.5rem; border-top: 1px solid var(--border-color);">
+                <h3 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    📜 排品对照历史
+                    <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">mapping_history</span>
+                </h3>
+                <div id="mappingHistoryContainer" class="data-table-container" style="max-height: 400px; overflow-y: auto;">
+                    <div class="placeholder-content">
+                        <p>正在加载历史记录...</p>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -398,6 +411,71 @@ async function initSubRankingPage() {
     document.getElementById('btnCopy2')?.addEventListener('click', () => copyLinks(20, 40));
     document.getElementById('btnCopy3')?.addEventListener('click', () => copyLinks(40, 60));
     document.getElementById('btnCopy4')?.addEventListener('click', () => copyLinks(60, 80));
+
+    // 自动加载 mapping_history 历史记录
+    loadMappingHistoryForSubRanking();
+}
+
+// 加载并显示 mapping_history 数据
+async function loadMappingHistoryForSubRanking() {
+    const historyContainer = document.getElementById('mappingHistoryContainer');
+    if (!historyContainer) return;
+
+    try {
+        const client = window.supabaseClient;
+        if (!client) throw new Error('Supabase 未初始化');
+
+        const { data, error } = await client
+            .from('mapping_history')
+            .select('*')
+            .order('generated_at', { ascending: false })
+            .limit(100);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            historyContainer.innerHTML = '<div class="placeholder-content"><p>暂无历史记录</p></div>';
+            return;
+        }
+
+        // 渲染历史表格
+        const html = `
+            <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                <thead>
+                    <tr style="background: var(--bg-secondary);">
+                        <th style="padding: 0.5rem; text-align: center; width: 50px;">图片</th>
+                        <th style="padding: 0.5rem; text-align: left;">商品名称</th>
+                        <th style="padding: 0.5rem; text-align: center; width: 80px;">分类</th>
+                        <th style="padding: 0.5rem; text-align: center; width: 60px;">序号</th>
+                        <th style="padding: 0.5rem; text-align: center; width: 80px;">样品仓位</th>
+                        <th style="padding: 0.5rem; text-align: center; width: 55px;">可用数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(item => {
+            const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
+            const imageHtml = imageUrl
+                ? `<img src="${imageUrl}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
+                : '<span style="color: var(--text-muted);">无</span>';
+            return `
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.3rem; text-align: center;">${imageHtml}</td>
+                            <td style="padding: 0.3rem; font-size: 0.75rem;">${item.product_name || '--'}</td>
+                            <td style="padding: 0.3rem; text-align: center; font-size: 0.75rem;">${item.ranking_result || '--'}</td>
+                            <td style="padding: 0.3rem; text-align: center;">${item.sample_number || '--'}</td>
+                            <td style="padding: 0.3rem; text-align: center; color: var(--primary-color);">${item.sample_warehouse || '--'}</td>
+                            <td style="padding: 0.3rem; text-align: center;">${item.available_qty || 0}</td>
+                        </tr>
+                    `;
+        }).join('')}
+                </tbody>
+            </table>
+        `;
+        historyContainer.innerHTML = html;
+    } catch (error) {
+        console.error('加载历史记录失败:', error);
+        historyContainer.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败</p></div>`;
+    }
 }
 
 function renderSubRankingResults(container, results) {
