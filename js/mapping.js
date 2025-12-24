@@ -88,8 +88,16 @@ async function loadMappingData() {
     if (rankingRes.error) throw new Error('加载排品结果失败: ' + rankingRes.error.message);
     if (newProductRes.error) throw new Error('加载新品数据失败: ' + newProductRes.error.message);
 
-    // 合并数据
-    return mergeAndDeduplicate(rankingRes.data || [], newProductRes.data || []);
+    const rankingData = rankingRes.data || [];
+    const newProductData = newProductRes.data || [];
+
+    // 合并数据并附加源统计信息
+    const mergedData = mergeAndDeduplicate(rankingData, newProductData);
+    mergedData._sourceStats = {
+        rankingCount: rankingData.length,
+        newProductCount: newProductData.length
+    };
+    return mergedData;
 }
 
 function mergeAndDeduplicate(rankingData, newProductData) {
@@ -240,6 +248,7 @@ function generateMappingPage() {
                 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
                 <button class="btn btn-secondary" id="btnSaveHistory">💾 保存到历史</button>
                 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ mapping_history</span>
+                <span id="sourceStats" style="color: var(--text-muted); font-size: 0.8rem;"></span>
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
@@ -271,6 +280,11 @@ async function initMappingPage() {
         updateStatus('加载中...');
         try {
             const data = await loadMappingData();
+            // 显示数据来源统计
+            const sourceStatsSpan = document.getElementById('sourceStats');
+            if (sourceStatsSpan && data._sourceStats) {
+                sourceStatsSpan.textContent = `ranking_results: ${data._sourceStats.rankingCount}个 | new_product_data: ${data._sourceStats.newProductCount}个`;
+            }
             // 计算样品仓位
             data.forEach(item => {
                 item.sample_warehouse = calculateSampleWarehouse(item.warehouse, rules);
