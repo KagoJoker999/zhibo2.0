@@ -672,7 +672,9 @@ function initNewProductUpload() {
             const now = new Date();
             timeSpan.textContent = `(${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} 刷新)`;
             const countSpan = document.getElementById('recordCountInfo');
-            if (countSpan) countSpan.textContent = `共 ${data.length} 条`;
+            // 计算商品名称去重后的个数
+            const uniqueProductNames = new Set(data.map(item => item.original_name || '')).size;
+            if (countSpan) countSpan.textContent = `商品 ${uniqueProductNames} 个，基础资料 ${data.length} 条`;
 
             if (!data || data.length === 0) {
                 container.innerHTML = '<p class="text-muted">暂无数据</p>';
