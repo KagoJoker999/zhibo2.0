@@ -166,6 +166,7 @@ function generateCouponPage() {
                     <h3>📦 待上传商品列表</h3>
                     <div class="section-actions">
                         <span class="match-stats" id="matchStats"></span>
+                        <button class="btn btn-secondary" id="clearUnmatchedBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 清空无ID商品</button>
                         <button class="btn btn-primary" id="uploadBtn-coupon" disabled>上传到数据库</button>
                     </div>
                 </div>
@@ -251,6 +252,20 @@ function initCouponUpload() {
 
     // 上传按钮事件
     uploadBtn.addEventListener('click', handleUpload);
+
+    // 清空无ID商品按钮事件
+    const clearUnmatchedBtn = document.getElementById('clearUnmatchedBtn');
+    clearUnmatchedBtn.addEventListener('click', () => {
+        const unmatchedCount = couponProductList.filter(r => !r.product_id).length;
+        if (unmatchedCount === 0) {
+            window.AppUtils?.showToast?.('没有无ID商品需要清空', 'info');
+            return;
+        }
+        // 过滤掉无ID的商品
+        couponProductList = couponProductList.filter(r => r.product_id);
+        renderProductList();
+        window.AppUtils?.showToast?.(`已清空 ${unmatchedCount} 条无ID商品`, 'success');
+    });
 
     // 下载按钮事件
     downloadBtn.addEventListener('click', downloadUploadedData);
