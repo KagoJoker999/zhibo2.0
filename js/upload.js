@@ -276,9 +276,9 @@ function generateUploadBlock(key, config) {
             
             <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
             
-            <details class="upload-info-details" style="margin-top: 1rem;">
-                <summary>📖 上传说明</summary>
-                <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm); margin-top: 0.5rem;">
+            <div class="upload-info-section" style="margin-top: 1rem;">
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary);">📖 上传说明</h4>
+                <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm);">
                     <div style="margin-bottom: 0.75rem;">
                         <strong style="color: var(--text-secondary);">📋 处理规则</strong>
                         <ul style="margin: 0.5rem 0 0 1rem; padding: 0; font-size: 0.85rem; color: var(--text-muted);">
@@ -293,7 +293,7 @@ function generateUploadBlock(key, config) {
                         </table>
                     </div>
                 </div>
-            </details>
+            </div>
         </div>
     `;
 }
