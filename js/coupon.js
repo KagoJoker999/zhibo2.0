@@ -160,10 +160,10 @@ function generateCouponPage() {
                 </div>
             </div>
             
-            <!-- 商品列表区域 -->
+            <!-- 待上传商品列表区域 -->
             <div class="coupon-product-list-section" id="couponProductListSection" style="display:none">
                 <div class="section-header">
-                    <h3>📦 商品列表</h3>
+                    <h3>📦 待上传商品列表</h3>
                     <div class="section-actions">
                         <span class="match-stats" id="matchStats"></span>
                         <button class="btn btn-primary" id="uploadBtn-coupon" disabled>上传到数据库</button>
@@ -185,6 +185,33 @@ function generateCouponPage() {
                     </table>
                 </div>
             </div>
+            
+            <!-- 已上传数据列表区域 -->
+            <div class="coupon-product-list-section" id="uploadedDataSection">
+                <div class="section-header">
+                    <h3>📋 已上传数据 <span class="db-table-tag">coupon_product_data</span></h3>
+                    <div class="section-actions">
+                        <span class="uploaded-stats" id="uploadedStats">加载中...</span>
+                        <button class="btn btn-secondary" id="downloadDataBtn">📥 下载数据</button>
+                    </div>
+                </div>
+                <div class="product-table-container" style="max-height: 400px;">
+                    <table class="product-table" id="uploadedDataTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">图片</th>
+                                <th style="width: 150px;">商品ID</th>
+                                <th>商品名称</th>
+                                <th style="width: 150px;">商品编码</th>
+                            </tr>
+                        </thead>
+                        <tbody id="uploadedDataTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="uploadedDataPagination">
+                </div>
+            </div>
         </div>
     `;
 }
@@ -192,6 +219,12 @@ function generateCouponPage() {
 // ========================================
 // 初始化
 // ========================================
+// 分页状态
+let uploadedDataPage = 1;
+const uploadedDataPageSize = 20;
+let uploadedDataTotal = 0;
+let uploadedDataCache = [];
+
 function initCouponUpload() {
     const uploadZone = document.getElementById('uploadZone-coupon');
     const fileInput = document.getElementById('fileInput-coupon');
@@ -201,6 +234,7 @@ function initCouponUpload() {
     const statusDetail = document.getElementById('statusDetail-coupon');
     const listSection = document.getElementById('couponProductListSection');
     const uploadBtn = document.getElementById('uploadBtn-coupon');
+    const downloadBtn = document.getElementById('downloadDataBtn');
 
     // 拖拽上传事件
     uploadZone.addEventListener('click', () => fileInput.click());
@@ -217,6 +251,12 @@ function initCouponUpload() {
 
     // 上传按钮事件
     uploadBtn.addEventListener('click', handleUpload);
+
+    // 下载按钮事件
+    downloadBtn.addEventListener('click', downloadUploadedData);
+
+    // 加载已上传数据
+    loadUploadedData();
 
     // 处理文件选择
     async function handleFileSelect(file) {
@@ -259,6 +299,190 @@ function initCouponUpload() {
     function updateStatus(text, progress) {
         statusText.textContent = text;
         progressBar.style.width = progress + '%';
+    }
+}
+
+// ========================================
+// 加载已上传数据
+// ========================================
+async function loadUploadedData() {
+    const statsEl = document.getElementById('uploadedStats');
+    const tbody = document.getElementById('uploadedDataTableBody');
+    const paginationEl = document.getElementById('uploadedDataPagination');
+
+    try {
+        // 获取总数
+        const { count, error: countError } = await window.supabaseClient
+            .from('coupon_product_data')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) throw countError;
+
+        uploadedDataTotal = count || 0;
+
+        if (uploadedDataTotal === 0) {
+            statsEl.textContent = '暂无数据';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">暂无已上传数据</td></tr>';
+            paginationEl.innerHTML = '';
+            return;
+        }
+
+        // 获取当前页数据
+        const offset = (uploadedDataPage - 1) * uploadedDataPageSize;
+        const { data, error } = await window.supabaseClient
+            .from('coupon_product_data')
+            .select('*')
+            .order('id', { ascending: false })
+            .range(offset, offset + uploadedDataPageSize - 1);
+
+        if (error) throw error;
+
+        uploadedDataCache = data || [];
+
+        // 更新统计
+        const totalPages = Math.ceil(uploadedDataTotal / uploadedDataPageSize);
+        statsEl.textContent = `共 ${uploadedDataTotal} 条 · 第 ${uploadedDataPage}/${totalPages} 页`;
+
+        // 渲染表格
+        renderUploadedDataTable();
+
+        // 渲染分页
+        renderUploadedDataPagination(totalPages);
+
+    } catch (error) {
+        console.error('加载已上传数据失败:', error);
+        statsEl.textContent = '加载失败';
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error-color); padding: 2rem;">加载失败: ${error.message}</td></tr>`;
+    }
+}
+
+// ========================================
+// 渲染已上传数据表格
+// ========================================
+function renderUploadedDataTable() {
+    const tbody = document.getElementById('uploadedDataTableBody');
+
+    tbody.innerHTML = uploadedDataCache.map(item => {
+        // 图片处理
+        let imageHtml = '<span class="no-image">无图片</span>';
+        if (item.image_url) {
+            imageHtml = `<img src="${item.image_url}" alt="商品图片" class="product-thumb" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=\\'no-image\\'>加载失败</span>'" />`;
+        }
+
+        return `
+            <tr>
+                <td class="image-cell">${imageHtml}</td>
+                <td class="id-cell"><span class="matched-id">${item.product_id || '-'}</span></td>
+                <td class="name-cell" title="${item.product_name}">${truncate(item.product_name, 40)}</td>
+                <td class="code-cell">${item.product_code || '-'}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// ========================================
+// 渲染分页
+// ========================================
+function renderUploadedDataPagination(totalPages) {
+    const paginationEl = document.getElementById('uploadedDataPagination');
+
+    if (totalPages <= 1) {
+        paginationEl.innerHTML = '';
+        return;
+    }
+
+    let html = '<div class="pagination-controls">';
+
+    // 上一页
+    html += `<button class="pagination-btn" ${uploadedDataPage <= 1 ? 'disabled' : ''} data-page="${uploadedDataPage - 1}">上一页</button>`;
+
+    // 页码
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, uploadedDataPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    if (startPage > 1) {
+        html += `<button class="pagination-btn" data-page="1">1</button>`;
+        if (startPage > 2) html += '<span class="pagination-ellipsis">...</span>';
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === uploadedDataPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += '<span class="pagination-ellipsis">...</span>';
+        html += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+
+    // 下一页
+    html += `<button class="pagination-btn" ${uploadedDataPage >= totalPages ? 'disabled' : ''} data-page="${uploadedDataPage + 1}">下一页</button>`;
+
+    html += '</div>';
+    paginationEl.innerHTML = html;
+
+    // 绑定分页事件
+    paginationEl.querySelectorAll('.pagination-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const page = parseInt(e.target.dataset.page);
+            if (!isNaN(page) && page !== uploadedDataPage) {
+                uploadedDataPage = page;
+                loadUploadedData();
+            }
+        });
+    });
+}
+
+// ========================================
+// 下载已上传数据
+// ========================================
+async function downloadUploadedData() {
+    const downloadBtn = document.getElementById('downloadDataBtn');
+
+    try {
+        downloadBtn.disabled = true;
+        downloadBtn.textContent = '⏳ 下载中...';
+
+        // 获取所有数据（只需要 product_id）
+        const { data, error } = await window.supabaseClient
+            .from('coupon_product_data')
+            .select('product_id')
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            window.AppUtils?.showToast?.('没有数据可下载', 'warning');
+            return;
+        }
+
+        // 构建导出数据
+        const exportData = [['商品ID']];  // 标题行
+        data.forEach(item => {
+            exportData.push([item.product_id || '']);
+        });
+
+        // 创建工作簿
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_array ? XLSX.utils.aoa_to_sheet(exportData) : XLSX.utils.aoa_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, '发券品ID');
+
+        // 下载文件
+        const fileName = `发券品ID_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        window.AppUtils?.showToast?.(`已下载 ${data.length} 条数据`, 'success');
+
+    } catch (error) {
+        console.error('下载失败:', error);
+        window.AppUtils?.showToast?.('下载失败: ' + error.message, 'error');
+    } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = '📥 下载数据';
     }
 }
 
@@ -473,6 +697,10 @@ async function handleUpload() {
         // 清空列表
         couponProductList = [];
         document.getElementById('couponProductListSection').style.display = 'none';
+
+        // 刷新已上传数据列表
+        uploadedDataPage = 1;
+        loadUploadedData();
 
     } catch (error) {
         console.error('上传失败:', error);
