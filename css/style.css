@@ -883,8 +883,6 @@ select:focus {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    height: 600px;
-    overflow: hidden;
 }
 
 .upload-block-header h3 {
