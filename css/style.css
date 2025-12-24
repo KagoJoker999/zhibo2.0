@@ -966,17 +966,41 @@ select:focus {
     font-size: 0.875rem;
 }
 
-.upload-block .upload-options {
+/* Toggle 分段切换器 */
+.toggle-group {
     display: flex;
-    gap: 1rem;
-    margin: 0;
-    padding: 0.75rem;
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border-radius: var(--border-radius-sm);
+    padding: 4px;
+    gap: 4px;
 }
 
-.upload-block .radio-label {
+.toggle-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
     font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: calc(var(--border-radius-sm) - 2px);
+    transition: all var(--transition-fast);
+}
+
+.toggle-btn:hover {
+    color: var(--text-secondary);
+}
+
+.toggle-btn.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 上传按钮统一高度 */
+.upload-block .btn-upload {
+    min-height: 44px;
 }
 
 /* 折叠面板 */

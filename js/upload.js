@@ -257,15 +257,10 @@ function generateUploadBlock(key, config) {
                 <input type="file" id="fileInput-${key}" accept=".xlsx,.xls,.csv" style="display:none">
             </div>
             
-            <div class="upload-options">
-                <label class="radio-label">
-                    <input type="radio" name="mode-${key}" value="full" checked>
-                    <span>更新全部</span>
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="mode-${key}" value="incremental">
-                    <span>补充上传</span>
-                </label>
+            <div class="toggle-group" id="modeToggle-${key}">
+                <button type="button" class="toggle-btn active" data-value="full">更新全部</button>
+                <button type="button" class="toggle-btn" data-value="incremental">补充上传</button>
+                <input type="hidden" name="mode-${key}" value="full">
             </div>
             
             <div class="upload-status" id="status-${key}" style="display:none">
@@ -320,8 +315,19 @@ function initUploadBlock(key, config) {
     const statusText = document.getElementById(`statusText-${key}`);
     const progressBar = document.getElementById(`progress-${key}`);
     const statusDetail = document.getElementById(`statusDetail-${key}`);
+    const toggleGroup = document.getElementById(`modeToggle-${key}`);
+    const modeInput = toggleGroup.querySelector('input[type="hidden"]');
 
     let selectedFile = null;
+
+    // Toggle group 点击事件
+    toggleGroup.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            toggleGroup.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            modeInput.value = btn.dataset.value;
+        });
+    });
 
     uploadZone.addEventListener('click', () => fileInput.click());
     uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -343,9 +349,9 @@ function initUploadBlock(key, config) {
 
     uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
-        const modeInput = document.querySelector(`input[name="mode-${key}"]:checked`);
-        const isFullMode = modeInput?.value === 'full';
-        console.log(`📋 上传模式: ${modeInput?.value}, isFullMode: ${isFullMode}`);
+        const modeValue = document.querySelector(`input[name="mode-${key}"]`).value;
+        const isFullMode = modeValue === 'full';
+        console.log(`📋 上传模式: ${modeValue}, isFullMode: ${isFullMode}`);
         try {
             statusDiv.style.display = 'block';
             uploadBtn.disabled = true;
