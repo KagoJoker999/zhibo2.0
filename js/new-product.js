@@ -746,11 +746,10 @@ function initNewProductUpload() {
 
             let rows, filename;
             if (type === 'rename') {
-                // 重命名表格：序号, 商品编码, 商品名称(新名), 商品简称(原名)
-                rows = [['序号', '商品编码', '商品名称', '商品简称']];
+                // 重命名表格：商品编码, 商品名称(新名), 商品简称(原名)
+                rows = [['商品编码', '商品名称', '商品简称']];
                 data.forEach(item => {
                     rows.push([
-                        item.sample_number || '',
                         item.product_code || '',
                         item.product_name || '',
                         item.original_name || ''
