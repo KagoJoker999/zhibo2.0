@@ -333,6 +333,17 @@ function loadPage(page) {
             }
         }
 
+        // 检查是否有发券品处理页面加载器
+        if (window.loadCouponPage && (page === 'coupon' || page.startsWith('coupon-'))) {
+            const couponPage = window.loadCouponPage(page);
+            if (couponPage) {
+                DOM.pageContainer.innerHTML = couponPage.html;
+                setTimeout(() => couponPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
         // 其他页面显示占位内容
         DOM.pageContainer.innerHTML = `
             <div class="placeholder-content">
