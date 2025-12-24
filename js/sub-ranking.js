@@ -385,7 +385,7 @@ function generateSubRankingPage() {
         <div class="sub-ranking-page">
             <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
                 <h2>📦 小号排品</h2>
-                <p>← sub_ranking_results | 根据库存数据筛选，使用独立配置</p>
+                <p>← sub_ranking_results | 根据库存数据筛选，使用独立配置。小号的样品仓位映射设置在排品设置中进行。</p>
             </div>
             
             <!-- 分页标签 -->
