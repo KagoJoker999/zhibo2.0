@@ -97,7 +97,8 @@ async function matchProductIds(records) {
 function generateCouponPage() {
     return `
         <div class="coupon-page">
-            <div class="coupon-upload-section">
+            <div class="coupon-upload-row">
+                <!-- 左侧：上传功能 -->
                 <div class="upload-block" id="block-coupon">
                     <div class="upload-block-header">
                         <h3>🎟️ 发券品数据上传 <span class="db-table-tag">→ coupon_product_data</span></h3>
@@ -126,33 +127,36 @@ function generateCouponPage() {
                         <div class="progress-bar"><div class="progress-fill" id="progress-coupon"></div></div>
                         <div class="status-detail" id="statusDetail-coupon"></div>
                     </div>
-                    
-                    <details class="upload-info-details" style="margin-top: 1rem;">
-                        <summary>📖 上传说明</summary>
-                        <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm); margin-top: 0.5rem;">
-                            <div style="margin-bottom: 0.75rem;">
-                                <strong style="color: var(--text-secondary);">📋 处理规则</strong>
-                                <ul style="margin: 0.5rem 0 0 1rem; padding: 0; font-size: 0.85rem; color: var(--text-muted);">
-                                    <li>从 product_id_data 表自动匹配商品ID</li>
-                                    <li>未匹配商品以红色高亮显示</li>
-                                    <li>可手动填写缺失的商品ID</li>
-                                    <li>所有商品必须有ID才能上传</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <strong style="color: var(--text-secondary);">🔗 字段映射</strong>
-                                <table class="mapping-table" style="margin-top: 0.5rem; font-size: 0.8rem;">
-                                    <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
-                                    <tbody>
-                                        <tr><td>A列 图片</td><td>→</td><td>image_url</td></tr>
-                                        <tr><td>B列 商品名称</td><td>→</td><td>product_name</td></tr>
-                                        <tr><td>C列 商品编码</td><td>→</td><td>product_code</td></tr>
-                                        <tr><td>自动匹配</td><td>→</td><td>product_id</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                </div>
+                
+                <!-- 右侧：上传说明 -->
+                <div class="upload-block coupon-info-block">
+                    <div class="upload-block-header">
+                        <h3>📖 上传说明</h3>
+                    </div>
+                    <div class="coupon-info-content">
+                        <div class="info-section">
+                            <strong>📋 处理规则</strong>
+                            <ul>
+                                <li>从 product_id_data 表自动匹配商品ID</li>
+                                <li>未匹配商品以红色高亮显示</li>
+                                <li>可手动填写缺失的商品ID</li>
+                                <li>所有商品必须有ID才能上传</li>
+                            </ul>
                         </div>
-                    </details>
+                        <div class="info-section">
+                            <strong>🔗 字段映射</strong>
+                            <table class="mapping-table">
+                                <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
+                                <tbody>
+                                    <tr><td>A列 图片</td><td>→</td><td>image_url</td></tr>
+                                    <tr><td>B列 商品名称</td><td>→</td><td>product_name</td></tr>
+                                    <tr><td>C列 商品编码</td><td>→</td><td>product_code</td></tr>
+                                    <tr><td>自动匹配</td><td>→</td><td>product_id</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             
