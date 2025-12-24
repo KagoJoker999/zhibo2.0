@@ -294,7 +294,7 @@ function renderProductList() {
         // 图片处理
         let imageHtml = '<span class="no-image">无图片</span>';
         if (item.image_url) {
-            imageHtml = `<img src="${item.image_url}" alt="商品图片" class="product-thumb" onerror="this.outerHTML='<span class=\\'no-image\\'>加载失败</span>'" />`;
+            imageHtml = `<img src="${item.image_url}" alt="商品图片" class="product-thumb" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=\\'no-image\\'>加载失败</span>'" />`;
         }
 
         // 商品ID处理
