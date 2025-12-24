@@ -1426,17 +1426,31 @@ async function saveManualProductId(productName, buttonElement) {
         buttonElement.disabled = true;
         buttonElement.textContent = '保存中...';
 
-        // 使用 upsert 插入或更新到 product_id_data 表
-        const { error } = await client
+        // 先查询是否已存在该商品名称
+        const { data: existing, error: queryError } = await client
             .from('product_id_data')
-            .upsert({
-                product_name: productName,
-                product_id: productId
-            }, {
-                onConflict: 'product_name'
-            });
+            .select('id')
+            .eq('product_name', productName)
+            .limit(1);
 
-        if (error) throw error;
+        if (queryError) throw queryError;
+
+        if (existing && existing.length > 0) {
+            // 已存在，更新
+            const { error: updateError } = await client
+                .from('product_id_data')
+                .update({ product_id: productId })
+                .eq('product_name', productName);
+            if (updateError) throw updateError;
+        } else {
+            // 不存在，插入新记录
+            const { error: insertError } = await client
+                .from('product_id_data')
+                .insert({ product_name: productName, product_id: productId });
+            if (insertError) throw insertError;
+        }
+
+        if (false) throw new Error(); // 占位符，保持结构
 
         // 更新内存缓存
         cachedProductIds[productName] = productId;
