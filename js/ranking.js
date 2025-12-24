@@ -1286,6 +1286,9 @@ function renderRankingResults(results) {
         grouped[r.ranking_result].push(r);
     });
 
+    // 计算未匹配ID的商品数量
+    const unmatchedCount = results.filter(r => !cachedProductIds[r.product_name]).length;
+
     // 缓存结果到localStorage（48小时有效）
     const cacheData = {
         results: results,
@@ -1294,7 +1297,17 @@ function renderRankingResults(results) {
     };
     localStorage.setItem('rankingResultsCache', JSON.stringify(cacheData));
 
+    // 未匹配商品警告提示
+    const unmatchedWarning = unmatchedCount > 0
+        ? `<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--warning-color); border-radius: var(--border-radius-sm); padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+               <span style="font-size: 1.25rem;">⚠️</span>
+               <span style="color: var(--warning-color); font-weight: 500;">有 ${unmatchedCount} 个商品疑似未上架</span>
+               <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">可手动填写商品ID后点击保存</span>
+           </div>`
+        : '';
+
     let html = `
+        ${unmatchedWarning}
         <div class="ranking-result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📊 排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">→ ranking_results</span></h3>
@@ -1336,9 +1349,20 @@ function renderRankingResults(results) {
                             ${items.map(item => {
             const productId = cachedProductIds[item.product_name];
             const hasNoId = !productId;
+            // 为无ID商品显示输入框和保存按钮，否则显示ID和复制按钮
+            const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
             const idDisplay = productId
                 ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
-                : '<span style="color: var(--warning-color);">疑似未上架</span>';
+                : `<div style="display: flex; align-items: center; gap: 0.5rem;">
+                       <input type="text" class="manual-product-id-input" data-product-name="${escapedProductName}" 
+                              placeholder="输入商品ID" 
+                              style="width: 120px; padding: 0.25rem 0.5rem; font-size: 0.8rem; border: 1px solid var(--warning-color); border-radius: 4px; background: var(--bg-tertiary); color: var(--text-primary);">
+                       <button onclick="saveManualProductId('${escapedProductName}', this)" 
+                               style="padding: 0.25rem 0.5rem; font-size: 0.7rem; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;">
+                           💾 保存
+                       </button>
+                       <span style="color: var(--warning-color); font-size: 0.75rem;">疑似未上架</span>
+                   </div>`;
             const imageUrl = item.image_url || '';
             // 处理图片URL，可能包含多个逗号分隔的URL
             const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
@@ -1379,6 +1403,97 @@ function renderRankingResults(results) {
     }
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
+}
+
+// 保存手动填写的商品ID到 product_id_data 表
+async function saveManualProductId(productName, buttonElement) {
+    // 从按钮的前一个兄弟元素（输入框）获取值
+    const input = buttonElement.previousElementSibling;
+    const productId = input?.value?.trim();
+
+    if (!productId) {
+        window.AppUtils?.showToast?.('请输入商品ID', 'warning');
+        return;
+    }
+
+    const client = window.supabaseClient;
+    if (!client) {
+        window.AppUtils?.showToast?.('数据库连接失败', 'error');
+        return;
+    }
+
+    try {
+        buttonElement.disabled = true;
+        buttonElement.textContent = '保存中...';
+
+        // 使用 upsert 插入或更新到 product_id_data 表
+        const { error } = await client
+            .from('product_id_data')
+            .upsert({
+                product_name: productName,
+                product_id: productId
+            }, {
+                onConflict: 'product_name'
+            });
+
+        if (error) throw error;
+
+        // 更新内存缓存
+        cachedProductIds[productName] = productId;
+
+        // 更新 localStorage 缓存
+        const cached = localStorage.getItem('rankingResultsCache');
+        if (cached) {
+            try {
+                const cacheData = JSON.parse(cached);
+                cacheData.productIds[productName] = productId;
+                localStorage.setItem('rankingResultsCache', JSON.stringify(cacheData));
+            } catch (e) { }
+        }
+
+        // 更新 UI：替换输入框为已保存的ID显示
+        const tdElement = buttonElement.closest('td');
+        const trElement = buttonElement.closest('tr');
+        if (tdElement) {
+            tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`;
+        }
+        // 移除红色背景
+        if (trElement) {
+            trElement.style.background = '';
+        }
+
+        // 更新未匹配数量提示
+        updateUnmatchedWarning();
+
+        window.AppUtils?.showToast?.(`已保存商品ID到 product_id_data 表`, 'success');
+    } catch (error) {
+        console.error('保存商品ID失败:', error);
+        window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        buttonElement.disabled = false;
+        buttonElement.textContent = '💾 保存';
+    }
+}
+
+// 更新未匹配商品数量警告
+function updateUnmatchedWarning() {
+    const container = document.getElementById('rankingResultContent');
+    if (!container) return;
+
+    // 计算剩余未匹配数量
+    const remainingInputs = container.querySelectorAll('.manual-product-id-input').length;
+
+    // 找到警告提示元素并更新
+    const warningDiv = container.querySelector('div[style*="rgba(239, 68, 68, 0.15)"]');
+    if (warningDiv) {
+        if (remainingInputs === 0) {
+            warningDiv.remove();
+        } else {
+            const countSpan = warningDiv.querySelector('span[style*="font-weight: 500"]');
+            if (countSpan) {
+                countSpan.textContent = `有 ${remainingInputs} 个商品疑似未上架`;
+            }
+        }
+    }
 }
 
 // 复制到剪贴板
