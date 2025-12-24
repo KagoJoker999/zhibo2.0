@@ -2080,10 +2080,32 @@ select:focus {
 .coupon-info-block {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .coupon-info-content {
     flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    min-height: 0;
+}
+
+/* 滚动条样式 - 与全局一致 */
+.coupon-info-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.coupon-info-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.coupon-info-content::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.4);
+    border-radius: 2px;
+}
+
+.coupon-info-content:hover::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.6);
 }
 
 .coupon-info-content .info-section {
