@@ -271,6 +271,8 @@ function generateUploadBlock(key, config) {
             
             <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
             
+            <div class="last-upload-time" id="lastUploadTime-${key}"></div>
+            
             <div class="upload-info-section" style="margin-top: 1rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary);">📖 上传说明</h4>
                 <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm);">
@@ -319,6 +321,20 @@ function initUploadBlock(key, config) {
     const modeInput = toggleGroup.querySelector('input[type="hidden"]');
 
     let selectedFile = null;
+    const lastUploadTimeDiv = document.getElementById(`lastUploadTime-${key}`);
+
+    // 更新最后上传时间显示
+    function updateLastUploadTime(timeStr) {
+        if (lastUploadTimeDiv) {
+            lastUploadTimeDiv.textContent = timeStr ? `最后上传：${timeStr}` : '';
+        }
+    }
+
+    // 加载保存的上传时间
+    const savedTime = localStorage.getItem(`lastUpload_${key}`);
+    if (savedTime) {
+        updateLastUploadTime(savedTime);
+    }
 
     // Toggle group 点击事件
     toggleGroup.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -371,6 +387,14 @@ function initUploadBlock(key, config) {
             await uploadData(config.tableName, records);
             updateStatus('完成！', 100);
             statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
+            // 保存最后上传时间
+            const now = new Date();
+            const timeStr = now.toLocaleString('zh-CN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            localStorage.setItem(`lastUpload_${key}`, timeStr);
+            updateLastUploadTime(timeStr);
             window.AppUtils?.showToast?.(`${config.title} 成功上传 ${records.length} 条`, 'success');
         } catch (error) {
             console.error('上传失败:', error);

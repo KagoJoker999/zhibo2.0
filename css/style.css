@@ -1003,6 +1003,22 @@ select:focus {
     min-height: 44px;
 }
 
+/* 最后上传时间显示 */
+.last-upload-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 1.25rem;
+    line-height: 1.25rem;
+}
+
+/* 上传说明区域固定高度，统一按钮位置 */
+.upload-info-section {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 280px;
+}
+
 /* 折叠面板 */
 .rules-details,
 .mapping-details {
