@@ -514,6 +514,9 @@ async function initSubRankingPage() {
 
     // 加载并计算
     document.getElementById('btnSubCalculate')?.addEventListener('click', async () => {
+        // 显示红色悬浮提示，提醒用户需要先更新库存
+        window.AppUtils?.showCenterAlert?.('请务必先更新库存，才可有效');
+
         updateStatus('加载中...');
         try {
             const config = await loadSubRankingConfig();

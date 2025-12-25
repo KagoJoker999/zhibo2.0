@@ -396,6 +396,44 @@ function showToast(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
+/**
+ * 显示页面中央红色警告提示
+ * @param {string} message - 提示消息
+ * @param {string} icon - 图标（可选，默认⚠️）
+ */
+function showCenterAlert(message, icon = '⚠️') {
+    // 移除已有的提示
+    const existing = document.querySelector('.center-alert-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'center-alert-overlay';
+    overlay.innerHTML = `
+        <div class="center-alert">
+            <div class="center-alert-icon">${icon}</div>
+            <div class="center-alert-message">${message}</div>
+            <button class="center-alert-close">知道了</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 绑定关闭事件
+    const closeBtn = overlay.querySelector('.center-alert-close');
+    closeBtn.addEventListener('click', () => {
+        overlay.style.animation = 'fadeIn 0.2s ease reverse';
+        setTimeout(() => overlay.remove(), 200);
+    });
+
+    // 点击遮罩关闭
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.style.animation = 'fadeIn 0.2s ease reverse';
+            setTimeout(() => overlay.remove(), 200);
+        }
+    });
+}
+
 // ========================================
 // 加载状态
 // ========================================
@@ -479,6 +517,7 @@ function formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
 // 导出工具函数供其他模块使用
 window.AppUtils = {
     showToast,
+    showCenterAlert,
     showLoading,
     hideLoading,
     updateStatus,

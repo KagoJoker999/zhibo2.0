@@ -1213,6 +1213,9 @@ async function initRankingPage() {
 
                 const count = await saveRankingResults(cachedResults);
                 window.AppUtils?.showToast?.(`已保存 ${count} 条结果到数据库`, 'success');
+
+                // 显示红色悬浮提示，提醒用户需要执行排品对照
+                window.AppUtils?.showCenterAlert?.('更新排品后，需要执行排品对照，方可生成对照表。');
             } catch (error) {
                 console.error('保存失败:', error);
                 window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
