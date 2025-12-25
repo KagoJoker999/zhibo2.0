@@ -122,6 +122,12 @@ body {
     gap: 0.5rem;
 }
 
+.logo-img {
+    height: 36px;
+    width: auto;
+    display: block;
+}
+
 .menu-toggle {
     display: none;
     flex-direction: column;
