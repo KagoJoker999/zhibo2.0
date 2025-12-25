@@ -16,6 +16,7 @@ let couponProductList = [];  // 当前待上传的商品列表
 // 列映射: A=图片, B=商品名称, C=商品编码
 // ========================================
 function processCouponProductData(rows) {
+    console.log(`🎟️ [发券品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
     const records = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -39,6 +40,7 @@ function processCouponProductData(rows) {
             matched: false   // 匹配状态
         });
     }
+    console.log(`✅ [发券品处理] 解析完成, 有效记录: ${records.length} 条`);
     return records;
 }
 
@@ -49,6 +51,7 @@ function processCouponProductData(rows) {
 async function matchProductIds(records) {
     if (!records || records.length === 0) return records;
 
+    console.log(`🔍 [发券品ID匹配] 开始匹配, 商品数: ${records.length}`);
     try {
         // 获取所有商品名称
         const productNames = records.map(r => r.product_name);
@@ -60,7 +63,7 @@ async function matchProductIds(records) {
             .in('product_name', productNames);
 
         if (error) {
-            console.error('查询商品ID失败:', error);
+            console.error('❌ [发券品ID匹配] 查询失败:', error.message);
             return records;
         }
 
@@ -83,10 +86,11 @@ async function matchProductIds(records) {
             }
         });
 
-        console.log(`✅ 商品ID匹配完成: ${records.filter(r => r.matched).length}/${records.length} 匹配成功`);
+        const matchedCount = records.filter(r => r.matched).length;
+        console.log(`✅ [发券品ID匹配] 完成: ${matchedCount}/${records.length} 匹配成功`);
         return records;
     } catch (err) {
-        console.error('匹配商品ID异常:', err);
+        console.error('❌ [发券品ID匹配] 异常:', err.message);
         return records;
     }
 }
@@ -321,6 +325,7 @@ function initCouponUpload() {
 // 加载已上传数据
 // ========================================
 async function loadUploadedData() {
+    console.log('📥 [发券品数据] 正在加载已上传数据...');
     const statsEl = document.getElementById('uploadedStats');
     const tbody = document.getElementById('uploadedDataTableBody');
     const paginationEl = document.getElementById('uploadedDataPagination');
@@ -334,6 +339,7 @@ async function loadUploadedData() {
         if (countError) throw countError;
 
         uploadedDataTotal = count || 0;
+        console.log(`📊 [发券品数据] 总记录数: ${uploadedDataTotal}`);
 
         if (uploadedDataTotal === 0) {
             statsEl.textContent = '暂无数据';
@@ -363,9 +369,10 @@ async function loadUploadedData() {
 
         // 渲染分页
         renderUploadedDataPagination(totalPages);
+        console.log(`✅ [发券品数据] 加载完成, 当前页 ${uploadedDataCache.length} 条`);
 
     } catch (error) {
-        console.error('加载已上传数据失败:', error);
+        console.error('❌ [发券品数据] 加载失败:', error.message);
         statsEl.textContent = '加载失败';
         tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error-color); padding: 2rem;">加载失败: ${error.message}</td></tr>`;
     }
@@ -633,6 +640,7 @@ function updateUploadButtonState() {
 // 处理上传
 // ========================================
 async function handleUpload() {
+    console.log('📤 [发券品上传] 开始上传到 coupon_product_data...');
     const uploadBtn = document.getElementById('uploadBtn-coupon');
     const statusDiv = document.getElementById('status-coupon');
     const statusText = document.getElementById('statusText-coupon');
@@ -653,6 +661,7 @@ async function handleUpload() {
 
     const modeInput = document.querySelector('input[name="mode-coupon"]:checked');
     const isFullMode = modeInput?.value === 'full';
+    console.log(`📝 [发券品上传] 模式: ${isFullMode ? '全量替换' : '补充上传'}, 商品数: ${couponProductList.length}`);
 
     try {
         uploadBtn.disabled = true;
@@ -673,6 +682,7 @@ async function handleUpload() {
         if (isFullMode) {
             statusText.textContent = '清空旧数据...';
             progressBar.style.width = '30%';
+            console.log('🧹 [发券品上传] 清空现有数据...');
 
             const { error: deleteError } = await window.supabaseClient
                 .from('coupon_product_data')
@@ -691,6 +701,7 @@ async function handleUpload() {
         const batchSize = 100;
         for (let i = 0; i < uploadData.length; i += batchSize) {
             const batch = uploadData.slice(i, i + batchSize);
+            console.log(`📤 [发券品上传] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(uploadData.length / batchSize)}`);
             const { error } = await window.supabaseClient
                 .from('coupon_product_data')
                 .insert(batch);
@@ -707,6 +718,7 @@ async function handleUpload() {
         progressBar.style.width = '100%';
         statusDetail.innerHTML = `<span class="success">✅ 成功上传 ${uploadData.length} 条商品</span>`;
 
+        console.log(`✅ [发券品上传] 完成, 共 ${uploadData.length} 条`);
         window.AppUtils?.showToast?.(`成功上传 ${uploadData.length} 条发券品数据`, 'success');
 
         // 清空列表
@@ -718,7 +730,7 @@ async function handleUpload() {
         loadUploadedData();
 
     } catch (error) {
-        console.error('上传失败:', error);
+        console.error('❌ [发券品上传] 失败:', error.message);
         statusText.textContent = '上传失败';
         statusDetail.innerHTML = `<span class="error">❌ ${error.message}</span>`;
         window.AppUtils?.showToast?.('上传失败: ' + error.message, 'error');

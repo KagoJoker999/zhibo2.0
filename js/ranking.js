@@ -43,6 +43,7 @@ const FILTERABLE_FIELDS = [
 // 数据汇总 - 从 product_ranking_view + inventory_data 读取并融合
 // ========================================
 async function loadCombinedProductData() {
+    console.log('📥 [数据加载] 开始加载库存+评分数据...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -157,11 +158,13 @@ async function loadCombinedProductData() {
             p.rating_rank = idx + 1;  // 排名从1开始
         });
 
+    console.log(`✅ [数据加载] 完成: 评分数据 ${rankingRes.data?.length || 0} 条, 库存数据 ${inventoryRes.data?.length || 0} 条, 汇总商品 ${products.length} 个`);
     return products;
 }
 
 // 读取新品数据（含本地去重）
 async function loadNewProductData() {
+    console.log('🌟 [新品加载] 开始从 new_product_data 加载...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -250,6 +253,7 @@ async function loadNewProductData() {
         after: deduplicatedCount
     };
 
+    console.log(`✅ [新品加载] 完成: 原始 ${rawCount} 条, 去重后 ${deduplicatedCount} 个商品`);
     return products;
 }
 
@@ -339,6 +343,7 @@ function filterExcludedProducts(products, excludedList) {
 // 配置读取/保存
 // ========================================
 async function loadRankingConfig(configKey = 'filter_config') {
+    console.log(`⚙️ [配置加载] 正在加载配置: ${configKey}`);
     const client = window.supabaseClient;
     if (!client) return null;
 
@@ -349,13 +354,15 @@ async function loadRankingConfig(configKey = 'filter_config') {
         .single();
 
     if (error) {
-        console.warn('加载配置失败:', error.message);
+        console.warn(`⚠️ [配置加载] 失败, 使用默认配置:`, error.message);
         return getDefaultRankingConfig();
     }
+    console.log(`✅ [配置加载] 成功加载配置: ${configKey}`);
     return data?.config_value || getDefaultRankingConfig();
 }
 
 async function saveRankingConfig(configKey, configValue) {
+    console.log(`💾 [配置保存] 正在保存配置: ${configKey}`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -367,7 +374,11 @@ async function saveRankingConfig(configKey, configValue) {
             updated_at: new Date().toISOString()
         }, { onConflict: 'config_key' });
 
-    if (error) throw new Error('保存配置失败: ' + error.message);
+    if (error) {
+        console.error(`❌ [配置保存] 失败:`, error.message);
+        throw new Error('保存配置失败: ' + error.message);
+    }
+    console.log(`✅ [配置保存] 成功: ${configKey}`);
     return true;
 }
 
@@ -713,10 +724,12 @@ function assignSampleNumbers(rankingResults, config) {
 // 结果保存到数据库
 // ========================================
 async function saveRankingResults(results) {
+    console.log(`💾 [结果保存] 开始保存排品结果到 ranking_results, 共 ${results.length} 条`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
     // 先清空现有结果
+    console.log('🧹 [结果保存] 清空现有结果...');
     await client.from('ranking_results').delete().gte('id', 0);
 
     // 准备插入数据
@@ -737,10 +750,12 @@ async function saveRankingResults(results) {
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
+        console.log(`📤 [结果保存] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
         const { error } = await client.from('ranking_results').insert(batch);
         if (error) throw new Error('保存结果失败: ' + error.message);
     }
 
+    console.log(`✅ [结果保存] 完成, 共保存 ${records.length} 条记录`);
     return records.length;
 }
 

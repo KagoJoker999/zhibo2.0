@@ -9,6 +9,7 @@
 // 列映射: A=图片, B=名称, C=编码, D=虚拟分类, E=分类, F=标签, G=售价, H=仓位, O=规格
 // ========================================
 function processNewProductData(rows) {
+    console.log(`📦 [新品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
     const records = [];
 
     for (let i = 1; i < rows.length; i++) {
@@ -32,6 +33,7 @@ function processNewProductData(rows) {
             color_spec: row.length > 14 ? String(row[14] ?? '').trim() || null : null
         });
     }
+    console.log(`✅ [新品处理] 解析完成, 有效记录: ${records.length} 条`);
     return records;
 }
 
@@ -41,6 +43,7 @@ function processNewProductData(rows) {
 // 示例：「明星系列-许妍马尾」韩国25秋冬百搭香蕉夹
 // ========================================
 async function generateProductNames(records) {
+    console.log(`✏️ [名称生成] 开始生成商品名称, 商品数: ${records.length}`);
     const settings = await loadNameFormulaSettings();
     const categoryWords = await loadCategoryWords();
 
@@ -54,8 +57,9 @@ async function generateProductNames(records) {
 
     const prefix = settings.name_prefix || '「';
     const suffix = settings.name_suffix || '」';
+    console.log(`  📝 [名称生成] 公式顺序: ${order.join(' -> ')}, 前缀: ${prefix}, 后缀: ${suffix}`);
 
-    return records.map(record => {
+    const result = records.map(record => {
         let nameParts = [];
 
         // 按顺序生成各部分
@@ -83,21 +87,26 @@ async function generateProductNames(records) {
             product_name: nameParts.join('')
         };
     });
+    console.log(`✅ [名称生成] 完成`);
+    return result;
 }
 
 // ========================================
 // 上架分类生成
 // ========================================
 async function generateListingCategories(records) {
+    console.log(`🏷️ [上架分类] 开始生成上架分类, 商品数: ${records.length}`);
     const mapping = await loadListingCategoryMapping();
 
-    return records.map(record => {
+    const result = records.map(record => {
         const listingCategory = record.category ? mapping[record.category] || null : null;
         return {
             ...record,
             listing_category: listingCategory
         };
     });
+    console.log(`✅ [上架分类] 完成`);
+    return result;
 }
 
 // ========================================

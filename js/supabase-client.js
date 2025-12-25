@@ -23,6 +23,7 @@ function getClient() {
  * 通用查询函数
  */
 async function queryData(table, options = {}) {
+    console.log(`📖 [DB查询] 表: ${table}`, options.filters ? `筛选: ${JSON.stringify(options.filters)}` : '');
     const client = getClient();
     let query = client.from(table).select(options.select || '*');
 
@@ -40,7 +41,11 @@ async function queryData(table, options = {}) {
     if (options.offset) query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
 
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+        console.error(`❌ [DB查询失败] 表: ${table}`, error.message);
+        throw error;
+    }
+    console.log(`✅ [DB查询完成] 表: ${table}, 返回 ${data?.length || 0} 条记录`);
     return data;
 }
 
@@ -48,9 +53,15 @@ async function queryData(table, options = {}) {
  * 插入数据
  */
 async function insertData(table, data) {
+    const count = Array.isArray(data) ? data.length : 1;
+    console.log(`✏️ [DB插入] 表: ${table}, 数据量: ${count} 条`);
     const client = getClient();
     const { data: result, error } = await client.from(table).insert(data).select();
-    if (error) throw error;
+    if (error) {
+        console.error(`❌ [DB插入失败] 表: ${table}`, error.message);
+        throw error;
+    }
+    console.log(`✅ [DB插入完成] 表: ${table}, 成功 ${result?.length || 0} 条`);
     return result;
 }
 
@@ -58,13 +69,18 @@ async function insertData(table, data) {
  * 更新数据
  */
 async function updateData(table, data, filters) {
+    console.log(`📝 [DB更新] 表: ${table}, 筛选: ${JSON.stringify(filters)}`);
     const client = getClient();
     let query = client.from(table).update(data);
     for (const [column, value] of Object.entries(filters)) {
         query = query.eq(column, value);
     }
     const { data: result, error } = await query.select();
-    if (error) throw error;
+    if (error) {
+        console.error(`❌ [DB更新失败] 表: ${table}`, error.message);
+        throw error;
+    }
+    console.log(`✅ [DB更新完成] 表: ${table}, 影响 ${result?.length || 0} 条`);
     return result;
 }
 
@@ -72,13 +88,18 @@ async function updateData(table, data, filters) {
  * 删除数据
  */
 async function deleteData(table, filters) {
+    console.log(`🗑️ [DB删除] 表: ${table}, 筛选: ${JSON.stringify(filters)}`);
     const client = getClient();
     let query = client.from(table).delete();
     for (const [column, value] of Object.entries(filters)) {
         query = query.eq(column, value);
     }
     const { error } = await query;
-    if (error) throw error;
+    if (error) {
+        console.error(`❌ [DB删除失败] 表: ${table}`, error.message);
+        throw error;
+    }
+    console.log(`✅ [DB删除完成] 表: ${table}`);
     return true;
 }
 
@@ -86,9 +107,14 @@ async function deleteData(table, filters) {
  * 清空表
  */
 async function truncateTable(table) {
+    console.log(`🧹 [DB清空] 表: ${table}`);
     const client = getClient();
     const { error } = await client.from(table).delete().neq('id', 0);
-    if (error) throw error;
+    if (error) {
+        console.error(`❌ [DB清空失败] 表: ${table}`, error.message);
+        throw error;
+    }
+    console.log(`✅ [DB清空完成] 表: ${table}`);
     return true;
 }
 
@@ -96,10 +122,15 @@ async function truncateTable(table) {
  * 批量插入
  */
 async function batchInsert(table, dataArray, fullReplace = false) {
+    console.log(`📦 [DB批量插入] 表: ${table}, 数据量: ${dataArray?.length || 0} 条, 全量替换: ${fullReplace}`);
     if (fullReplace) await truncateTable(table);
     const client = getClient();
     const { data, error } = await client.from(table).insert(dataArray).select();
-    if (error) throw error;
+    if (error) {
+        console.error(`❌ [DB批量插入失败] 表: ${table}`, error.message);
+        throw error;
+    }
+    console.log(`✅ [DB批量插入完成] 表: ${table}, 成功 ${data?.length || 0} 条`);
     return data;
 }
 

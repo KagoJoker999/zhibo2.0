@@ -8,6 +8,7 @@
 // 配置加载与保存
 // ========================================
 async function loadMappingConfig() {
+    console.log('⚙️ [对照配置] 正在加载仓位映射规则...');
     const client = window.supabaseClient;
     if (!client) return null;
 
@@ -18,14 +19,16 @@ async function loadMappingConfig() {
         .single();
 
     if (error) {
-        console.error('加载对照配置失败:', error);
+        console.warn('⚠️ [对照配置] 加载失败, 使用默认配置:', error.message);
         return { rules: [] };
     }
 
+    console.log(`✅ [对照配置] 加载成功, 规则数: ${data?.config_value?.rules?.length || 0}`);
     return data?.config_value || { rules: [] };
 }
 
 async function saveMappingConfig(config) {
+    console.log('💾 [对照配置] 正在保存仓位映射规则...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -37,7 +40,11 @@ async function saveMappingConfig(config) {
             updated_at: new Date().toISOString()
         }, { onConflict: 'config_key' });
 
-    if (error) throw new Error('保存配置失败: ' + error.message);
+    if (error) {
+        console.error('❌ [对照配置] 保存失败:', error.message);
+        throw new Error('保存配置失败: ' + error.message);
+    }
+    console.log('✅ [对照配置] 保存成功');
 }
 
 // ========================================
@@ -76,6 +83,7 @@ function convertSingleWarehouse(warehouse, rules) {
 // 数据加载与合并
 // ========================================
 async function loadMappingData() {
+    console.log('📥 [对照数据] 开始加载排品结果和新品数据...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -90,6 +98,7 @@ async function loadMappingData() {
 
     const rankingData = rankingRes.data || [];
     const newProductData = newProductRes.data || [];
+    console.log(`📊 [对照数据] ranking_results: ${rankingData.length} 条, new_product_data: ${newProductData.length} 条`);
 
     // 合并数据并附加源统计信息
     const mergedData = mergeAndDeduplicate(rankingData, newProductData);
@@ -97,6 +106,7 @@ async function loadMappingData() {
         rankingCount: rankingData.length,
         newProductCount: newProductData.length
     };
+    console.log(`✅ [对照数据] 合并完成, 共 ${mergedData.length} 个商品`);
     return mergedData;
 }
 
@@ -192,10 +202,12 @@ function mergeAndDeduplicate(rankingData, newProductData) {
 // 历史记录
 // ========================================
 async function saveToHistory(data) {
+    console.log(`💾 [历史记录] 开始保存到 mapping_history, 共 ${data.length} 条`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
     // 清空旧记录
+    console.log('🧹 [历史记录] 清空现有记录...');
     await client.from('mapping_history').delete().gte('id', 0);
 
     // 插入新记录
@@ -208,14 +220,17 @@ async function saveToHistory(data) {
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
+        console.log(`📤 [历史记录] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
         const { error } = await client.from('mapping_history').insert(batch);
         if (error) throw new Error('保存历史记录失败: ' + error.message);
     }
 
+    console.log(`✅ [历史记录] 保存完成, 共 ${records.length} 条`);
     return records.length;
 }
 
 async function loadHistoryData() {
+    console.log('📜 [历史记录] 正在加载历史数据...');
     const client = window.supabaseClient;
     if (!client) return [];
 
@@ -225,10 +240,11 @@ async function loadHistoryData() {
         .order('ranking_result', { ascending: true });
 
     if (error) {
-        console.error('加载历史记录失败:', error);
+        console.warn('⚠️ [历史记录] 加载失败:', error.message);
         return [];
     }
 
+    console.log(`✅ [历史记录] 加载完成, 共 ${data?.length || 0} 条`);
     return data || [];
 }
 

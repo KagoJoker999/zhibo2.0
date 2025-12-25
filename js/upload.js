@@ -51,6 +51,7 @@ function parsePercentage(value) {
 // 列映射: B=商品名称, C=讲解次数, F=用户支付金额, J=曝光点击率, K=点击成交率
 // ========================================
 function processRankingData(rows) {
+    console.log(`📊 [排名数据处理] 开始, 原始行数: ${rows?.length || 0}`);
     const records = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -70,6 +71,7 @@ function processRankingData(rows) {
             conversion_rate: parsePercentage(row[10])           // K列(索引10): 商品点击-成交转化率
         });
     }
+    console.log(`✅ [排名数据处理] 完成, 有效记录: ${records.length} 条`);
     return records;
 }
 
@@ -78,6 +80,7 @@ function processRankingData(rows) {
 // 列映射: A=图片, B=商品名称, C=商品编码, D=虚拟分类, E=分类, H=主仓位, I=可用数, J=实际库存
 // ========================================
 function processInventoryData(rows) {
+    console.log(`📦 [库存数据处理] 开始, 原始行数: ${rows?.length || 0}`);
     const productMap = new Map();
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -132,6 +135,7 @@ function processInventoryData(rows) {
             product_category: Array.from(data.product_category).filter(Boolean).join(',')
         });
     });
+    console.log(`✅ [库存数据处理] 完成, 商品数: ${records.length}, 已合并同名商品`);
     return records;
 }
 
@@ -140,6 +144,7 @@ function processInventoryData(rows) {
 // 列映射: A=商品ID, B=商品名称, D=二级分类(备用), E=三级分类, N=商品价格
 // ========================================
 function processProductIdData(rows) {
+    console.log(`🆔 [ID数据处理] 开始, 原始行数: ${rows?.length || 0}`);
     const seenProducts = new Set();
     const records = [];
     for (let i = 1; i < rows.length; i++) {
@@ -172,6 +177,7 @@ function processProductIdData(rows) {
 
         records.push(record);
     }
+    console.log(`✅ [ID数据处理] 完成, 有效记录: ${records.length} 条, 已去重`);
     return records;
 }
 

@@ -32,6 +32,7 @@ const SUB_FILTERABLE_FIELDS = [
 // 配置加载与保存
 // ========================================
 async function loadSubRankingConfig() {
+    console.log('⚙️ [小号配置] 正在加载筛选配置...');
     const client = window.supabaseClient;
     if (!client) return null;
 
@@ -42,14 +43,16 @@ async function loadSubRankingConfig() {
         .single();
 
     if (error) {
-        console.error('加载小号排品配置失败:', error);
+        console.warn('⚠️ [小号配置] 加载失败, 使用默认配置:', error.message);
         return getDefaultSubConfig();
     }
 
+    console.log('✅ [小号配置] 加载成功');
     return data?.config_value || getDefaultSubConfig();
 }
 
 async function saveSubRankingConfig(config) {
+    console.log('💾 [小号配置] 正在保存筛选配置...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -61,7 +64,11 @@ async function saveSubRankingConfig(config) {
             updated_at: new Date().toISOString()
         }, { onConflict: 'config_key' });
 
-    if (error) throw new Error('保存配置失败: ' + error.message);
+    if (error) {
+        console.error('❌ [小号配置] 保存失败:', error.message);
+        throw new Error('保存配置失败: ' + error.message);
+    }
+    console.log('✅ [小号配置] 保存成功');
 }
 
 // ========================================
@@ -185,6 +192,7 @@ function getDefaultSubConfig() {
 // 数据加载（加载库存数据并匹配商品ID）
 // ========================================
 async function loadSubRankingData() {
+    console.log('📥 [小号数据] 开始加载库存数据和商品ID...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -195,6 +203,8 @@ async function loadSubRankingData() {
     ]);
 
     if (inventoryRes.error) throw new Error('读取库存数据失败: ' + inventoryRes.error.message);
+
+    console.log(`📦 [小号数据] 库存数据: ${inventoryRes.data?.length || 0} 条, ID数据: ${productIdRes.data?.length || 0} 条`);
 
     // 构建商品ID映射表
     const productIdMap = new Map();
@@ -237,13 +247,17 @@ async function loadSubRankingData() {
         }
     });
 
-    return Array.from(productMap.values());
+    const products = Array.from(productMap.values());
+    const matchedCount = products.filter(p => p.id_matched).length;
+    console.log(`✅ [小号数据] 加载完成: 商品数 ${products.length}, ID匹配成功 ${matchedCount}`);
+    return products;
 }
 
 // ========================================
 // 筛选计算（支持 topN/bottomN 排序）
 // ========================================
 function calculateSubRanking(products, config, numberConfig = null) {
+    console.log(`🧮 [小号计算] 开始筛选计算, 商品总数: ${products.length}`);
     const results = [];
     const usedProducts = new Set();
     const categoryOrder = config['分类排序'] || [];
@@ -288,6 +302,8 @@ function calculateSubRanking(products, config, numberConfig = null) {
             candidates = candidates.filter(p => checkConditions(p, conditions));
         }
 
+        console.log(`  📌 [小号计算] ${categoryKey} -> ${rankingResult}: ${candidates.length} 个商品`);
+
         // 添加分类结果（暂不分配序号）
         candidates.forEach(p => {
             results.push({
@@ -318,6 +334,7 @@ function calculateSubRanking(products, config, numberConfig = null) {
         item.sample_number = `${prefix}${String(seqInPrefix).padStart(2, '0')}`;
     });
 
+    console.log(`✅ [小号计算] 完成, 共筛选出 ${results.length} 个商品`);
     return results;
 }
 
@@ -345,13 +362,18 @@ function checkConditions(product, conditions) {
 // 保存结果
 // ========================================
 async function saveSubRankingResults(results) {
+    console.log(`💾 [小号保存] 开始保存结果到 sub_ranking_results, 共 ${results.length} 条`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
     // 清空旧数据
+    console.log('🧹 [小号保存] 清空现有结果...');
     await client.from('sub_ranking_results').delete().gte('id', 0);
 
-    if (results.length === 0) return 0;
+    if (results.length === 0) {
+        console.log('✅ [小号保存] 完成, 无数据需要保存');
+        return 0;
+    }
 
     const records = results.map(r => ({
         product_name: r.product_name,
@@ -370,10 +392,12 @@ async function saveSubRankingResults(results) {
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
+        console.log(`📤 [小号保存] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
         const { error } = await client.from('sub_ranking_results').insert(batch);
         if (error) throw new Error('保存结果失败: ' + error.message);
     }
 
+    console.log(`✅ [小号保存] 完成, 共保存 ${records.length} 条记录`);
     return records.length;
 }
 
