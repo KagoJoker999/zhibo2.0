@@ -186,7 +186,7 @@ function processProductIdData(rows) {
 // ========================================
 const UploadConfigs = {
     ranking: {
-        title: '📊 排名上传',
+        title: '📊 排名上传 <span style=\"font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;\">只需下播更新</span>',
         tableName: 'ranking_data',
         processor: processRankingData,
         rules: [
