@@ -855,12 +855,12 @@ function generateRankingPage() {
                     </div>
                 </div>
                 
-                <div class="upload-actions">
+                <div class="upload-actions" style="display: flex; align-items: center; gap: 0.5rem;">
                     <button class="btn btn-primary" id="btnSaveResults" disabled style="display: inline-flex; align-items: center; gap: 0.5rem;">
                         保存结果到数据库 <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: normal; font-family: monospace;">ranking_results</span>
                     </button>
-                    <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal; margin-left: 0.5rem;">插件读取</span>
-                    <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span>
+                    <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">插件读取</span>
+                    <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">影刀读取</span>
                 </div>
             </div>
             
