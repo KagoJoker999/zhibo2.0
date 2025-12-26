@@ -186,7 +186,7 @@ function processProductIdData(rows) {
 // ========================================
 const UploadConfigs = {
     ranking: {
-        title: '📊 排名数据上传',
+        title: '📊 排名上传',
         tableName: 'ranking_data',
         processor: processRankingData,
         rules: [
@@ -205,7 +205,7 @@ const UploadConfigs = {
         ]
     },
     inventory: {
-        title: '📦 库存数据上传',
+        title: '📦 库存上传',
         tableName: 'inventory_data',
         processor: processInventoryData,
         rules: [
@@ -225,7 +225,7 @@ const UploadConfigs = {
         ]
     },
     productId: {
-        title: '🆔 商品ID上传',
+        title: '🆔 ID上传',
         tableName: 'product_id_data',
         processor: processProductIdData,
         rules: [
