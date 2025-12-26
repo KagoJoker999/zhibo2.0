@@ -865,7 +865,7 @@ function generateRankingPage() {
             <!-- 已保存排品结果（从数据库读取） -->
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 200px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span></h3>
+                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">此表即为推送给插件的列表</span></h3>
                     <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
                 <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 500px; overflow-y: auto;">
