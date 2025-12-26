@@ -58,7 +58,8 @@ const PageConfig = {
     'mapping-history': { title: '历史记录', icon: '📜' },
     'mapping-settings': { title: '对照设置', icon: '⚙️' },
     'sub-ranking': { title: '小号排品', icon: '📦' },
-    'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' }
+    'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
+    'presale': { title: '关预售表', icon: '📋' }
 };
 
 // ========================================
@@ -339,6 +340,17 @@ function loadPage(page) {
             if (couponPage) {
                 DOM.pageContainer.innerHTML = couponPage.html;
                 setTimeout(() => couponPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 检查是否有关预售表页面加载器
+        if (window.loadPresalePage && page === 'presale') {
+            const presalePage = window.loadPresalePage(page);
+            if (presalePage) {
+                DOM.pageContainer.innerHTML = presalePage.html;
+                setTimeout(() => presalePage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }
