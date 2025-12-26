@@ -255,7 +255,7 @@ function generateMappingPage() {
     return `
         <div class="mapping-page">
             <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
-                <h2>🔗 排品对照表</h2>
+                <h2>🔗 排品结果推送</h2>
                 <p>合并显示排品结果和新品数据，自动计算样品仓位</p>
             </div>
             

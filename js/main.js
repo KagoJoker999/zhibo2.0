@@ -54,7 +54,7 @@ const PageConfig = {
     'coupon-process': { title: '发券品数据处理', icon: '🎟️' },
     'coupon-download': { title: '发券品数据下载', icon: '🎟️' },
     'coupon-settings': { title: '发券品处理设置', icon: '🎟️' },
-    'mapping': { title: '排品对照功能', icon: '🔗' },
+    'mapping': { title: '排品结果推送', icon: '🔗' },
     'mapping-history': { title: '历史记录', icon: '📜' },
     'mapping-settings': { title: '对照设置', icon: '⚙️' },
     'sub-ranking': { title: '小号排品', icon: '📦' },
@@ -312,7 +312,7 @@ function loadPage(page) {
             }
         }
 
-        // 检查是否有排品对照功能页面加载器
+        // 检查是否有排品推送页面加载器
         if (window.loadMappingPage && (page === 'mapping' || page.startsWith('mapping-'))) {
             const mappingPage = window.loadMappingPage(page);
             if (mappingPage) {
