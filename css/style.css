@@ -1315,7 +1315,7 @@ select:focus {
 .mapping-table-container {
     flex: 1;
     overflow-y: auto;
-    max-height: 400px;
+    min-height: 200px;
 }
 
 .editable-table {
