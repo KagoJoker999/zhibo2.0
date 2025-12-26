@@ -18,26 +18,24 @@ let presaleTotal = 0;
 // ========================================
 function generatePresalePage() {
     return `
-        <div class="presale-page">
-            <div class="section-card">
-                <div class="section-header">
-                    <h3>📋 关预售表 <span class="db-table-tag">presale_product_ids</span></h3>
-                    <div class="section-actions">
-                        <span class="presale-stats" id="presaleStats">加载中...</span>
-                        <button class="btn btn-danger" id="clearAllBtn">🗑️ 一键清除</button>
+        <div class="presale-page" style="padding: 1.5rem;">
+            <div class="upload-block" style="margin-bottom: 1.5rem;">
+                <div class="upload-block-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">📋 关预售表 <span class="db-table-tag">presale_product_ids</span></h3>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="presale-stats" id="presaleStats" style="color: var(--text-muted); font-size: 0.875rem;">加载中...</span>
+                        <button class="btn btn-secondary" id="clearAllBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 一键清除</button>
                     </div>
                 </div>
                 
                 <!-- 添加区域 -->
-                <div class="presale-add-section">
-                    <div class="add-input-group">
-                        <input type="text" id="newProductIdInput" class="form-input" placeholder="输入商品ID（多个ID用逗号分隔）">
-                        <button class="btn btn-primary" id="addProductIdBtn">➕ 添加</button>
-                    </div>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" id="newProductIdInput" class="form-input" placeholder="输入商品ID（多个ID用逗号分隔）" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.875rem;">
+                    <button class="btn btn-primary" id="addProductIdBtn">➕ 添加</button>
                 </div>
                 
                 <!-- 数据表格 -->
-                <div class="product-table-container" style="max-height: 500px;">
+                <div class="product-table-container" style="max-height: 500px; margin-top: 1rem;">
                     <table class="product-table" id="presaleTable">
                         <thead>
                             <tr>
