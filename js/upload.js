@@ -205,7 +205,7 @@ const UploadConfigs = {
         ]
     },
     inventory: {
-        title: '📦 库存上传',
+        title: '📦 库存上传 <span style=\"font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;\">需先清空样品仓</span>',
         tableName: 'inventory_data',
         processor: processInventoryData,
         rules: [
