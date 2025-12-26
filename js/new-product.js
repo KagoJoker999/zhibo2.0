@@ -263,7 +263,7 @@ function generateNewProductPage() {
                 <!-- 上传区块 -->
                 <div class="upload-block" id="block-new-product">
                     <div class="upload-block-header">
-                        <h3>📦 新品数据上传 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">上传后可被插件读取</span></h3>
+                        <h3>📦 新品数据上传 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">插件读取</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
                     </div>
                     
                     <div class="upload-zone" id="uploadZone-new-product">
