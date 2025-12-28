@@ -371,6 +371,7 @@ function generateNewProductPage() {
                     <div class="header-buttons">
                         <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 重命名表格下载</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
+                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">💾 保存上链接表</button>
                         <button class="btn btn-primary btn-sm" id="refreshDataBtn">🔄 刷新</button>
                     </div>
                 </div>
@@ -630,6 +631,7 @@ function initNewProductUpload() {
             // 显示下载按钮
             document.getElementById('downloadRenameBtn').style.display = 'inline-block';
             document.getElementById('downloadListingBtn').style.display = 'inline-block';
+            document.getElementById('saveListingDataBtn').style.display = 'inline-block';
 
             window.AppUtils?.showToast?.(`成功处理 ${records.length} 条商品`, 'success');
 
@@ -658,9 +660,11 @@ function initNewProductUpload() {
     // 下载按钮
     const downloadRenameBtn = document.getElementById('downloadRenameBtn');
     const downloadListingBtn = document.getElementById('downloadListingBtn');
+    const saveListingDataBtn = document.getElementById('saveListingDataBtn');
 
     downloadRenameBtn.addEventListener('click', () => downloadExcel('rename'));
     downloadListingBtn.addEventListener('click', () => downloadExcel('listing'));
+    saveListingDataBtn.addEventListener('click', saveListingData);
 
     // 加载数据表格
     async function loadDataTable() {
@@ -732,6 +736,7 @@ function initNewProductUpload() {
             // 有数据时显示下载按钮
             document.getElementById('downloadRenameBtn').style.display = 'inline-block';
             document.getElementById('downloadListingBtn').style.display = 'inline-block';
+            document.getElementById('saveListingDataBtn').style.display = 'inline-block';
         } catch (error) {
             container.innerHTML = `<p class="error">加载失败: ${error.message}</p>`;
         }
@@ -835,6 +840,91 @@ function initNewProductUpload() {
             window.AppUtils?.showToast?.('下载成功', 'success');
         } catch (error) {
             window.AppUtils?.showToast?.('下载失败: ' + error.message, 'error');
+        }
+    }
+
+    // 保存上链接数据到数据库
+    async function saveListingData() {
+        try {
+            saveListingDataBtn.disabled = true;
+            saveListingDataBtn.textContent = '⏳ 保存中...';
+
+            // 1. 获取原始数据
+            const { data, error } = await window.supabaseClient
+                .from('new_product_data')
+                .select('*');
+
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                window.AppUtils?.showToast?.('暂无数据可保存', 'warning');
+                return;
+            }
+
+            // 2. 按商品编码排序
+            data.sort((a, b) => (a.product_code || '').localeCompare(b.product_code || ''));
+
+            // 3. 按商品名称分组
+            const groups = new Map();
+            data.forEach(item => {
+                const name = item.product_name || '';
+                if (!groups.has(name)) {
+                    groups.set(name, []);
+                }
+                groups.get(name).push(item);
+            });
+
+            // 4. 构建要保存的记录
+            const records = [];
+            groups.forEach((items, name) => {
+                const first = items[0];
+                const record = {
+                    product_name: name,
+                    product_code: first.product_code || '',
+                    listing_category: first.listing_category || '',
+                    virtual_category: first.virtual_category || '',
+                    base_price: first.base_price || 0,
+                    color_spec: first.color_spec || '',
+                    sku_count: items.length
+                };
+
+                // 添加额外SKU（最多10个）
+                for (let i = 1; i < Math.min(items.length, 10); i++) {
+                    record[`product_code_${i + 1}`] = items[i].product_code || '';
+                    record[`color_spec_${i + 1}`] = items[i].color_spec || '';
+                }
+
+                records.push(record);
+            });
+
+            console.log('准备保存上链接数据到 listing_data_export，共', records.length, '条');
+
+            // 5. 清空旧数据
+            const { error: deleteError } = await window.supabaseClient
+                .from('listing_data_export')
+                .delete()
+                .gte('id', 0);
+
+            if (deleteError) throw new Error('清空旧数据失败: ' + deleteError.message);
+
+            // 6. 分批插入新数据
+            const batchSize = 100;
+            for (let i = 0; i < records.length; i += batchSize) {
+                const batch = records.slice(i, i + batchSize);
+                const { error: insertError } = await window.supabaseClient
+                    .from('listing_data_export')
+                    .insert(batch);
+                if (insertError) throw new Error('保存失败: ' + insertError.message);
+            }
+
+            console.log('上链接数据保存成功，共', records.length, '条');
+            window.AppUtils?.showToast?.(`保存成功！共 ${records.length} 条数据`, 'success');
+
+        } catch (error) {
+            console.error('保存上链接数据失败:', error);
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        } finally {
+            saveListingDataBtn.disabled = false;
+            saveListingDataBtn.textContent = '💾 保存上链接表';
         }
     }
 
