@@ -371,7 +371,7 @@ function generateNewProductPage() {
                     <div class="header-buttons">
                         <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 重命名表格下载</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
-                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">💾 保存上链接表</button>
+                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">💾 保存上链接表</button><span class="db-table-tag">→ listing_data_export</span>
                         <button class="btn btn-primary btn-sm" id="refreshDataBtn">🔄 刷新</button>
                     </div>
                 </div>
