@@ -408,7 +408,9 @@ function initUploadBlock(key, config) {
             });
             localStorage.setItem(`lastUpload_${key}`, timeStr);
             updateLastUploadTime(timeStr);
-            window.AppUtils?.showToast?.(`${config.title} 成功上传 ${records.length} 条`, 'success');
+            // 提取纯文本标题（去除 HTML 标签）
+            const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
+            window.AppUtils?.showToast?.(`${plainTitle} 成功上传 ${records.length} 条`, 'success');
         } catch (error) {
             console.error('上传失败:', error);
             statusText.textContent = '上传失败';
