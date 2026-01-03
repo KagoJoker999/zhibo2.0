@@ -299,7 +299,7 @@ async function initMappingPage() {
             // 显示数据来源统计
             const sourceStatsSpan = document.getElementById('sourceStats');
             if (sourceStatsSpan && data._sourceStats) {
-                sourceStatsSpan.textContent = `ranking_results: ${data._sourceStats.rankingCount}个 | new_product_data: ${data._sourceStats.newProductCount}个`;
+                sourceStatsSpan.textContent = `排品获取 ranking_results: ${data._sourceStats.rankingCount}个 | 新品获取 new_product_data: ${data._sourceStats.newProductCount}个`;
             }
             // 计算样品仓位
             data.forEach(item => {
