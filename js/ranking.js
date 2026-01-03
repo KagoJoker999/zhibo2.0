@@ -1246,6 +1246,18 @@ async function initRankingPage() {
 
 // 删除排品项（从当前分类移除，重新计算补充新商品）
 async function removeRankingItem(category, productName) {
+    // 获取被删除商品的信息（用于弹窗显示）
+    const removedItem = cachedResults.find(r => r.product_name === productName && r.ranking_result === category);
+    const removedInfo = {
+        name: productName,
+        image: removedItem?.image_url || ''
+    };
+
+    // 获取该分类当前的商品列表
+    const oldCategoryItems = cachedResults
+        .filter(r => r.ranking_result === category)
+        .map(r => r.product_name);
+
     // 将商品加入该分类的排除列表
     if (!categoryExcluded[category]) {
         categoryExcluded[category] = [];
@@ -1255,15 +1267,36 @@ async function removeRankingItem(category, productName) {
     // 记录删除（用于撤回）
     deletedItems.push({
         category: category,
-        productName: productName
+        productName: productName,
+        removedInfo: removedInfo
     });
 
     // 重新计算排品（使用缓存的数据和配置）
     if (cachedProducts.length > 0 && cachedConfig) {
         const rankingResults = calculateRanking(cachedProducts, cachedConfig, categoryExcluded);
         cachedResults = assignSampleNumbers(rankingResults, cachedConfig);
+
+        // 找出该分类新增的商品（补充进来的）
+        const newCategoryItems = cachedResults
+            .filter(r => r.ranking_result === category)
+            .map(r => r.product_name);
+
+        const addedProductName = newCategoryItems.find(name => !oldCategoryItems.includes(name) || name === productName ? false : true);
+        // 更精确的查找：排除被删除的，找新增的
+        const addedProduct = cachedResults.find(r =>
+            r.ranking_result === category &&
+            r.product_name !== productName &&
+            !oldCategoryItems.includes(r.product_name)
+        );
+
+        const addedInfo = addedProduct
+            ? { name: addedProduct.product_name, image: addedProduct.image_url || '' }
+            : { name: '（无可补充商品）', image: '' };
+
         renderRankingResults(cachedResults);
-        window.AppUtils?.showToast?.(`已从"${category}"删除并补充新商品，可点击撤回恢复`, 'info');
+
+        // 显示替换弹窗
+        window.AppUtils?.showReplaceModal?.(removedInfo, addedInfo, 'replace');
     } else {
         window.AppUtils?.showToast?.('删除成功，但无法重新计算（请重新加载数据）', 'warning');
     }
@@ -1278,6 +1311,11 @@ async function undoDeleteRankingItem() {
 
     const last = deletedItems.pop();
 
+    // 获取撤回前该分类的商品列表（用于找出被移除的补充商品）
+    const oldCategoryItems = cachedResults
+        .filter(r => r.ranking_result === last.category)
+        .map(r => r.product_name);
+
     // 从分类排除列表中移除
     if (categoryExcluded[last.category]) {
         const idx = categoryExcluded[last.category].indexOf(last.productName);
@@ -1290,8 +1328,27 @@ async function undoDeleteRankingItem() {
     if (cachedProducts.length > 0 && cachedConfig) {
         const rankingResults = calculateRanking(cachedProducts, cachedConfig, categoryExcluded);
         cachedResults = assignSampleNumbers(rankingResults, cachedConfig);
+
+        // 找出该分类被移除的商品（之前补充的，现在被挤出去的）
+        const newCategoryItems = cachedResults
+            .filter(r => r.ranking_result === last.category)
+            .map(r => r.product_name);
+
+        // 被挤出去的商品 = 老列表有但新列表没有的
+        const removedProductName = oldCategoryItems.find(name => !newCategoryItems.includes(name));
+        const removedProduct = cachedProducts.find(p => p.product_name === removedProductName);
+
+        // 恢复的商品信息
+        const restoredInfo = last.removedInfo || { name: last.productName, image: '' };
+        // 被挤出去的商品信息
+        const kickedInfo = removedProduct
+            ? { name: removedProduct.product_name, image: removedProduct.image_url || '' }
+            : { name: removedProductName || '（无）', image: '' };
+
         renderRankingResults(cachedResults);
-        window.AppUtils?.showToast?.('已撤回删除', 'success');
+
+        // 显示撤回弹窗（恢复的商品 ← 被挤出去的商品）
+        window.AppUtils?.showReplaceModal?.(kickedInfo, restoredInfo, 'undo');
     }
 }
 

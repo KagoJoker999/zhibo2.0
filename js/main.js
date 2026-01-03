@@ -446,6 +446,154 @@ function showCenterAlert(message, icon = '⚠️') {
     });
 }
 
+/**
+ * 显示商品替换弹窗
+ * @param {Object} removedItem - 被删除的商品 { name, image }
+ * @param {Object} addedItem - 补充的商品 { name, image }
+ * @param {string} action - 操作类型 'replace' 或 'undo'
+ */
+function showReplaceModal(removedItem, addedItem, action = 'replace') {
+    // 移除已有的提示
+    const existing = document.querySelector('.replace-modal-overlay');
+    if (existing) existing.remove();
+
+    // 截取简短名称（保留「后面的内容，最多20个字符）
+    const shortenName = (name) => {
+        if (!name) return '未知商品';
+        let shortName = name;
+        if (name.includes('「')) {
+            shortName = name.substring(name.indexOf('「'));
+        }
+        return shortName.length > 20 ? shortName.substring(0, 20) + '...' : shortName;
+    };
+
+    const removedName = shortenName(removedItem?.name);
+    const addedName = shortenName(addedItem?.name);
+    const removedImage = removedItem?.image || '';
+    const addedImage = addedItem?.image || '';
+
+    // 根据操作类型设置标题和图标
+    const isUndo = action === 'undo';
+    const title = isUndo ? '已撤回替换' : '商品已替换';
+    const arrowIcon = isUndo ? '↩️' : '➡️';
+    const bgColor = isUndo ? 'rgba(34, 197, 94, 0.95)' : 'rgba(59, 130, 246, 0.95)';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'replace-modal-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease;
+    `;
+
+    overlay.innerHTML = `
+        <div class="replace-modal" style="
+            background: ${bgColor};
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            color: white;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        ">
+            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">${title}</div>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                <!-- 被删除/原商品 -->
+                <div style="flex: 1; text-align: center;">
+                    <div style="
+                        width: 80px;
+                        height: 80px;
+                        margin: 0 auto 0.5rem;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        background: rgba(255,255,255,0.2);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        ${removedImage
+            ? `<img src="${removedImage.split(',')[0].trim()}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'font-size:2rem;\\'>📦</span>'">`
+            : '<span style="font-size: 2rem;">📦</span>'
+        }
+                    </div>
+                    <div style="font-size: 0.85rem; opacity: 0.9; max-width: 120px; margin: 0 auto; word-break: break-all;">${removedName}</div>
+                </div>
+                
+                <!-- 箭头 -->
+                <div style="font-size: 2rem;">${arrowIcon}</div>
+                
+                <!-- 补充的商品 -->
+                <div style="flex: 1; text-align: center;">
+                    <div style="
+                        width: 80px;
+                        height: 80px;
+                        margin: 0 auto 0.5rem;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        background: rgba(255,255,255,0.2);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        ${addedImage
+            ? `<img src="${addedImage.split(',')[0].trim()}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'font-size:2rem;\\'>📦</span>'">`
+            : '<span style="font-size: 2rem;">📦</span>'
+        }
+                    </div>
+                    <div style="font-size: 0.85rem; opacity: 0.9; max-width: 120px; margin: 0 auto; word-break: break-all;">${addedName}</div>
+                </div>
+            </div>
+            
+            <button class="replace-modal-close" style="
+                margin-top: 1.25rem;
+                padding: 0.5rem 2rem;
+                background: rgba(255,255,255,0.2);
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">知道了</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 绑定关闭事件
+    const closeBtn = overlay.querySelector('.replace-modal-close');
+    closeBtn.addEventListener('click', () => {
+        overlay.style.animation = 'fadeIn 0.2s ease reverse';
+        setTimeout(() => overlay.remove(), 200);
+    });
+
+    // 点击遮罩关闭
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.style.animation = 'fadeIn 0.2s ease reverse';
+            setTimeout(() => overlay.remove(), 200);
+        }
+    });
+
+    // 3秒后自动关闭
+    setTimeout(() => {
+        if (document.body.contains(overlay)) {
+            overlay.style.animation = 'fadeIn 0.2s ease reverse';
+            setTimeout(() => overlay.remove(), 200);
+        }
+    }, 3000);
+}
+
 // ========================================
 // 加载状态
 // ========================================
@@ -530,6 +678,7 @@ function formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
 window.AppUtils = {
     showToast,
     showCenterAlert,
+    showReplaceModal,
     showLoading,
     hideLoading,
     updateStatus,
