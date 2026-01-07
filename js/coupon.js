@@ -170,6 +170,7 @@ function generateCouponPage() {
                     <h3>📦 待上传商品列表</h3>
                     <div class="section-actions">
                         <span class="match-stats" id="matchStats"></span>
+                        <button class="btn btn-secondary" id="copyUnmatchedNamesBtn" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #3b82f6;">📋 批量复制无ID商品名称</button>
                         <button class="btn btn-secondary" id="clearUnmatchedBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 清空无ID商品</button>
                         <button class="btn btn-primary" id="uploadBtn-coupon" disabled>上传到数据库</button>
                     </div>
@@ -269,6 +270,25 @@ function initCouponUpload() {
         couponProductList = couponProductList.filter(r => r.product_id);
         renderProductList();
         window.AppUtils?.showToast?.(`已清空 ${unmatchedCount} 条无ID商品`, 'success');
+    });
+
+    // 批量复制无ID商品名称按钮事件
+    const copyUnmatchedNamesBtn = document.getElementById('copyUnmatchedNamesBtn');
+    copyUnmatchedNamesBtn.addEventListener('click', async () => {
+        const unmatchedProducts = couponProductList.filter(r => !r.product_id);
+        if (unmatchedProducts.length === 0) {
+            window.AppUtils?.showToast?.('没有无ID商品可复制', 'info');
+            return;
+        }
+        // 获取所有无ID商品的名称，用逗号分割
+        const names = unmatchedProducts.map(r => r.product_name).join(',');
+        try {
+            await navigator.clipboard.writeText(names);
+            window.AppUtils?.showToast?.(`已复制 ${unmatchedProducts.length} 个无ID商品名称到剪贴板`, 'success');
+        } catch (err) {
+            console.error('复制失败:', err);
+            window.AppUtils?.showToast?.('复制失败，请手动复制', 'error');
+        }
     });
 
     // 下载按钮事件
