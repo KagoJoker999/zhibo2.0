@@ -743,7 +743,9 @@ async function saveRankingResults(results) {
         warehouse: r.warehouse || null,
         total_score: r.total_score || 0,
         rating_rank: r.rating_rank || null,
-        is_wearable: r.is_wearable !== undefined ? r.is_wearable : null
+        is_wearable: r.is_wearable !== undefined ? r.is_wearable : null,
+        available_qty: r.available_qty || 0,
+        actual_stock: r.actual_stock || 0
     }));
 
     // 批量插入
