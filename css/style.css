@@ -2546,7 +2546,11 @@ select:focus {
     display: block;
 }
 
-/* 确保表格单元格不会因为悬浮而溢出 */
+/* 确保表格单元格不会因为悬浮预览被裁剪 */
+td:has(.hover-zoom-img) {
+    overflow: visible !important;
+}
+
 td .hover-zoom-img {
     overflow: visible;
 }
