@@ -2505,3 +2505,60 @@ select:focus {
         opacity: 1;
     }
 }
+
+/* ========================================
+   图片悬浮放大效果
+   ======================================== */
+.hover-zoom-img {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.hover-zoom-img img {
+    transition: transform var(--transition-fast);
+}
+
+.hover-zoom-img .zoom-preview {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 144px;
+    height: 144px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--border-color);
+    background: var(--bg-card);
+    z-index: 999;
+    overflow: hidden;
+    animation: zoomIn 0.15s ease;
+}
+
+.hover-zoom-img .zoom-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hover-zoom-img:hover .zoom-preview {
+    display: block;
+}
+
+/* 确保表格单元格不会因为悬浮而溢出 */
+td .hover-zoom-img {
+    overflow: visible;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+}

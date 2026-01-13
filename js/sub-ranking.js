@@ -703,7 +703,7 @@ async function loadMappingHistoryForSubRanking() {
                     ${data.map(item => {
             const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
             const imageHtml = imageUrl
-                ? `<img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
+                ? `<span class="hover-zoom-img"><img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''"><span class="zoom-preview"><img src="${imageUrl}" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></span></span>`
                 : '<span style="color: var(--text-muted);">无</span>';
             const productId = item.product_id || '';
             return `
@@ -775,7 +775,7 @@ function renderSubRankingResults(container, results) {
                 ${results.map((item, idx) => {
         const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
         const imageHtml = imageUrl
-            ? `<img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
+            ? `<span class="hover-zoom-img"><img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''"><span class="zoom-preview"><img src="${imageUrl}" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></span></span>`
             : '<span style="color: var(--text-muted);">无</span>';
 
         // 判断ID是否匹配（有值就算匹配）
