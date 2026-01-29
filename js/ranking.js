@@ -1024,6 +1024,42 @@ function generateRankingCheckPage() {
                 <p>查看数据库中已保存的排品结果</p>
             </div>
             
+            <!-- 悬浮放大图片样式 -->
+            <style>
+                .hover-zoom-container {
+                    position: relative;
+                    width: 48px;
+                    height: 48px;
+                    margin: 0 auto;
+                    cursor: zoom-in;
+                }
+                .hover-zoom-thumb {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 6px;
+                    border: 1px solid var(--border-color);
+                    display: block;
+                }
+                .hover-zoom-large {
+                    display: none;
+                    position: absolute;
+                    left: 54px;
+                    top: -72px; /* 垂直居中: -(192/2 - 48/2) */
+                    width: 192px; /* 4倍大小 */
+                    height: 192px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                    z-index: 1000;
+                    border: 1px solid var(--border-color);
+                    background: var(--bg-primary);
+                }
+                .hover-zoom-container:hover .hover-zoom-large {
+                    display: block;
+                }
+            </style>
+            
             <!-- 已保存排品结果（从数据库读取） -->
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 1.5rem 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
