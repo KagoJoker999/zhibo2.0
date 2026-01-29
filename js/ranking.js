@@ -1461,7 +1461,7 @@ function renderRankingResults(results) {
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 300px;">商品名称</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 160px;">商品ID</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: right; width: 180px;">商品编码</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
                             </tr>
                         </thead>
@@ -1518,7 +1518,7 @@ function renderRankingResults(results) {
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
                                         <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button onclick="copyToClipboard('${escapedProductName}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称">📋</button></td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
-                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: right;">${codeDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
                                             <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 1rem; padding: 0.25rem;">✕</button>
                                         </td>
