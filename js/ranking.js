@@ -863,6 +863,7 @@ function generateRankingPage() {
                     </button>
                     <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">插件读取</span>
                     <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">影刀读取</span>
+                    <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem;">📦 历史排品</button>
                 </div>
             </div>
         </div>
