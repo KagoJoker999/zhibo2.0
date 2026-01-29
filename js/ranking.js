@@ -851,7 +851,7 @@ function generateRankingPage() {
             <div class="upload-block" id="block-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 400px;">
 
                 
-                <div class="scrollable-content" id="rankingResultContent" style="max-height: 500px; overflow-y: auto;">
+                <div class="scrollable-content" id="rankingResultContent">
                     <div class="placeholder-content">
                         <p>请点击"加载数据并计算"按钮</p>
                     </div>
