@@ -324,7 +324,7 @@ async function initMappingPage() {
         }
         try {
             const count = await saveToHistory(window._currentMappingData);
-            window.AppUtils?.showToast?.(`已保存 ${count} 条到历史记录`, 'success');
+            window.AppUtils?.showToast?.(`已成功推送 ${count} 条`, 'success');
         } catch (error) {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         }
