@@ -1154,19 +1154,7 @@ async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
 
-    // 尝试加载缓存的结果
-    const cached = loadCachedResults();
-    if (cached && cached.results && cached.results.length > 0) {
-        cachedResults = cached.results;
-        cachedProductIds = cached.productIds || {};
-        renderRankingResults(cachedResults);
-        btnSaveResults.disabled = false;
-
-        // 显示缓存时间
-        const cacheTime = new Date(cached.timestamp);
-        const timeStr = cacheTime.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        window.AppUtils?.showToast?.(`已加载 ${timeStr} 的缓存结果（48小时内有效）`, 'info');
-    }
+    // 不再自动加载缓存结果，等待用户手动点击按钮
 
     if (btnLoadAndCalculate) {
         btnLoadAndCalculate.addEventListener('click', async () => {
