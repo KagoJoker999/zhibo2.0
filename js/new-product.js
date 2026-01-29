@@ -12,6 +12,21 @@ function processNewProductData(rows) {
     console.log(`📦 [新品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
     const records = [];
 
+    // 从表头自动查找"颜色及规格"字段的列索引
+    const headerRow = rows[0] || [];
+    let colorSpecIndex = -1;
+    for (let j = 0; j < headerRow.length; j++) {
+        const headerName = String(headerRow[j] ?? '').trim();
+        if (headerName === '颜色及规格') {
+            colorSpecIndex = j;
+            console.log(`📍 [新品处理] 找到"颜色及规格"字段在第 ${j + 1} 列（索引 ${j}）`);
+            break;
+        }
+    }
+    if (colorSpecIndex === -1) {
+        throw new Error('表格中未找到"颜色及规格"字段，请检查表头是否包含该字段（需完全匹配）');
+    }
+
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
@@ -30,7 +45,7 @@ function processNewProductData(rows) {
             product_tag: String(row[5] ?? '').trim() || null,        // F列
             base_price: parseFloat(row[6]) || 0,                      // G列
             warehouse: String(row[7] ?? '').trim() || null,          // H列
-            color_spec: row.length > 14 ? String(row[14] ?? '').trim() || null : null
+            color_spec: colorSpecIndex >= 0 ? String(row[colorSpecIndex] ?? '').trim() || null : null
         });
     }
     console.log(`✅ [新品处理] 解析完成, 有效记录: ${records.length} 条`);
