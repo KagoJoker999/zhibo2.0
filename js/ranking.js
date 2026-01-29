@@ -848,11 +848,11 @@ function generateRankingPage() {
             </div>
             
             <!-- 下部分：排品结果（全宽） -->
-            <div class="upload-block" id="block-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 400px;">
+            <div class="upload-block" id="block-ranking-result" style="margin: 0 1.5rem 1.5rem;">
 
                 
                 <div class="scrollable-content" id="rankingResultContent">
-                    <div class="placeholder-content">
+                    <div class="placeholder-content" style="padding: 2rem 0; color: var(--text-muted);">
                         <p>请点击"加载数据并计算"按钮</p>
                     </div>
                 </div>
