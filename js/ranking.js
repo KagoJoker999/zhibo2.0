@@ -1180,7 +1180,7 @@ async function initRankingPage() {
                     removedNewFromInventory = originalCount - allProducts.length;
                     baseInventoryCount = allProducts.length;
 
-                    document.getElementById('statNewProduct').textContent = `${newProductStats.after}/${newProductStats.before}（已排除${removedNewFromInventory}个）`;
+                    document.getElementById('statNewProduct').innerHTML = `${newProductStats.after}/${newProductStats.before}<span title="排除的为多SKU部分商品（重复商品名称的新品）" style="cursor: help; border-bottom: 1px dashed currentColor;">（已排除${removedNewFromInventory}个）</span>`;
                     cachedNewProducts = [];  // 不参与排品
                 }
 
@@ -1453,9 +1453,19 @@ function renderRankingResults(results) {
                    </div>`
                 : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
             const productCode = item.product_code || '--';
-            const codeDisplay = productCode !== '--'
-                ? `${productCode} <button onclick="copyToClipboard('${productCode}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
-                : '--';
+            // 处理多编码显示：最多显示2个，其余悬浮显示
+            let codeDisplay = '--';
+            if (productCode !== '--') {
+                const codes = productCode.split(',').map(c => c.trim()).filter(c => c);
+                const allCodes = codes.join(',');
+                if (codes.length <= 2) {
+                    codeDisplay = `${allCodes} <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`;
+                } else {
+                    const displayCodes = codes.slice(0, 2).join(',');
+                    const moreCount = codes.length - 2;
+                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码">📋</button>`;
+                }
+            }
             // 无ID商品红底
             const rowStyle = hasNoId
                 ? 'border-bottom: 1px solid var(--border-color); background: rgba(239, 68, 68, 0.15);'
