@@ -427,7 +427,7 @@ function generateSubRankingPage() {
                 <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
                     <button class="btn btn-secondary" id="btnSubSave">💾 保存结果</button>
-                    <button class="btn btn-secondary" id="btnCopyUnmatched">📋 复制未匹配</button>
+                    <button class="btn btn-secondary" id="btnCopyUnmatched">📋 批量复制未匹配商品名</button>
                     <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
                     <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
                 </div>
