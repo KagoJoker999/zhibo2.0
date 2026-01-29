@@ -865,19 +865,6 @@ function generateRankingPage() {
                     <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">影刀读取</span>
                 </div>
             </div>
-            
-            <!-- 已保存排品结果（从数据库读取） -->
-            <div class="upload-block" id="block-saved-ranking-result" style="margin: 0 1.5rem 1.5rem; min-height: 200px;">
-                <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">插件读取</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
-                    <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
-                </div>
-                <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 500px; overflow-y: auto;">
-                    <div class="placeholder-content">
-                        <p>加载中...</p>
-                    </div>
-                </div>
-            </div>
         </div>
     `;
 }
@@ -1027,6 +1014,52 @@ function generateRankingExclusionPage() {
 }
 
 // ========================================
+// 排品检查页面
+// ========================================
+function generateRankingCheckPage() {
+    return `
+        <div class="ranking-check-page">
+            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+                <h2>🔍 排品检查</h2>
+                <p>查看数据库中已保存的排品结果</p>
+            </div>
+            
+            <!-- 已保存排品结果（从数据库读取） -->
+            <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 1.5rem 1.5rem; min-height: 400px;">
+                <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">插件读取</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
+                    <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
+                </div>
+                <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 600px; overflow-y: auto;">
+                    <div class="placeholder-content">
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function initRankingCheckPage() {
+    const btnRefreshSavedResults = document.getElementById('btnRefreshSavedResults');
+
+    // 自动读取数据库中已保存的排品结果
+    await loadAndRenderSavedResults();
+
+    // 绑定刷新按钮事件
+    if (btnRefreshSavedResults) {
+        btnRefreshSavedResults.addEventListener('click', async () => {
+            btnRefreshSavedResults.disabled = true;
+            btnRefreshSavedResults.textContent = '刷新中...';
+            await loadAndRenderSavedResults();
+            btnRefreshSavedResults.disabled = false;
+            btnRefreshSavedResults.textContent = '🔄 刷新';
+            window.AppUtils?.showToast?.('已刷新', 'success');
+        });
+    }
+}
+
+// ========================================
 // 初始化
 // ========================================
 let cachedProducts = [];      // 库存+评分汇总数据
@@ -1084,22 +1117,6 @@ function setNewProductMode(include) {
 async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
-    const btnRefreshSavedResults = document.getElementById('btnRefreshSavedResults');
-
-    // 自动读取数据库中已保存的排品结果
-    await loadAndRenderSavedResults();
-
-    // 绑定刷新按钮事件
-    if (btnRefreshSavedResults) {
-        btnRefreshSavedResults.addEventListener('click', async () => {
-            btnRefreshSavedResults.disabled = true;
-            btnRefreshSavedResults.textContent = '刷新中...';
-            await loadAndRenderSavedResults();
-            btnRefreshSavedResults.disabled = false;
-            btnRefreshSavedResults.textContent = '🔄 刷新';
-            window.AppUtils?.showToast?.('已刷新', 'success');
-        });
-    }
 
     // 尝试加载缓存的结果
     const cached = loadCachedResults();
@@ -2664,6 +2681,12 @@ window.loadRankingPage = function (pageId) {
         return {
             html: generateRankingExclusionPage(),
             init: initRankingExclusion
+        };
+    }
+    if (pageId === 'ranking-check') {
+        return {
+            html: generateRankingCheckPage(),
+            init: initRankingCheckPage
         };
     }
     return null;
