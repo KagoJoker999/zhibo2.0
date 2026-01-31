@@ -265,6 +265,7 @@ function generateMappingPage() {
                 <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">🔄 刷新数据</button>
                 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
                 <span id="sourceStats" style="color: var(--text-muted); font-size: 0.8rem;"></span>
+                <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color);">📦 更新仓位</button>
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
@@ -272,6 +273,35 @@ function generateMappingPage() {
                 <div id="mappingTableContainer" class="data-table-container">
                     <div class="placeholder-content">
                         <p>正在加载数据...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 更新仓位对话框 -->
+            <div id="warehouseUpdateDialog" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="modal-content" style="background: var(--bg-card); border-radius: var(--border-radius); padding: 2rem; max-width: 600px; width: 90%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="margin: 0;">📦 更新仓位</h3>
+                        <button id="closeWarehouseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                    </div>
+                    
+                    <div id="warehouseUploadZone" style="border: 2px dashed var(--border-color); border-radius: var(--border-radius); padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 1rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                        <p style="margin: 0.5rem 0; color: var(--text-primary);">拖拽文件到此处,或点击选择</p>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">.xlsx, .xls, .csv</p>
+                        <input type="file" id="warehouseFileInput" accept=".xlsx,.xls,.csv" style="display:none">
+                    </div>
+                    
+                    <div id="warehouseUpdateStatus" style="display: none; padding: 1rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm); margin-bottom: 1rem;">
+                        <div id="warehouseStatusText" style="margin-bottom: 0.5rem;">准备中...</div>
+                        <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div id="warehouseProgressBar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                        <div id="warehouseStatusDetail" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);"></div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">说明:读取表格的商品名称(B列)和主仓位(H列),更新 mapping_history 表中匹配商品的仓位信息</p>
                     </div>
                 </div>
             </div>
@@ -329,6 +359,14 @@ async function initMappingPage() {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         }
     });
+
+    // 绑定更新仓位按钮
+    document.getElementById('btnUpdateWarehouse')?.addEventListener('click', () => {
+        document.getElementById('warehouseUpdateDialog').style.display = 'flex';
+    });
+
+    // 初始化更新仓位对话框
+    initWarehouseUpdateDialog();
 
     // 初始加载
     await refreshData();
@@ -608,6 +646,172 @@ async function initMappingSettingsPage() {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         }
     });
+}
+
+// ========================================
+// 更新仓位对话框
+// ========================================
+function initWarehouseUpdateDialog() {
+    const dialog = document.getElementById('warehouseUpdateDialog');
+    const uploadZone = document.getElementById('warehouseUploadZone');
+    const fileInput = document.getElementById('warehouseFileInput');
+    const closeBtn = document.getElementById('closeWarehouseDialog');
+    const statusDiv = document.getElementById('warehouseUpdateStatus');
+    const statusText = document.getElementById('warehouseStatusText');
+    const progressBar = document.getElementById('warehouseProgressBar');
+    const statusDetail = document.getElementById('warehouseStatusDetail');
+
+    // 关闭对话框
+    const closeDialog = () => {
+        dialog.style.display = 'none';
+        statusDiv.style.display = 'none';
+        uploadZone.innerHTML = `
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+            <p style="margin: 0.5rem 0; color: var(--text-primary);">拖拽文件到此处,或点击选择</p>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">.xlsx, .xls, .csv</p>
+        `;
+    };
+
+    closeBtn?.addEventListener('click', closeDialog);
+    dialog?.addEventListener('click', (e) => {
+        if (e.target === dialog) closeDialog();
+    });
+
+    // 点击上传区域
+    uploadZone?.addEventListener('click', () => fileInput.click());
+
+    // 拖拽事件
+    uploadZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = 'var(--primary-color)';
+        uploadZone.style.background = 'var(--bg-secondary)';
+    });
+
+    uploadZone?.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = 'var(--border-color)';
+        uploadZone.style.background = 'transparent';
+    });
+
+    uploadZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = 'var(--border-color)';
+        uploadZone.style.background = 'transparent';
+        if (e.dataTransfer.files.length > 0) {
+            handleWarehouseFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    // 文件选择
+    fileInput?.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleWarehouseFile(e.target.files[0]);
+        }
+    });
+
+    // 处理文件
+    async function handleWarehouseFile(file) {
+        console.log('📦 [仓位更新] 开始处理文件:', file.name);
+
+        try {
+            statusDiv.style.display = 'block';
+            updateProgress('读取文件...', 10);
+
+            // 读取Excel文件
+            const data = await readExcelFile(file);
+            if (!data || data.length < 2) {
+                throw new Error('文件内容为空或格式不正确');
+            }
+
+            updateProgress('解析数据...', 30);
+
+            // 提取商品名称(B列,索引1)和主仓位(H列,索引7)
+            const updates = [];
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row || row.length === 0) continue;
+
+                const productName = String(row[1] ?? '').trim();
+                const warehouse = String(row[7] ?? '').trim();
+
+                if (productName && warehouse) {
+                    updates.push({ productName, warehouse });
+                }
+            }
+
+            console.log(`📊 [仓位更新] 解析到 ${updates.length} 条更新记录`);
+            if (updates.length === 0) {
+                throw new Error('未找到有效的商品名称和仓位数据');
+            }
+
+            updateProgress('匹配商品...', 50);
+
+            // 从 mapping_history 加载现有数据
+            const client = window.supabaseClient;
+            if (!client) throw new Error('Supabase 未初始化');
+
+            const { data: historyData, error: fetchError } = await client
+                .from('mapping_history')
+                .select('*');
+
+            if (fetchError) throw new Error('加载历史数据失败: ' + fetchError.message);
+
+            console.log(`📜 [仓位更新] 历史记录共 ${historyData?.length || 0} 条`);
+
+            // 匹配并更新
+            updateProgress('更新仓位...', 70);
+            let matchCount = 0;
+            let updateCount = 0;
+
+            for (const update of updates) {
+                const matchedItems = historyData.filter(item =>
+                    item.product_name === update.productName
+                );
+
+                if (matchedItems.length > 0) {
+                    matchCount++;
+                    console.log(`✓ [仓位更新] 匹配到商品: ${update.productName}, 更新仓位: ${update.warehouse}`);
+
+                    // 更新每个匹配的记录
+                    for (const item of matchedItems) {
+                        const { error: updateError } = await client
+                            .from('mapping_history')
+                            .update({ warehouse: update.warehouse })
+                            .eq('id', item.id);
+
+                        if (updateError) {
+                            console.warn(`⚠️ [仓位更新] 更新失败 ID=${item.id}:`, updateError.message);
+                        } else {
+                            updateCount++;
+                        }
+                    }
+                }
+            }
+
+            updateProgress('完成!', 100);
+            statusDetail.innerHTML = `<span style="color: var(--success-color);">✅ 成功匹配 ${matchCount} 个商品, 更新 ${updateCount} 条记录</span>`;
+
+            window.AppUtils?.showToast?.(`成功更新 ${updateCount} 条仓位记录`, 'success');
+
+            // 3秒后关闭对话框
+            setTimeout(() => {
+                closeDialog();
+                // 刷新主页面数据(如果在mapping页面)
+                const refreshBtn = document.getElementById('btnRefreshMapping');
+                if (refreshBtn) refreshBtn.click();
+            }, 3000);
+
+        } catch (error) {
+            console.error('❌ [仓位更新] 处理失败:', error);
+            statusText.textContent = '处理失败';
+            statusDetail.innerHTML = `<span style="color: var(--error-color);">❌ ${error.message}</span>`;
+            window.AppUtils?.showToast?.('更新失败: ' + error.message, 'error');
+        }
+    }
+
+    function updateProgress(text, percent) {
+        statusText.textContent = text;
+        progressBar.style.width = percent + '%';
+    }
 }
 
 // ========================================
