@@ -384,10 +384,10 @@ function generateNewProductPage() {
                 <div class="data-table-header">
                     <h3>📋 数据库新品列表 <span class="db-table-tag">← new_product_data</span> <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
                     <div class="header-buttons">
-                        <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 重命名表格下载</button>
+                        <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 下载重命名表</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
-                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">💾 保存上链接表</button><span class="db-table-tag">→ listing_data_export</span>
-                        <button class="btn btn-primary btn-sm" id="refreshDataBtn">🔄 刷新</button>
+                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">💾 同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
+                        <button class="btn btn-primary btn-sm" id="refreshDataBtn">🔄</button>
                     </div>
                 </div>
                 <div id="dataTableContainer" class="data-table-container">
@@ -645,7 +645,7 @@ function initNewProductUpload() {
             // 显示下载按钮
             // 显示下载按钮
             document.getElementById('downloadRenameBtn').style.display = 'inline-block';
-            document.getElementById('downloadListingBtn').style.display = 'inline-block';
+            // document.getElementById('downloadListingBtn').style.display = 'inline-block'; // 隐藏上链接表格下载按钮
             document.getElementById('saveListingDataBtn').style.display = 'inline-block';
 
             window.AppUtils?.showToast?.(`成功处理 ${records.length} 条商品`, 'success');
@@ -750,7 +750,7 @@ function initNewProductUpload() {
             // 有数据时显示下载按钮
             // 有数据时显示下载按钮
             document.getElementById('downloadRenameBtn').style.display = 'inline-block';
-            document.getElementById('downloadListingBtn').style.display = 'inline-block';
+            // document.getElementById('downloadListingBtn').style.display = 'inline-block'; // 隐藏上链接表格下载按钮
             document.getElementById('saveListingDataBtn').style.display = 'inline-block';
         } catch (error) {
             container.innerHTML = `<p class="error">加载失败: ${error.message}</p>`;
@@ -939,7 +939,7 @@ function initNewProductUpload() {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         } finally {
             saveListingDataBtn.disabled = false;
-            saveListingDataBtn.textContent = '💾 保存上链接表';
+            saveListingDataBtn.textContent = '💾 同步上链接表';
         }
     }
 
