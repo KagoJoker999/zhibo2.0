@@ -476,7 +476,7 @@ function calculateRanking(products, config, categoryExcludedMap = {}) {
         if (category.includes('库存品')) {
             // 库存品特殊逻辑：从剩余商品中按可用数排序
             available = available.sort((a, b) => (b.available_qty || 0) - (a.available_qty || 0));
-            const limit = conditions.available_qty?.前几名 || 10;
+            const limit = conditions["可用数"]?.前几名 || 10;
             available = available.slice(0, limit);
         } else if (conditions.按子分类分别筛选) {
             // 按子分类分别筛选
