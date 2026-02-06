@@ -448,6 +448,17 @@ function initInvestmentPage() {
         input.addEventListener('input', calculate);
     });
 
+    // 已跑时长智能识别：>= 10 认为是分钟，自动转换为小时
+    inputs.preRunTime.addEventListener('blur', function () {
+        const value = parseFloat(this.value);
+        if (!isNaN(value) && value >= 10) {
+            // 输入值 >= 10，认为是分钟数，转换为小时
+            const hours = value / 60;
+            this.value = hours.toFixed(2);
+            calculate();
+        }
+    });
+
     // 绑定重置按钮
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn) {
