@@ -489,4 +489,7 @@ function initInvestmentPage() {
     if (resetBtn) {
         resetBtn.addEventListener('click', reset);
     }
+
+    // 页面加载时自动设置默认值
+    reset();
 }
