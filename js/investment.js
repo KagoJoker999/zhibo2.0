@@ -83,6 +83,11 @@ function getInvestmentPageHTML() {
                             <span class="separator">=</span>
                             <input type="number" id="preRunTime" placeholder="0" min="0" step="0.01">
                             <span class="unit">小时</span>
+                            <div class="header-quick-btns">
+                                <button type="button" class="header-quick-btn" data-hours="0.5">0.5h</button>
+                                <button type="button" class="header-quick-btn" data-hours="1">1h</button>
+                                <button type="button" class="header-quick-btn" data-hours="1.5">1.5h</button>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body">
@@ -375,6 +380,32 @@ function getInvestmentPageHTML() {
                 margin: 0 0.25rem;
             }
             
+            .header-quick-btns {
+                display: flex;
+                gap: 0.25rem;
+                margin-left: 0.5rem;
+            }
+            
+            .header-quick-btn {
+                padding: 0.2rem 0.5rem;
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 0.7rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .header-quick-btn:hover {
+                background: rgba(255, 255, 255, 0.25);
+                border-color: rgba(255, 255, 255, 0.6);
+            }
+            
+            .header-quick-btn:active {
+                transform: scale(0.95);
+            }
 
             .quick-options {
                 display: flex;
@@ -610,6 +641,17 @@ function initInvestmentPage() {
             const duration = btn.dataset.duration;
             inputs.addAmount.value = amount;
             inputs.addDuration.value = duration;
+            calculate();
+        });
+    });
+
+    // 绑定已跑时长快捷按钮
+    const headerQuickBtns = document.querySelectorAll('.header-quick-btn');
+    headerQuickBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const hours = parseFloat(btn.dataset.hours);
+            inputs.preRunTime.value = hours;
+            preRunTimeMinutes.value = Math.round(hours * 60);
             calculate();
         });
     });
