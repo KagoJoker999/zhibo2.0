@@ -81,7 +81,7 @@ function getInvestmentPageHTML() {
                             <input type="number" id="preRunTimeMinutes" placeholder="0" min="0" step="1">
                             <span class="unit">分钟</span>
                             <span class="separator">=</span>
-                            <input type="number" id="preRunTime" placeholder="0" min="0" step="0.01" readonly>
+                            <input type="number" id="preRunTime" placeholder="0" min="0" step="0.01">
                             <span class="unit">小时</span>
                         </div>
                     </div>
@@ -357,10 +357,7 @@ function getInvestmentPageHTML() {
                 margin: 0 0.25rem;
             }
             
-            .header-input input[readonly] {
-                background: rgba(255, 255, 255, 0.05);
-                cursor: default;
-            }
+
             
             /* 响应式 */
             @media (max-width: 480px) {
@@ -408,6 +405,14 @@ function initInvestmentPage() {
         const minutes = parseFloat(preRunTimeMinutes.value) || 0;
         const hours = minutes / 60;
         inputs.preRunTime.value = hours.toFixed(2);
+        calculate();
+    }
+
+    // 小时转分钟函数
+    function convertHoursToMinutes() {
+        const hours = parseFloat(inputs.preRunTime.value) || 0;
+        const minutes = hours * 60;
+        preRunTimeMinutes.value = Math.round(minutes);
         calculate();
     }
 
@@ -516,9 +521,14 @@ function initInvestmentPage() {
         preRunTimeMinutes.addEventListener('input', convertMinutesToHours);
     }
 
+    // 绑定小时输入事件 - 实时转换
+    if (inputs.preRunTime) {
+        inputs.preRunTime.addEventListener('input', convertHoursToMinutes);
+    }
+
     // 绑定输入事件 - 实时计算
     Object.values(inputs).forEach(input => {
-        if (input && input !== inputs.preRunTime) { // preRunTime已是只读，由分钟输入控制
+        if (input && input !== inputs.preRunTime) { // preRunTime有专门的转换事件
             input.addEventListener('input', calculate);
         }
     });
