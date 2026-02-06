@@ -61,6 +61,7 @@ const PageConfig = {
     'sub-ranking': { title: '小号排品', icon: '📦' },
     'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
     'livestream-data': { title: '直播数据', icon: '📊' },
+    'livestream-additional-investment': { title: '追投计算', icon: '💰' },
     'presale': { title: '关预售表', icon: '📋' }
 };
 
@@ -344,6 +345,17 @@ function loadPage(page) {
             if (couponPage) {
                 DOM.pageContainer.innerHTML = couponPage.html;
                 setTimeout(() => couponPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 检查是否有追投计算页面加载器
+        if (window.loadInvestmentPage && page === 'livestream-additional-investment') {
+            const investmentPage = window.loadInvestmentPage(page);
+            if (investmentPage) {
+                DOM.pageContainer.innerHTML = investmentPage.html;
+                setTimeout(() => investmentPage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }

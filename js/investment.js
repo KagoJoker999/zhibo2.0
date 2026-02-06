@@ -1,0 +1,419 @@
+/**
+ * 追投计算功能
+ * ========================================
+ * 数据库表名：无（纯前端计算功能）
+ */
+
+// ========================================
+// 页面加载器
+// ========================================
+window.loadInvestmentPage = function (page) {
+    if (page === 'livestream-additional-investment') {
+        return {
+            html: getInvestmentPageHTML(),
+            init: initInvestmentPage
+        };
+    }
+    return null;
+};
+
+// ========================================
+// 页面 HTML
+// ========================================
+function getInvestmentPageHTML() {
+    return `
+        <div class="investment-page">
+            <div class="investment-container">
+                <!-- 开播前投放数据 -->
+                <div class="investment-card">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h3>开播前投放数据</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <label>已跑时长</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="preRunTime" placeholder="0" min="0" step="0.1">
+                                <span class="unit">小时</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>投放金额</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="preAmount" placeholder="0" min="0" step="1">
+                                <span class="unit">元</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>投放时长</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="preDuration" placeholder="0" min="0" step="0.1">
+                                <span class="unit">小时</span>
+                            </div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <div class="result-item">
+                                <span class="result-label">剩余金额</span>
+                                <span class="result-value" id="preRemaining">--</span>
+                                <span class="result-unit">元</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">分钟平均消耗</span>
+                                <span class="result-value" id="preMinuteConsume">--</span>
+                                <span class="result-unit">元/分钟</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">5分钟消耗</span>
+                                <span class="result-value" id="pre5MinConsume">--</span>
+                                <span class="result-unit">元</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 追投计划 -->
+                <div class="investment-card">
+                    <div class="card-header">
+                        <span class="card-icon">💰</span>
+                        <h3>追投计划</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <label>追投金额</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="addAmount" placeholder="0" min="0" step="1">
+                                <span class="unit">元</span>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>追投时长</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="addDuration" placeholder="0" min="0" step="0.1">
+                                <span class="unit">小时</span>
+                            </div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <div class="result-item highlight">
+                                <span class="result-label">追投后剩余金额</span>
+                                <span class="result-value" id="addRemaining">--</span>
+                                <span class="result-unit">元</span>
+                            </div>
+                            <div class="result-item highlight">
+                                <span class="result-label">追投后分钟消耗</span>
+                                <span class="result-value" id="addMinuteConsume">--</span>
+                                <span class="result-unit">元/分钟</span>
+                            </div>
+                            <div class="result-item highlight">
+                                <span class="result-label">追投后5分钟消耗</span>
+                                <span class="result-value" id="add5MinConsume">--</span>
+                                <span class="result-unit">元</span>
+                            </div>
+                            <div class="result-item total">
+                                <span class="result-label">合计消耗</span>
+                                <span class="result-value" id="totalConsume">--</span>
+                                <span class="result-unit">元</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="investment-actions">
+                    <button type="button" class="btn btn-secondary" id="resetBtn">
+                        <span class="btn-icon">🔄</span>
+                        重置
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+            .investment-page {
+                padding: 1.5rem;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .investment-container {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .investment-card {
+                background: var(--card-bg);
+                border-radius: 12px;
+                box-shadow: var(--shadow-sm);
+                overflow: hidden;
+            }
+            
+            .card-header {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 1rem 1.25rem;
+                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+                color: white;
+            }
+            
+            .card-icon {
+                font-size: 1.25rem;
+            }
+            
+            .card-header h3 {
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+            
+            .card-body {
+                padding: 1.25rem;
+            }
+            
+            .input-group {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 1rem;
+            }
+            
+            .input-group label {
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+            
+            .input-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            
+            .input-wrapper input {
+                width: 100px;
+                padding: 0.5rem 0.75rem;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                font-size: 1rem;
+                text-align: right;
+                transition: border-color 0.2s, box-shadow 0.2s;
+            }
+            
+            .input-wrapper input:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            }
+            
+            .input-wrapper .unit {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                min-width: 50px;
+            }
+            
+            .result-section {
+                margin-top: 1.25rem;
+                padding-top: 1.25rem;
+                border-top: 1px dashed var(--border-color);
+            }
+            
+            .result-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.6rem 0;
+            }
+            
+            .result-label {
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+            }
+            
+            .result-value {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                min-width: 80px;
+                text-align: right;
+            }
+            
+            .result-unit {
+                font-size: 0.8rem;
+                color: var(--text-muted);
+                min-width: 60px;
+                text-align: left;
+                margin-left: 0.5rem;
+            }
+            
+            .result-item.highlight .result-value {
+                color: var(--primary-color);
+            }
+            
+            .result-item.total {
+                margin-top: 0.5rem;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .result-item.total .result-label {
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+            
+            .result-item.total .result-value {
+                font-size: 1.25rem;
+                color: var(--success-color);
+            }
+            
+            .investment-actions {
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .investment-actions .btn {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.5rem;
+                border: none;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .investment-actions .btn-secondary {
+                background: var(--bg-secondary);
+                color: var(--text-secondary);
+            }
+            
+            .investment-actions .btn-secondary:hover {
+                background: var(--border-color);
+            }
+            
+            .btn-icon {
+                font-size: 1rem;
+            }
+            
+            /* 响应式 */
+            @media (max-width: 480px) {
+                .investment-page {
+                    padding: 1rem;
+                }
+                
+                .input-wrapper input {
+                    width: 80px;
+                }
+            }
+        </style>
+    `;
+}
+
+// ========================================
+// 页面初始化
+// ========================================
+function initInvestmentPage() {
+    // 获取所有输入元素
+    const inputs = {
+        preRunTime: document.getElementById('preRunTime'),
+        preAmount: document.getElementById('preAmount'),
+        preDuration: document.getElementById('preDuration'),
+        addAmount: document.getElementById('addAmount'),
+        addDuration: document.getElementById('addDuration')
+    };
+
+    // 获取所有结果显示元素
+    const results = {
+        preRemaining: document.getElementById('preRemaining'),
+        preMinuteConsume: document.getElementById('preMinuteConsume'),
+        pre5MinConsume: document.getElementById('pre5MinConsume'),
+        addRemaining: document.getElementById('addRemaining'),
+        addMinuteConsume: document.getElementById('addMinuteConsume'),
+        add5MinConsume: document.getElementById('add5MinConsume'),
+        totalConsume: document.getElementById('totalConsume')
+    };
+
+    // 计算函数
+    function calculate() {
+        // 获取输入值
+        const preRunTime = parseFloat(inputs.preRunTime.value) || 0;
+        const preAmount = parseFloat(inputs.preAmount.value) || 0;
+        const preDuration = parseFloat(inputs.preDuration.value) || 0;
+        const addAmount = parseFloat(inputs.addAmount.value) || 0;
+        const addDuration = parseFloat(inputs.addDuration.value) || 0;
+
+        // 开播前投放计算
+        let preRemaining = 0;
+        let preMinuteConsume = 0;
+        let pre5MinConsume = 0;
+
+        if (preDuration > 0) {
+            // 剩余金额 = 金额 / 投放时长 * (投放时长 - 已跑时长)
+            preRemaining = preAmount / preDuration * (preDuration - preRunTime);
+            // 分钟平均消耗 = 金额 / 投放时长 / 60
+            preMinuteConsume = preAmount / preDuration / 60;
+            // 5分钟消耗 = 分钟平均消耗 * 5
+            pre5MinConsume = preMinuteConsume * 5;
+        }
+
+        // 追投后计算
+        let addRemaining = 0;
+        let addMinuteConsume = 0;
+        let add5MinConsume = 0;
+        let totalConsume = 0;
+
+        // 追投后剩余金额 = 开播前剩余金额 + 追投金额
+        addRemaining = preRemaining + addAmount;
+
+        const totalTime = preRunTime + addDuration;
+        if (totalTime > 0) {
+            // 追投后分钟平均消耗 = 剩余金额 / (已跑时长 + 追投时长) / 60
+            addMinuteConsume = addRemaining / totalTime / 60;
+            // 追投后5分钟消耗 = 分钟平均消耗 * 5
+            add5MinConsume = addMinuteConsume * 5;
+            // 合计消耗 = (开播前金额 - 开播前剩余) + ((追投金额 + 开播前剩余) / (追投时长 + 已跑时长))
+            totalConsume = (preAmount - preRemaining) + ((addAmount + preRemaining) / totalTime);
+        }
+
+        // 更新显示
+        results.preRemaining.textContent = formatNumber(preRemaining);
+        results.preMinuteConsume.textContent = formatNumber(preMinuteConsume);
+        results.pre5MinConsume.textContent = formatNumber(pre5MinConsume);
+        results.addRemaining.textContent = formatNumber(addRemaining);
+        results.addMinuteConsume.textContent = formatNumber(addMinuteConsume);
+        results.add5MinConsume.textContent = formatNumber(add5MinConsume);
+        results.totalConsume.textContent = formatNumber(totalConsume);
+    }
+
+    // 格式化数字
+    function formatNumber(num) {
+        if (isNaN(num) || !isFinite(num)) return '--';
+        return num.toFixed(2);
+    }
+
+    // 重置函数
+    function reset() {
+        Object.values(inputs).forEach(input => {
+            input.value = '';
+        });
+        Object.values(results).forEach(result => {
+            result.textContent = '--';
+        });
+    }
+
+    // 绑定输入事件 - 实时计算
+    Object.values(inputs).forEach(input => {
+        input.addEventListener('input', calculate);
+    });
+
+    // 绑定重置按钮
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', reset);
+    }
+}
