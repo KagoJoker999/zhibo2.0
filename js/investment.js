@@ -29,6 +29,10 @@ function getInvestmentPageHTML() {
                     <div class="card-header">
                         <span class="card-icon">📊</span>
                         <h3>开播前投放数据</h3>
+                        <button type="button" class="btn-reset" id="resetBtn">
+                            <span class="btn-icon">🔄</span>
+                            重置
+                        </button>
                     </div>
                     <div class="card-body">
                         <div class="input-group">
@@ -120,13 +124,6 @@ function getInvestmentPageHTML() {
                     </div>
                 </div>
 
-                <!-- 操作按钮 -->
-                <div class="investment-actions">
-                    <button type="button" class="btn btn-secondary" id="resetBtn">
-                        <span class="btn-icon">🔄</span>
-                        重置
-                    </button>
-                </div>
             </div>
         </div>
         
@@ -268,36 +265,28 @@ function getInvestmentPageHTML() {
                 color: var(--success-color);
             }
             
-            .investment-actions {
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-            }
-            
-            .investment-actions .btn {
+            .btn-reset {
+                margin-left: auto;
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
-                padding: 0.75rem 1.5rem;
+                gap: 0.35rem;
+                padding: 0.4rem 0.75rem;
                 border: none;
-                border-radius: 8px;
-                font-size: 0.9rem;
+                border-radius: 6px;
+                font-size: 0.8rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s;
+                background: rgba(255, 255, 255, 0.15);
+                color: white;
             }
             
-            .investment-actions .btn-secondary {
-                background: var(--bg-secondary);
-                color: var(--text-secondary);
+            .btn-reset:hover {
+                background: rgba(255, 255, 255, 0.25);
             }
             
-            .investment-actions .btn-secondary:hover {
-                background: var(--border-color);
-            }
-            
-            .btn-icon {
-                font-size: 1rem;
+            .btn-reset .btn-icon {
+                font-size: 0.85rem;
             }
             
             /* 响应式 */
