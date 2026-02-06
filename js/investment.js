@@ -122,6 +122,7 @@ function getInvestmentPageHTML() {
                                 <span class="result-value" id="totalConsume">--</span>
                                 <span class="result-unit">元</span>
                             </div>
+                            <div class="consume-hint" id="consumeHint"></div>
                         </div>
                     </div>
                 </div>
@@ -265,6 +266,27 @@ function getInvestmentPageHTML() {
             .result-item.total .result-value {
                 font-size: 1.25rem;
                 color: var(--success-color);
+            }
+            
+            .consume-hint {
+                margin-top: 1rem;
+                padding: 0.75rem 1rem;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                text-align: center;
+            }
+            
+            .consume-hint.decrease {
+                background: rgba(34, 197, 94, 0.15);
+                color: #22c55e;
+                border: 1px solid rgba(34, 197, 94, 0.3);
+            }
+            
+            .consume-hint.increase {
+                background: rgba(239, 68, 68, 0.15);
+                color: #ef4444;
+                border: 1px solid rgba(239, 68, 68, 0.3);
             }
             
             .btn-reset {
@@ -439,6 +461,23 @@ function initInvestmentPage() {
         results.addMinuteConsume.textContent = formatNumber(addMinuteConsume);
         results.add5MinConsume.textContent = formatNumber(add5MinConsume);
         results.totalConsume.textContent = formatNumber(totalConsume);
+
+        // 更新消耗对比提示
+        const consumeHint = document.getElementById('consumeHint');
+        if (consumeHint) {
+            if (preMinuteConsume > 0 && addMinuteConsume > 0) {
+                if (preMinuteConsume > addMinuteConsume) {
+                    consumeHint.textContent = '📉 降低消耗速度及总量';
+                    consumeHint.className = 'consume-hint decrease';
+                } else {
+                    consumeHint.textContent = '📈 加速消耗速度及付费介入量';
+                    consumeHint.className = 'consume-hint increase';
+                }
+            } else {
+                consumeHint.textContent = '';
+                consumeHint.className = 'consume-hint';
+            }
+        }
     }
 
     // 格式化数字
