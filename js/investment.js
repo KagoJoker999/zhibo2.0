@@ -35,13 +35,7 @@ function getInvestmentPageHTML() {
                         </button>
                     </div>
                     <div class="card-body">
-                        <div class="input-group">
-                            <label>已跑时长</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="preRunTime" placeholder="0" min="0" step="0.1">
-                                <span class="unit">小时</span>
-                            </div>
-                        </div>
+
                         <div class="input-group">
                             <label>投放金额</label>
                             <div class="input-wrapper">
@@ -82,6 +76,11 @@ function getInvestmentPageHTML() {
                     <div class="card-header">
                         <span class="card-icon">💰</span>
                         <h3>追投计划</h3>
+                        <div class="header-input">
+                            <label>已跑时长</label>
+                            <input type="number" id="preRunTime" placeholder="0" min="0" step="0.1">
+                            <span class="unit">小时</span>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="input-group">
@@ -287,6 +286,44 @@ function getInvestmentPageHTML() {
             
             .btn-reset .btn-icon {
                 font-size: 0.85rem;
+            }
+            
+            .header-input {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            
+            .header-input label {
+                font-size: 0.8rem;
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            .header-input input {
+                width: 60px;
+                padding: 0.3rem 0.5rem;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 6px;
+                font-size: 0.85rem;
+                text-align: right;
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+            
+            .header-input input:focus {
+                outline: none;
+                border-color: rgba(255, 255, 255, 0.6);
+                background: rgba(255, 255, 255, 0.15);
+            }
+            
+            .header-input input::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
+            
+            .header-input .unit {
+                font-size: 0.8rem;
+                color: rgba(255, 255, 255, 0.8);
             }
             
             /* 响应式 */
