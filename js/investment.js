@@ -78,7 +78,10 @@ function getInvestmentPageHTML() {
                         <h3>追投计划</h3>
                         <div class="header-input">
                             <label>已跑时长</label>
-                            <input type="number" id="preRunTime" placeholder="0" min="0" step="0.1">
+                            <input type="number" id="preRunTimeMinutes" placeholder="0" min="0" step="1">
+                            <span class="unit">分钟</span>
+                            <span class="separator">=</span>
+                            <input type="number" id="preRunTime" placeholder="0" min="0" step="0.01" readonly>
                             <span class="unit">小时</span>
                         </div>
                     </div>
@@ -326,6 +329,17 @@ function getInvestmentPageHTML() {
                 color: rgba(255, 255, 255, 0.8);
             }
             
+            .header-input .separator {
+                font-size: 0.9rem;
+                color: rgba(255, 255, 255, 0.6);
+                margin: 0 0.25rem;
+            }
+            
+            .header-input input[readonly] {
+                background: rgba(255, 255, 255, 0.05);
+                cursor: default;
+            }
+            
             /* 响应式 */
             @media (max-width: 480px) {
                 .investment-page {
@@ -353,6 +367,9 @@ function initInvestmentPage() {
         addDuration: document.getElementById('addDuration')
     };
 
+    // 获取分钟输入框
+    const preRunTimeMinutes = document.getElementById('preRunTimeMinutes');
+
     // 获取所有结果显示元素
     const results = {
         preRemaining: document.getElementById('preRemaining'),
@@ -363,6 +380,14 @@ function initInvestmentPage() {
         add5MinConsume: document.getElementById('add5MinConsume'),
         totalConsume: document.getElementById('totalConsume')
     };
+
+    // 分钟转小时函数
+    function convertMinutesToHours() {
+        const minutes = parseFloat(preRunTimeMinutes.value) || 0;
+        const hours = minutes / 60;
+        inputs.preRunTime.value = hours.toFixed(2);
+        calculate();
+    }
 
     // 计算函数
     function calculate() {
@@ -430,6 +455,10 @@ function initInvestmentPage() {
 
     // 重置函数
     function reset() {
+        // 清空分钟输入框
+        if (preRunTimeMinutes) {
+            preRunTimeMinutes.value = '';
+        }
         // 清空所有输入
         Object.entries(inputs).forEach(([key, input]) => {
             // 检查是否有默认值
@@ -443,19 +472,15 @@ function initInvestmentPage() {
         calculate();
     }
 
+    // 绑定分钟输入事件 - 实时转换
+    if (preRunTimeMinutes) {
+        preRunTimeMinutes.addEventListener('input', convertMinutesToHours);
+    }
+
     // 绑定输入事件 - 实时计算
     Object.values(inputs).forEach(input => {
-        input.addEventListener('input', calculate);
-    });
-
-    // 已跑时长智能识别：>= 10 认为是分钟，自动转换为小时
-    inputs.preRunTime.addEventListener('blur', function () {
-        const value = parseFloat(this.value);
-        if (!isNaN(value) && value >= 10) {
-            // 输入值 >= 10，认为是分钟数，转换为小时
-            const hours = value / 60;
-            this.value = hours.toFixed(2);
-            calculate();
+        if (input && input !== inputs.preRunTime) { // preRunTime已是只读，由分钟输入控制
+            input.addEventListener('input', calculate);
         }
     });
 
