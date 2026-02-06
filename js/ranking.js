@@ -474,10 +474,8 @@ function calculateRanking(products, config, categoryExcludedMap = {}) {
 
         // 应用筛选条件
         if (category.includes('库存品')) {
-            // 库存品特殊逻辑：从剩余商品中按可用数排序
-            available = available.sort((a, b) => (b.available_qty || 0) - (a.available_qty || 0));
-            const limit = conditions["可用数"]?.前几名 || 10;
-            available = available.slice(0, limit);
+            // 库存品:使用标准筛选逻辑
+            available = applyFilters(available, conditions);
         } else if (conditions.按子分类分别筛选) {
             // 按子分类分别筛选
             console.log(`[排品调试] ${category}: 调用 filterBySubcategory`);
