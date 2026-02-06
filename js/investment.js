@@ -73,9 +73,11 @@ function getInvestmentPageHTML() {
 
                 <!-- 追投计划 -->
                 <div class="investment-card">
-                    <div class="card-header">
-                        <span class="card-icon">💰</span>
-                        <h3>追投计划</h3>
+                    <div class="card-header card-header-wrap">
+                        <div class="card-header-title">
+                            <span class="card-icon">💰</span>
+                            <h3>追投计划</h3>
+                        </div>
                         <div class="header-input">
                             <label>已跑时长</label>
                             <input type="number" id="preRunTimeMinutes" placeholder="0" min="0" step="1">
@@ -111,7 +113,7 @@ function getInvestmentPageHTML() {
                             <button type="button" class="quick-btn" data-amount="300" data-duration="1">300元/1小时</button>
                             <button type="button" class="quick-btn" data-amount="500" data-duration="1">500元/1小时</button>
                             <button type="button" class="quick-btn" data-amount="300" data-duration="0.5">300元/0.5小时</button>
-                            <button type="button" class="quick-btn" data-amount="500" data-duration="4">500元/4小时</button>
+                            <button type="button" class="quick-btn" data-amount="100" data-duration="5">100元/5小时</button>
                         </div>
                         
                         <div class="result-section">
@@ -170,6 +172,17 @@ function getInvestmentPageHTML() {
                 padding: 1rem 1.25rem;
                 background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
                 color: white;
+            }
+            
+            .card-header.card-header-wrap {
+                flex-wrap: wrap;
+                gap: 0.5rem 1rem;
+            }
+            
+            .card-header-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
             }
             
             .card-icon {
