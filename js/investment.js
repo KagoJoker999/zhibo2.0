@@ -224,15 +224,22 @@ function getInvestmentPageHTML() {
             
             .result-section {
                 margin-top: 1.25rem;
-                padding-top: 1.25rem;
-                border-top: 1px dashed var(--border-color);
+                padding: 1rem;
+                background: rgba(0, 0, 0, 0.02);
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
             }
             
             .result-item {
-                display: flex;
+                display: grid;
+                grid-template-columns: 1fr 100px 70px;
                 align-items: center;
-                justify-content: space-between;
-                padding: 0.6rem 0;
+                padding: 0.5rem 0;
+                gap: 0.5rem;
+            }
+            
+            .result-item + .result-item {
+                border-top: 1px solid rgba(0, 0, 0, 0.05);
             }
             
             .result-label {
@@ -244,16 +251,15 @@ function getInvestmentPageHTML() {
                 font-size: 1.1rem;
                 font-weight: 600;
                 color: var(--text-primary);
-                min-width: 80px;
                 text-align: right;
+                font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+                font-variant-numeric: tabular-nums;
             }
             
             .result-unit {
                 font-size: 0.8rem;
                 color: var(--text-muted);
-                min-width: 60px;
                 text-align: left;
-                margin-left: 0.5rem;
             }
             
             .result-item.highlight .result-value {
@@ -263,7 +269,11 @@ function getInvestmentPageHTML() {
             .result-item.total {
                 margin-top: 0.5rem;
                 padding-top: 0.75rem;
-                border-top: 1px solid var(--border-color);
+                border-top: 2px solid var(--primary-color) !important;
+                background: rgba(99, 102, 241, 0.05);
+                margin: 0.5rem -1rem -1rem -1rem;
+                padding: 0.75rem 1rem;
+                border-radius: 0 0 8px 8px;
             }
             
             .result-item.total .result-label {
