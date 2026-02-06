@@ -396,14 +396,25 @@ function initInvestmentPage() {
         return num.toFixed(2);
     }
 
+    // 默认值配置
+    const defaultValues = {
+        preAmount: 200,      // 投放金额默认值（元）
+        preDuration: 2       // 投放时长默认值（小时）
+    };
+
     // 重置函数
     function reset() {
-        Object.values(inputs).forEach(input => {
-            input.value = '';
+        // 清空所有输入
+        Object.entries(inputs).forEach(([key, input]) => {
+            // 检查是否有默认值
+            if (defaultValues[key] !== undefined) {
+                input.value = defaultValues[key];
+            } else {
+                input.value = '';
+            }
         });
-        Object.values(results).forEach(result => {
-            result.textContent = '--';
-        });
+        // 重置后重新计算
+        calculate();
     }
 
     // 绑定输入事件 - 实时计算
