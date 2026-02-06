@@ -101,6 +101,14 @@ function getInvestmentPageHTML() {
                             </div>
                         </div>
                         
+                        <div class="quick-options">
+                            <span class="quick-label">快速添加：</span>
+                            <button type="button" class="quick-btn" data-amount="300" data-duration="1">300元/1小时</button>
+                            <button type="button" class="quick-btn" data-amount="500" data-duration="1">500元/1小时</button>
+                            <button type="button" class="quick-btn" data-amount="300" data-duration="0.5">300元/0.5小时</button>
+                            <button type="button" class="quick-btn" data-amount="500" data-duration="4">500元/4小时</button>
+                        </div>
+                        
                         <div class="result-section">
                             <div class="result-item highlight">
                                 <span class="result-label">追投后剩余金额</span>
@@ -358,6 +366,42 @@ function getInvestmentPageHTML() {
             }
             
 
+            .quick-options {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.5rem;
+                margin-top: 0.5rem;
+                padding-top: 0.75rem;
+                border-top: 1px dashed var(--border-color);
+            }
+            
+            .quick-label {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+                margin-right: 0.25rem;
+            }
+            
+            .quick-btn {
+                padding: 0.4rem 0.75rem;
+                border: 1px solid var(--primary-color);
+                border-radius: 16px;
+                background: rgba(99, 102, 241, 0.1);
+                color: var(--primary-color);
+                font-size: 0.8rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .quick-btn:hover {
+                background: var(--primary-color);
+                color: white;
+            }
+            
+            .quick-btn:active {
+                transform: scale(0.95);
+            }
             
             /* 响应式 */
             @media (max-width: 480px) {
@@ -367,6 +411,15 @@ function getInvestmentPageHTML() {
                 
                 .input-wrapper input {
                     width: 80px;
+                }
+                
+                .quick-options {
+                    justify-content: flex-start;
+                }
+                
+                .quick-btn {
+                    font-size: 0.75rem;
+                    padding: 0.35rem 0.6rem;
                 }
             }
         </style>
@@ -538,6 +591,18 @@ function initInvestmentPage() {
     if (resetBtn) {
         resetBtn.addEventListener('click', reset);
     }
+
+    // 绑定快速选项按钮
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const amount = btn.dataset.amount;
+            const duration = btn.dataset.duration;
+            inputs.addAmount.value = amount;
+            inputs.addDuration.value = duration;
+            calculate();
+        });
+    });
 
     // 页面加载时自动设置默认值
     reset();
