@@ -13,7 +13,7 @@
     /* 背景色 (Dark Mode) */
     --bg-primary: #17171A;
     /* 极深灰 */
-    --bg-secondary: #232324;
+    --bg-secondary: #eeeadf;
     /* 组件背景 */
     --bg-card: #232324;
     /* 卡片背景 */
@@ -586,7 +586,7 @@ select:focus {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.375rem 1.5rem;
     font-size: 0.9375rem;
     font-weight: 500;
     border: none;

@@ -260,7 +260,7 @@ function generateMappingPage() {
             </div>
             
             <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机版</button>
+                <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机/插件</button>
                 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ mapping_history</span>
                 <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">🔄 刷新数据</button>
                 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>

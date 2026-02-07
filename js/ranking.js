@@ -859,7 +859,6 @@ function generateRankingPage() {
                     <button class="btn btn-primary" id="btnSaveResults" disabled style="display: inline-flex; align-items: center; gap: 0.5rem;">
                         保存结果到数据库 <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: normal; font-family: monospace;">ranking_results</span>
                     </button>
-                    <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">插件读取</span>
                     <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">影刀读取</span>
                     <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem;">📦 历史排品</button>
                 </div>
@@ -1062,7 +1061,7 @@ function generateRankingCheckPage() {
             <!-- 已保存排品结果（从数据库读取） -->
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 1.5rem 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">插件读取</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
+                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
                     <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
                 <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 600px; overflow-y: auto;">
