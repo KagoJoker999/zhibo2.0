@@ -835,7 +835,7 @@ function generateRankingPage() {
                     <button type="button" class="toggle-btn active" id="btnExcludeNew" onclick="setNewProductMode(false)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">
                         排除新品<span style="font-size: 0.625rem; opacity: 0.8; display: block;">开播前</span>
                     </button>
-                    <button type="button" class="toggle-btn" id="btnIncludeNew" onclick="setNewProductMode(true)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--bg-secondary); color: #4E5969; cursor: pointer; transition: all 0.2s;">
+                    <button type="button" class="toggle-btn" id="btnIncludeNew" onclick="setNewProductMode(true)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;">
                         包含新品<span style="font-size: 0.625rem; opacity: 0.8; display: block;">下播调拨</span>
                     </button>
                 </div>
@@ -850,7 +850,7 @@ function generateRankingPage() {
 
                 
                 <div class="scrollable-content" id="rankingResultContent">
-                    <div class="placeholder-content" style="padding: 2rem 0; color: #86909C;">
+                    <div class="placeholder-content" style="padding: 2rem 0; color: var(--text-muted);">
                         <p>请点击"加载数据并计算"按钮</p>
                     </div>
                 </div>
@@ -1061,7 +1061,7 @@ function generateRankingCheckPage() {
             <!-- 已保存排品结果（从数据库读取） -->
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 1.5rem 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: #4E5969; font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
+                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
                     <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
                 <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 600px; overflow-y: auto;">
@@ -1420,7 +1420,7 @@ function renderRankingResults(results) {
         ? `<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--warning-color); border-radius: var(--border-radius-sm); padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                <span style="font-size: 1.25rem;">⚠️</span>
                <span style="color: var(--warning-color); font-weight: 500;">有 ${unmatchedCount} 个商品疑似未上架</span>
-               <span style="color: #86909C; font-size: 0.85rem; margin-left: 0.5rem;">可手动填写商品ID后点击保存</span>
+               <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">可手动填写商品ID后点击保存</span>
            </div>`
         : '';
 
@@ -1428,8 +1428,8 @@ function renderRankingResults(results) {
         ${unmatchedWarning}
         <div class="ranking-result-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📊 排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: #4E5969; font-weight: normal; font-family: monospace;">→ ranking_results</span></h3>
-                <span style="font-size: 0.875rem; color: #4E5969;">共 ${results.length} 个商品</span>
+                <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📊 排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">→ ranking_results</span></h3>
+                <span style="font-size: 0.875rem; color: var(--text-secondary);">共 ${results.length} 个商品</span>
             </div>
             <button class="btn btn-sm" onclick="undoDeleteRankingItem()" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;" ${deletedItems.length === 0 ? 'disabled' : ''}>
                 ↩ 撤回 (${deletedItems.length})
@@ -1454,7 +1454,7 @@ function renderRankingResults(results) {
                 <div class="result-items-table">
                     <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                         <thead>
-                            <tr style="background: var(--bg-secondary); color: #4E5969;">
+                            <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">图片</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 300px;">商品名称</th>
@@ -1470,7 +1470,7 @@ function renderRankingResults(results) {
             // 为无ID商品显示输入框和保存按钮，否则显示ID和复制按钮
             const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
             const idDisplay = productId
-                ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: #86909C;" title="复制">📋</button>`
+                ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
                 : `<div style="display: flex; align-items: center; gap: 0.5rem;">
                        <input type="text" class="manual-product-id-input" data-product-name="${escapedProductName}" 
                               placeholder="输入商品ID" 
@@ -1487,10 +1487,10 @@ function renderRankingResults(results) {
             // 使用 .hover-zoom-container 和双图结构实现悬浮放大（避免闪烁）
             const imageHtml = firstImageUrl
                 ? `<div class="hover-zoom-container">
-                       <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: #86909C; font-size: 0.625rem;\\'>加载失败</span>'">
+                       <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'">
                        <img src="${firstImageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
                    </div>`
-                : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #86909C; font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
+                : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
             const productCode = item.product_code || '--';
             // 处理多编码显示：最多显示2个，其余悬浮显示
             let codeDisplay = '--';
@@ -1498,11 +1498,11 @@ function renderRankingResults(results) {
                 const codes = productCode.split(',').map(c => c.trim()).filter(c => c);
                 const allCodes = codes.join(',');
                 if (codes.length <= 2) {
-                    codeDisplay = `${allCodes} <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: #86909C;" title="复制">📋</button>`;
+                    codeDisplay = `${allCodes} <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`;
                 } else {
                     const displayCodes = codes.slice(0, 2).join(',');
                     const moreCount = codes.length - 2;
-                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: #86909C;" title="复制全部编码">📋</button>`;
+                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码">📋</button>`;
                 }
             }
             // 无ID商品红底
@@ -1514,9 +1514,9 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button onclick="copyToClipboard('${escapedProductName}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: #86909C;" title="复制商品名称">📋</button></td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button onclick="copyToClipboard('${escapedProductName}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称">📋</button></td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
-                                        <td style="padding: 0.75rem 0.5rem; color: #4E5969; text-align: left;">${codeDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
                                             <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 1rem; padding: 0.25rem;">✕</button>
                                         </td>
@@ -1597,7 +1597,7 @@ async function saveManualProductId(productName, buttonElement) {
         const tdElement = buttonElement.closest('td');
         const trElement = buttonElement.closest('tr');
         if (tdElement) {
-            tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: #86909C;" title="复制">📋</button>`;
+            tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`;
         }
         // 移除红色背景
         if (trElement) {
@@ -1689,7 +1689,7 @@ async function loadAndRenderSavedResults() {
         });
 
         let html = `
-            <div style="font-size: 0.875rem; color: #4E5969; margin-bottom: 1rem;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
                 共 ${data.length} 个商品
             </div>
         `;
@@ -1697,11 +1697,11 @@ async function loadAndRenderSavedResults() {
         for (const [category, items] of Object.entries(grouped)) {
             html += `
                 <div class="result-category" style="margin-bottom: 1.5rem;">
-                    <h4 style="margin: 0 0 0.5rem 0;">${category} <span class="count" style="font-size: 0.85rem; color: #86909C;">(${items.length})</span></h4>
+                    <h4 style="margin: 0 0 0.5rem 0;">${category} <span class="count" style="font-size: 0.85rem; color: var(--text-muted);">(${items.length})</span></h4>
                     <div class="result-items-table">
                         <table class="ranking-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                             <thead>
-                                <tr style="background: var(--bg-secondary); color: #4E5969;">
+                                <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
                                     <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">图片</th>
                                     <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
                                     <th style="padding: 0.75rem 0.5rem; text-align: left; width: 250px;">商品名称</th>
@@ -1719,10 +1719,10 @@ async function loadAndRenderSavedResults() {
                 const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
                 const imageHtml = firstImageUrl
                     ? `<div class="hover-zoom-container">
-                           <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: #86909C; font-size: 0.625rem;\\'>加载失败</span>'">
+                           <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'">
                            <img src="${firstImageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
                        </div>`
-                    : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #86909C; font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
+                    : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
                 const productCode = item.product_code || '--';
                 const hasNoId = !productId;
                 const rowStyle = hasNoId
@@ -1734,7 +1734,7 @@ async function loadAndRenderSavedResults() {
                                             <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                             <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number || '--'}</td>
                                             <td style="padding: 0.75rem 0.5rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
-                                            <td style="padding: 0.75rem 0.5rem; color: #4E5969; text-align: left;">${productCode}</td>
+                                            <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${productCode}</td>
                                             <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         </tr>
                                     `;

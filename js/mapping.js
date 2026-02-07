@@ -261,12 +261,12 @@ function generateMappingPage() {
             
             <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机/插件</button>
-                <span class="db-table-tag" style="font-size: 0.75rem; color: #86909C; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ mapping_history</span>
-                <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: #4E5969;">🔄 刷新数据</button>
-                <span class="db-table-tag" style="font-size: 0.75rem; color: #86909C; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
-                <span id="sourceStats" style="color: #86909C; font-size: 0.8rem;"></span>
+                <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ mapping_history</span>
+                <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">🔄 刷新数据</button>
+                <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
+                <span id="sourceStats" style="color: var(--text-muted); font-size: 0.8rem;"></span>
                 <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color);">📦 更新仓位</button>
-                <span id="mappingStatus" style="color: #86909C; font-size: 0.875rem; margin-left: auto;"></span>
+                <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
             <div class="mapping-content" style="padding: 0 1.5rem 1.5rem;">
@@ -282,13 +282,13 @@ function generateMappingPage() {
                 <div class="modal-content" style="background: var(--bg-card); border-radius: var(--border-radius); padding: 2rem; max-width: 600px; width: 90%;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h3 style="margin: 0;">📦 更新仓位 <span style="color: #ff4444; font-size: 0.75rem; font-weight: normal;">需下载最新库存视图新品表格，注意商品名称准确</span></h3>
-                        <button id="closeWarehouseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #4E5969;">&times;</button>
+                        <button id="closeWarehouseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
                     </div>
                     
                     <div id="warehouseUploadZone" style="border: 2px dashed var(--border-color); border-radius: var(--border-radius); padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 1rem;">
                         <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
-                        <p style="margin: 0.5rem 0; color: #1D2129;">拖拽文件到此处,或点击选择</p>
-                        <p style="margin: 0; color: #86909C; font-size: 0.875rem;">.xlsx, .xls, .csv</p>
+                        <p style="margin: 0.5rem 0; color: var(--text-primary);">拖拽文件到此处,或点击选择</p>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">.xlsx, .xls, .csv</p>
                         <input type="file" id="warehouseFileInput" accept=".xlsx,.xls,.csv" style="display:none">
                     </div>
                     
@@ -297,11 +297,11 @@ function generateMappingPage() {
                         <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
                             <div id="warehouseProgressBar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
                         </div>
-                        <div id="warehouseStatusDetail" style="margin-top: 0.5rem; font-size: 0.875rem; color: #4E5969;"></div>
+                        <div id="warehouseStatusDetail" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);"></div>
                     </div>
                     
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <p style="color: #86909C; font-size: 0.875rem; margin: 0;">说明:读取表格的商品名称(B列)和主仓位(H列),更新 mapping_history 表中匹配商品的仓位信息</p>
+                        <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">说明:读取表格的商品名称(B列)和主仓位(H列),更新 mapping_history 表中匹配商品的仓位信息</p>
                     </div>
                 </div>
             </div>
@@ -407,7 +407,7 @@ function renderMappingTable(container, data) {
         const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
         const imageHtml = imageUrl
             ? `<img src="${imageUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
-            : '<span style="color: #86909C;">无</span>';
+            : '<span style="color: var(--text-muted);">无</span>';
         const bgColor = categoryColors[item.ranking_result] || 'transparent';
         return `
                         <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};">
@@ -435,12 +435,12 @@ function generateMappingHistoryPage() {
     return `
         <div class="mapping-history-page">
             <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
-                <h2>📜 历史记录 <span class="db-table-tag" style="font-size: 0.75rem; color: #86909C; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; vertical-align: middle;">mapping_history</span></h2>
+                <h2>📜 历史记录 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; vertical-align: middle;">mapping_history</span></h2>
                 <p>显示上一次保存的对照结果</p>
             </div>
             
             <div class="history-info" style="padding: 1rem 1.5rem;">
-                <span id="historyGeneratedTime" style="color: #86909C; font-size: 0.875rem;"></span>
+                <span id="historyGeneratedTime" style="color: var(--text-muted); font-size: 0.875rem;"></span>
             </div>
             
             <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
@@ -501,21 +501,21 @@ function generateMappingSettingsPage() {
                 <!-- 左侧：仓位映射规则 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">📦 仓位映射规则</h3>
-                    <p style="color: #86909C; font-size: 0.875rem; margin-bottom: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
                         仓位格式为 X-Y-Z，第二位 Y 在区间内时替换为对应样品仓位
                     </p>
                     
                     <div class="rule-editor" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: #4E5969;">区间起始</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">区间起始</label>
                             <input type="number" id="ruleRangeStart" value="1" min="1" style="width: 100%;">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: #4E5969;">区间结束</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">区间结束</label>
                             <input type="number" id="ruleRangeEnd" value="10" min="1" style="width: 100%;">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: #4E5969;">样品仓位</label>
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">样品仓位</label>
                             <select id="ruleSampleValue" style="width: 100%; height: 38px;">
                                 <option value="">请选择</option>
                             </select>
@@ -524,7 +524,7 @@ function generateMappingSettingsPage() {
                     </div>
                     
                     <div id="rulesListContainer" style="margin-top: 1rem;">
-                        <h4 style="margin: 0 0 0.5rem; color: #4E5969; font-size: 0.875rem;">已添加规则：</h4>
+                        <h4 style="margin: 0 0 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">已添加规则：</h4>
                         <div id="rulesList"></div>
                     </div>
                     
@@ -536,7 +536,7 @@ function generateMappingSettingsPage() {
                 <!-- 右侧：样品仓位选项设置 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">📋 样品仓位选项</h3>
-                    <p style="color: #86909C; font-size: 0.875rem; margin-bottom: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
                         每行一个选项，保存后可在左侧下拉栏选择
                     </p>
                     
@@ -581,7 +581,7 @@ async function initMappingSettingsPage() {
 
     function renderRulesList() {
         if (currentRules.length === 0) {
-            rulesList.innerHTML = '<p style="color: #86909C; font-size: 0.875rem;">暂无规则</p>';
+            rulesList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.875rem;">暂无规则</p>';
             return;
         }
 
@@ -667,8 +667,8 @@ function initWarehouseUpdateDialog() {
         statusDiv.style.display = 'none';
         uploadZone.innerHTML = `
             <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
-            <p style="margin: 0.5rem 0; color: #1D2129;">拖拽文件到此处,或点击选择</p>
-            <p style="margin: 0; color: #86909C; font-size: 0.875rem;">.xlsx, .xls, .csv</p>
+            <p style="margin: 0.5rem 0; color: var(--text-primary);">拖拽文件到此处,或点击选择</p>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">.xlsx, .xls, .csv</p>
         `;
     };
 

@@ -5,29 +5,29 @@
 /* CSS 变量 - 主题配置 */
 :root {
     /* 主色调 (Arco Design Blue) */
-    --primary-color: #ff751f;
+    --primary-color: #165DFF;
     --primary-hover: #4080FF;
     --primary-active: #0E42D2;
     --primary-light: rgba(22, 93, 255, 0.1);
 
     /* 背景色 (Dark Mode) */
-    --bg-primary: #99826a;
+    --bg-primary: #17171A;
     /* 极深灰 */
-    --bg-secondary: #eeeadf;
+    --bg-secondary: #232324;
     /* 组件背景 */
-    --bg-card: #FFFFFF;
+    --bg-card: #232324;
     /* 卡片背景 */
-    --bg-hover: #F2F3F5;
-    --bg-active: #E5E6EB;
+    --bg-hover: rgba(255, 255, 255, 0.04);
+    --bg-active: rgba(255, 255, 255, 0.08);
 
     /* 文字颜色 */
-    --text-primary: #1D2129;
-    --text-secondary: #4E5969;
-    --text-muted: #86909C;
-    --text-disabled: #C9CDD4;
+    --text-primary: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.5);
+    --text-disabled: rgba(255, 255, 255, 0.3);
 
     /* 边框 */
-    --border-color: #E5E6EB;
+    --border-color: rgba(255, 255, 255, 0.08);
     /* 极细边框 */
     --border-radius: 4px;
     /* 标准圆角 */
@@ -95,7 +95,7 @@ body {
 .sidebar {
     width: var(--sidebar-width);
     background: var(--bg-secondary);
-    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -107,7 +107,7 @@ body {
 .sidebar-header {
     height: var(--header-height);
     padding: 0 1.25rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -116,7 +116,7 @@ body {
 .logo {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1D2129;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -141,7 +141,7 @@ body {
 .menu-toggle span {
     width: 20px;
     height: 2px;
-    background: #1D2129;
+    background: var(--text-primary);
     transition: var(--transition-fast);
 }
 
@@ -164,14 +164,14 @@ body {
     padding: 0.75rem 1rem;
     margin: 0 0.5rem;
     border-radius: var(--border-radius);
-    color: #4E5969;
+    color: var(--text-secondary);
     text-decoration: none;
     transition: all var(--transition-fast);
 }
 
 .nav-link:hover {
     background: var(--bg-hover);
-    color: #1D2129;
+    color: var(--text-primary);
 }
 
 .nav-link.active {
@@ -206,14 +206,14 @@ body {
 .nav-submenu a {
     display: block;
     padding: 0.5rem 1.25rem 0.5rem 3.5rem;
-    color: #86909C;
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 0.875rem;
     transition: var(--transition-fast);
 }
 
 .nav-submenu a:hover {
-    color: #1D2129;
+    color: var(--text-primary);
     background: var(--bg-hover);
 }
 
@@ -236,20 +236,18 @@ body {
     height: var(--header-height);
     padding: 0 1.5rem;
     background: var(--bg-secondary);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 50;
-    color: #1D2129;
 }
 
 .page-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1D2129;
 }
 
 .header-actions {
@@ -559,7 +557,7 @@ select {
     width: 100%;
     padding: 0.5rem 0.75rem;
     font-size: 0.9375rem;
-    color: #1D2129;
+    color: var(--text-primary);
     background: var(--bg-hover);
     /* Arco Dark Input Bg */
     border: 1px solid transparent;
@@ -617,7 +615,7 @@ select:focus {
 
 .btn-secondary {
     background: transparent;
-    color: #1D2129;
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
 }
 
@@ -677,7 +675,7 @@ select:focus {
 .data-table th {
     background: var(--bg-secondary);
     font-weight: 600;
-    color: #4E5969;
+    color: var(--text-secondary);
     font-size: 0.875rem;
     text-transform: uppercase;
 }
@@ -695,7 +693,7 @@ select:focus {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #4E5969;
+    color: var(--text-secondary);
 }
 
 .form-input,
@@ -705,7 +703,7 @@ select:focus {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    color: #1D2129;
+    color: var(--text-primary);
     font-size: 0.9375rem;
     transition: var(--transition-fast);
 }
@@ -761,7 +759,7 @@ select:focus {
 
 .upload-mode-label {
     font-weight: 500;
-    color: #4E5969;
+    color: var(--text-secondary);
 }
 
 .radio-label {
@@ -769,7 +767,7 @@ select:focus {
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    color: #1D2129;
+    color: var(--text-primary);
 }
 
 .radio-label input[type="radio"] {
@@ -1433,7 +1431,7 @@ select:focus {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    color: #1D2129;
+    color: var(--text-primary);
     font-size: 0.875rem;
 }
 
@@ -1461,7 +1459,7 @@ select:focus {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    color: #1D2129;
+    color: var(--text-primary);
     font-size: 0.875rem;
 }
 
@@ -2567,118 +2565,4 @@ td .hover-zoom-img {
         opacity: 1;
         transform: translateX(-50%) scale(1);
     }
-}
-
-/* ========================================
-   全局提示组件 (Toast)
-   ======================================== */
-.toast-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10001;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    pointer-events: none;
-}
-
-.toast {
-    padding: 10px 20px;
-    border-radius: var(--border-radius);
-    background: var(--bg-card);
-    color: var(--text-primary);
-    box-shadow: var(--shadow-lg);
-    font-size: 0.875rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    animation: slideIn 0.3s ease;
-    pointer-events: auto;
-    border: 1px solid var(--border-color);
-}
-
-.toast.info {
-    border-left: 4px solid var(--info-color);
-}
-
-.toast.success {
-    border-left: 4px solid var(--success-color);
-}
-
-.toast.warning {
-    border-left: 4px solid var(--warning-color);
-}
-
-.toast.error {
-    border-left: 4px solid var(--error-color);
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* ========================================
-   中央警告弹窗 (Center Alert)
-   ======================================== */
-.center-alert-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10002;
-    animation: fadeIn 0.2s ease;
-}
-
-.center-alert {
-    background: var(--bg-card);
-    padding: 24px;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
-    text-align: center;
-    max-width: 320px;
-    width: 90%;
-    animation: zoomIn 0.2s ease;
-}
-
-.center-alert-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-}
-
-.center-alert-message {
-    font-size: 1rem;
-    color: var(--text-primary);
-    margin-bottom: 24px;
-    line-height: 1.5;
-}
-
-.center-alert-close {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 8px 24px;
-    border-radius: var(--border-radius);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.center-alert-close:hover {
-    background: var(--primary-hover);
 }
