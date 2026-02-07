@@ -159,7 +159,7 @@ function getInvestmentPageHTML() {
             }
             
             .investment-card {
-                background: var(--card-bg);
+                background: var(--bg-card);
                 border-radius: 12px;
                 box-shadow: var(--shadow-sm);
                 overflow: hidden;

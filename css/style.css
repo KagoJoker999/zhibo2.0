@@ -15,19 +15,19 @@
     /* 极深灰 */
     --bg-secondary: #eeeadf;
     /* 组件背景 */
-    --bg-card: #232324;
+    --bg-card: #FFFFFF;
     /* 卡片背景 */
-    --bg-hover: rgba(255, 255, 255, 0.04);
-    --bg-active: rgba(255, 255, 255, 0.08);
+    --bg-hover: #F2F3F5;
+    --bg-active: #E5E6EB;
 
     /* 文字颜色 */
-    --text-primary: rgba(255, 255, 255, 0.9);
-    --text-secondary: rgba(255, 255, 255, 0.7);
-    --text-muted: rgba(255, 255, 255, 0.5);
-    --text-disabled: rgba(255, 255, 255, 0.3);
+    --text-primary: #1D2129;
+    --text-secondary: #4E5969;
+    --text-muted: #86909C;
+    --text-disabled: #C9CDD4;
 
     /* 边框 */
-    --border-color: rgba(255, 255, 255, 0.08);
+    --border-color: #E5E6EB;
     /* 极细边框 */
     --border-radius: 4px;
     /* 标准圆角 */
@@ -2567,4 +2567,118 @@ td .hover-zoom-img {
         opacity: 1;
         transform: translateX(-50%) scale(1);
     }
+}
+
+/* ========================================
+   全局提示组件 (Toast)
+   ======================================== */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease;
+    pointer-events: auto;
+    border: 1px solid var(--border-color);
+}
+
+.toast.info {
+    border-left: 4px solid var(--info-color);
+}
+
+.toast.success {
+    border-left: 4px solid var(--success-color);
+}
+
+.toast.warning {
+    border-left: 4px solid var(--warning-color);
+}
+
+.toast.error {
+    border-left: 4px solid var(--error-color);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   中央警告弹窗 (Center Alert)
+   ======================================== */
+.center-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+    animation: fadeIn 0.2s ease;
+}
+
+.center-alert {
+    background: var(--bg-card);
+    padding: 24px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+    animation: zoomIn 0.2s ease;
+}
+
+.center-alert-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.center-alert-message {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.center-alert-close {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.center-alert-close:hover {
+    background: var(--primary-hover);
 }

@@ -430,7 +430,7 @@ function generateNumberingRulesUI() {
                     <h4 style="margin:0; font-size:0.9rem;">👁️ 规则预览</h4>
                     <button class="btn btn-sm btn-secondary" id="btnPreviewRules">刷新预览</button>
                 </div>
-                <div id="rulesPreviewText" style="font-family:monospace; color:var(--text-secondary); font-size:0.85rem; line-height:1.6; white-space: pre-wrap;">请配置规则...</div>
+                <div id="rulesPreviewText" style="font-family:monospace; color: #4E5969; font-size:0.85rem; line-height:1.6; white-space: pre-wrap;">请配置规则...</div>
             </div>
         </div>
     `;
@@ -1402,7 +1402,7 @@ function initNumberingRulesLogic() {
         rulesContainer.innerHTML = rules.map((r, i) => `
             <div class="rule-item" data-index="${i}" style="background:var(--bg-tertiary); padding:1rem; border-radius:4px; display:flex; gap:1rem; align-items:flex-end; border:1px solid var(--border-color);">
                 <div style="flex:1">
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">第几个品（按编码排序后）</label>
+                    <label style="font-size:0.75rem; color: #86909C; display:block; margin-bottom:4px;">第几个品（按编码排序后）</label>
                     <div style="display:flex; align-items:center; gap:0.5rem">
                         <input type="number" class="input input-sm rule-start" value="${r.range_start}" style="width:70px">
                         <span>-</span>
@@ -1410,15 +1410,15 @@ function initNumberingRulesLogic() {
                     </div>
                 </div>
                  <div style="width:80px">
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">前缀</label>
+                    <label style="font-size:0.75rem; color: #86909C; display:block; margin-bottom:4px;">前缀</label>
                     <input type="text" class="input input-sm rule-prefix" value="${r.prefix || ''}" style="width:100%">
                 </div>
                 <div style="width:80px">
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">起始号</label>
+                    <label style="font-size:0.75rem; color: #86909C; display:block; margin-bottom:4px;">起始号</label>
                     <input type="number" class="input input-sm rule-start-num" value="${r.start_num}" style="width:100%">
                 </div>
                 <div style="width:80px">
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">步长</label>
+                    <label style="font-size:0.75rem; color: #86909C; display:block; margin-bottom:4px;">步长</label>
                     <input type="number" class="input input-sm rule-step" value="${r.step}" style="width:100%">
                 </div>
                 <button class="btn btn-sm btn-icon btn-delete-rule" style="color:var(--error-color); height:32px; width:32px; display:flex; align-items:center; justify-content:center; cursor: pointer;">✕</button>
