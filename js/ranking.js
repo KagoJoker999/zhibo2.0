@@ -1404,8 +1404,13 @@ function renderRankingResults(results) {
         grouped[r.ranking_result].push(r);
     });
 
-    // 计算未匹配ID的商品数量
-    const unmatchedCount = results.filter(r => !cachedProductIds[r.product_name]).length;
+    // 计算未匹配ID的商品及其编码
+    const unmatchedItems = results.filter(r => !cachedProductIds[r.product_name]);
+    const unmatchedCount = unmatchedItems.length;
+    const unmatchedCodes = unmatchedItems
+        .map(r => r.product_code)
+        .filter(code => code && code !== '--')
+        .join(',');
 
     // 缓存结果到localStorage（48小时有效）
     const cacheData = {
@@ -1421,6 +1426,7 @@ function renderRankingResults(results) {
                <span style="font-size: 1.25rem;">⚠️</span>
                <span style="color: var(--warning-color); font-weight: 500;">有 ${unmatchedCount} 个商品疑似未上架</span>
                <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">可手动填写商品ID后点击保存</span>
+               <button onclick="copyToClipboard('${unmatchedCodes}')" style="margin-left: auto; padding: 0.25rem 0.75rem; font-size: 0.75rem; background: var(--warning-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;">📋 复制编码</button>
            </div>`
         : '';
 
