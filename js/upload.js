@@ -280,16 +280,16 @@ function generateUploadBlock(key, config) {
             <div class="last-upload-time" id="lastUploadTime-${key}"></div>
             
             <div class="upload-info-section" style="margin-top: 1rem;">
-                <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary);">📖 上传说明</h4>
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #4E5969;">📖 上传说明</h4>
                 <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm);">
                     <div style="margin-bottom: 0.75rem;">
-                        <strong style="color: var(--text-secondary);">📋 处理规则</strong>
-                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0; font-size: 0.85rem; color: var(--text-muted);">
+                        <strong style="color: #4E5969;">📋 处理规则</strong>
+                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0; font-size: 0.85rem; color: #86909C;">
                             ${config.rules.map(r => `<li>${r}</li>`).join('')}
                         </ul>
                     </div>
                     <div>
-                        <strong style="color: var(--text-secondary);">🔗 字段映射</strong>
+                        <strong style="color: #4E5969;">🔗 字段映射</strong>
                         <table class="mapping-table" style="margin-top: 0.5rem; font-size: 0.8rem;">
                             <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
                             <tbody>${mappingRows}</tbody>

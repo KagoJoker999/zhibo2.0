@@ -559,7 +559,7 @@ select {
     width: 100%;
     padding: 0.5rem 0.75rem;
     font-size: 0.9375rem;
-    color: var(--text-primary);
+    color: #1D2129;
     background: var(--bg-hover);
     /* Arco Dark Input Bg */
     border: 1px solid transparent;
@@ -617,7 +617,7 @@ select:focus {
 
 .btn-secondary {
     background: transparent;
-    color: var(--text-primary);
+    color: #1D2129;
     border: 1px solid var(--border-color);
 }
 
@@ -677,7 +677,7 @@ select:focus {
 .data-table th {
     background: var(--bg-secondary);
     font-weight: 600;
-    color: var(--text-secondary);
+    color: #4E5969;
     font-size: 0.875rem;
     text-transform: uppercase;
 }
@@ -695,7 +695,7 @@ select:focus {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: #4E5969;
 }
 
 .form-input,
@@ -705,7 +705,7 @@ select:focus {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    color: var(--text-primary);
+    color: #1D2129;
     font-size: 0.9375rem;
     transition: var(--transition-fast);
 }
@@ -761,7 +761,7 @@ select:focus {
 
 .upload-mode-label {
     font-weight: 500;
-    color: var(--text-secondary);
+    color: #4E5969;
 }
 
 .radio-label {
@@ -769,7 +769,7 @@ select:focus {
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    color: var(--text-primary);
+    color: #1D2129;
 }
 
 .radio-label input[type="radio"] {
@@ -1433,7 +1433,7 @@ select:focus {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    color: var(--text-primary);
+    color: #1D2129;
     font-size: 0.875rem;
 }
 
@@ -1461,7 +1461,7 @@ select:focus {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    color: var(--text-primary);
+    color: #1D2129;
     font-size: 0.875rem;
 }
 

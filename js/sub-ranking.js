@@ -414,10 +414,10 @@ function generateSubRankingPage() {
             
             <!-- 分页标签 -->
             <div class="tab-container" style="padding: 1rem 1.5rem 0; border-bottom: 1px solid var(--border-color);">
-                <button class="tab-btn active" id="tabCalculate" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid var(--primary-color); color: var(--text-primary); cursor: pointer; font-weight: 500;">
+                <button class="tab-btn active" id="tabCalculate" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid var(--primary-color); color: #4E5969; cursor: pointer; font-weight: 500;">
                     🔄 加载计算
                 </button>
-                <button class="tab-btn" id="tabHistory" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer;">
+                <button class="tab-btn" id="tabHistory" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: #86909C; cursor: pointer;">
                     📜 历史记录 <span class="db-table-tag" style="font-size: 0.65rem; background: var(--bg-secondary); padding: 0.1rem 0.3rem; border-radius: 3px;">sub_ranking_results</span>
                 </button>
             </div>
@@ -428,8 +428,8 @@ function generateSubRankingPage() {
                     <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
                     <button class="btn btn-secondary" id="btnSubSave">💾 保存结果</button>
                     <button class="btn btn-secondary" id="btnCopyUnmatched">📋 批量复制未匹配商品名</button>
-                    <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
-                    <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
+                    <span class="db-table-tag" style="font-size: 0.75rem; color: #86909C; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
+                    <span id="subRankingStatus" style="color: #86909C; font-size: 0.875rem;"></span>
                 </div>
                 
                 <div class="ranking-content" style="padding: 0 1.5rem 1.5rem;">
@@ -704,7 +704,7 @@ async function loadMappingHistoryForSubRanking() {
             const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
             const imageHtml = imageUrl
                 ? `<span class="hover-zoom-img"><img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.style.display='none'"><span class="zoom-preview"><img src="${imageUrl}" referrerpolicy="no-referrer"></span></span>`
-                : '<span style="color: var(--text-muted);">无</span>';
+                : '<span style="color: #86909C;">无</span>';
             const productId = item.product_id || '';
             return `
                         <tr style="border-bottom: 1px solid var(--border-color);" data-product-id="${productId}">
@@ -762,7 +762,7 @@ function renderSubRankingResults(container, results) {
                     <th style="padding: 0.75rem; text-align: center; width: 50px;">图片</th>
                     <th style="padding: 0.75rem; text-align: left;">商品名称</th>
                     <th style="padding: 0.75rem; text-align: center; width: 100px;">商品编码</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 180px;">商品ID <span style="font-size: 0.7rem; color: var(--text-muted);">(可编辑)</span></th>
+                    <th style="padding: 0.75rem; text-align: center; width: 180px;">商品ID <span style="font-size: 0.7rem; color: #86909C;">(可编辑)</span></th>
                     <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
                     <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
@@ -776,7 +776,7 @@ function renderSubRankingResults(container, results) {
         const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
         const imageHtml = imageUrl
             ? `<span class="hover-zoom-img"><img src="${imageUrl}" style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.style.display='none'"><span class="zoom-preview"><img src="${imageUrl}" referrerpolicy="no-referrer"></span></span>`
-            : '<span style="color: var(--text-muted);">无</span>';
+            : '<span style="color: #86909C;">无</span>';
 
         // 判断ID是否匹配（有值就算匹配）
         const hasId = !!item.product_id;
@@ -826,7 +826,7 @@ function generateSubRankingSettingsPage() {
                 <!-- 左侧：筛选配置 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">📋 筛选配置 (JSON)</h3>
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                    <p style="color: #86909C; font-size: 0.875rem; margin-bottom: 1rem;">
                         直接编辑 JSON 配置，格式与主排品设置相同
                     </p>
                     
@@ -841,7 +841,7 @@ function generateSubRankingSettingsPage() {
                 <!-- 右侧：序号分配设置 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">🔢 序号分配设置</h3>
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                    <p style="color: #86909C; font-size: 0.875rem; margin-bottom: 1rem;">
                         配置加载计算后的排序规则和序号分配
                     </p>
                     
@@ -874,18 +874,18 @@ function generateSubRankingSettingsPage() {
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">字母前缀序列</label>
                             <input type="text" id="numberPrefixes" placeholder="A,B,C" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" />
-                            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">用逗号分隔，如：A,B,C</p>
+                            <p style="color: #86909C; font-size: 0.75rem; margin-top: 0.25rem;">用逗号分隔，如：A,B,C</p>
                         </div>
                         
                         <div>
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">每个前缀分配数量</label>
                             <input type="number" id="numberCount" min="1" max="99" value="42" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" />
-                            <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem;">如设置42，则分配 A01-A42</p>
+                            <p style="color: #86909C; font-size: 0.75rem; margin-top: 0.25rem;">如设置42，则分配 A01-A42</p>
                         </div>
                         
                         <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--border-radius);">
                             <p style="margin: 0; font-size: 0.875rem;"><strong>预览：</strong></p>
-                            <p id="numberPreview" style="margin: 0.5rem 0 0; color: var(--text-muted); font-size: 0.875rem;">A01-A42, B01-B42</p>
+                            <p id="numberPreview" style="margin: 0.5rem 0 0; color: #86909C; font-size: 0.875rem;">A01-A42, B01-B42</p>
                         </div>
                     </div>
                     
