@@ -5,13 +5,13 @@
 /* CSS 变量 - 主题配置 */
 :root {
     /* 主色调 (Arco Design Blue) */
-    --primary-color: #165DFF;
+    --primary-color: #ff751f;
     --primary-hover: #4080FF;
     --primary-active: #0E42D2;
     --primary-light: rgba(22, 93, 255, 0.1);
 
     /* 背景色 (Dark Mode) */
-    --bg-primary: #17171A;
+    --bg-primary: #99826a;
     /* 极深灰 */
     --bg-secondary: #eeeadf;
     /* 组件背景 */
