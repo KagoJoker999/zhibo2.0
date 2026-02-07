@@ -95,7 +95,7 @@ body {
 .sidebar {
     width: var(--sidebar-width);
     background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -107,7 +107,7 @@ body {
 .sidebar-header {
     height: var(--header-height);
     padding: 0 1.25rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -116,7 +116,7 @@ body {
 .logo {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #1D2129;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -141,7 +141,7 @@ body {
 .menu-toggle span {
     width: 20px;
     height: 2px;
-    background: var(--text-primary);
+    background: #1D2129;
     transition: var(--transition-fast);
 }
 
@@ -164,14 +164,14 @@ body {
     padding: 0.75rem 1rem;
     margin: 0 0.5rem;
     border-radius: var(--border-radius);
-    color: var(--text-secondary);
+    color: #4E5969;
     text-decoration: none;
     transition: all var(--transition-fast);
 }
 
 .nav-link:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
+    color: #1D2129;
 }
 
 .nav-link.active {
@@ -206,14 +206,14 @@ body {
 .nav-submenu a {
     display: block;
     padding: 0.5rem 1.25rem 0.5rem 3.5rem;
-    color: var(--text-muted);
+    color: #86909C;
     text-decoration: none;
     font-size: 0.875rem;
     transition: var(--transition-fast);
 }
 
 .nav-submenu a:hover {
-    color: var(--text-primary);
+    color: #1D2129;
     background: var(--bg-hover);
 }
 
@@ -236,18 +236,20 @@ body {
     height: var(--header-height);
     padding: 0 1.5rem;
     background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 50;
+    color: #1D2129;
 }
 
 .page-title {
     font-size: 1.25rem;
     font-weight: 600;
+    color: #1D2129;
 }
 
 .header-actions {
