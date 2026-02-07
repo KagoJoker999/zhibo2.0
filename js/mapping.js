@@ -745,45 +745,65 @@ function initWarehouseUpdateDialog() {
 
             updateProgress('匹配商品...', 50);
 
-            // 从 mapping_history 加载现有数据
             const client = window.supabaseClient;
             if (!client) throw new Error('Supabase 未初始化');
 
-            const { data: historyData, error: fetchError } = await client
-                .from('mapping_history')
-                .select('*');
+            // 同时加载三个表的数据
+            const [historyRes, rankingRes, newProductRes] = await Promise.all([
+                client.from('mapping_history').select('*'),
+                client.from('ranking_results').select('*'),
+                client.from('new_product_data').select('*')
+            ]);
 
-            if (fetchError) throw new Error('加载历史数据失败: ' + fetchError.message);
+            if (historyRes.error) throw new Error('加载历史数据失败: ' + historyRes.error.message);
 
-            console.log(`📜 [仓位更新] 历史记录共 ${historyData?.length || 0} 条`);
+            const historyData = historyRes.data || [];
+            const rankingData = rankingRes.data || [];
+            const newProductData = newProductRes.data || [];
 
-            // 匹配并更新
+            console.log(`📜 [仓位更新] mapping_history: ${historyData.length} 条, ranking_results: ${rankingData.length} 条, new_product_data: ${newProductData.length} 条`);
+
+            // 匹配并更新所有表
             updateProgress('更新仓位...', 70);
             let matchCount = 0;
             let updateCount = 0;
 
             for (const update of updates) {
-                const matchedItems = historyData.filter(item =>
-                    item.product_name === update.productName
-                );
+                let matched = false;
 
-                if (matchedItems.length > 0) {
+                // 1. 更新 mapping_history 表
+                const historyMatched = historyData.filter(item => item.product_name === update.productName);
+                if (historyMatched.length > 0) {
+                    matched = true;
+                    for (const item of historyMatched) {
+                        const { error } = await client.from('mapping_history').update({ warehouse: update.warehouse }).eq('id', item.id);
+                        if (!error) updateCount++;
+                    }
+                }
+
+                // 2. 更新 ranking_results 表
+                const rankingMatched = rankingData.filter(item => item.product_name === update.productName);
+                if (rankingMatched.length > 0) {
+                    matched = true;
+                    for (const item of rankingMatched) {
+                        const { error } = await client.from('ranking_results').update({ warehouse: update.warehouse }).eq('id', item.id);
+                        if (!error) updateCount++;
+                    }
+                }
+
+                // 3. 更新 new_product_data 表
+                const newProductMatched = newProductData.filter(item => item.product_name === update.productName);
+                if (newProductMatched.length > 0) {
+                    matched = true;
+                    for (const item of newProductMatched) {
+                        const { error } = await client.from('new_product_data').update({ warehouse: update.warehouse }).eq('id', item.id);
+                        if (!error) updateCount++;
+                    }
+                }
+
+                if (matched) {
                     matchCount++;
                     console.log(`✓ [仓位更新] 匹配到商品: ${update.productName}, 更新仓位: ${update.warehouse}`);
-
-                    // 更新每个匹配的记录
-                    for (const item of matchedItems) {
-                        const { error: updateError } = await client
-                            .from('mapping_history')
-                            .update({ warehouse: update.warehouse })
-                            .eq('id', item.id);
-
-                        if (updateError) {
-                            console.warn(`⚠️ [仓位更新] 更新失败 ID=${item.id}:`, updateError.message);
-                        } else {
-                            updateCount++;
-                        }
-                    }
                 }
             }
 
