@@ -823,14 +823,17 @@ function generateSubRankingSettingsPage() {
             </div>
             
             <div class="settings-content" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <!-- 左侧：筛选配置 -->
+                <!-- 左侧：筛选配置（可视化） -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
-                    <h3 style="margin: 0 0 1rem;">📋 筛选配置 (JSON)</h3>
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
-                        直接编辑 JSON 配置，格式与主排品设置相同
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">📋 筛选分类配置</h3>
+                        <button class="btn btn-secondary" id="btnAddCategory" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">➕ 添加分类</button>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
+                        配置每个分类的筛选字段、范围、排序方式和提取数量。各分类按顺序依次筛选，已被前一分类选中的商品不会重复出现。
                     </p>
                     
-                    <textarea id="subConfigJson" rows="18" style="width: 100%; font-family: monospace; font-size: 0.875rem; resize: vertical;"></textarea>
+                    <div id="subCategoryCards" style="display: flex; flex-direction: column; gap: 1rem;"></div>
                     
                     <div style="margin-top: 1rem; display: flex; gap: 1rem;">
                         <button class="btn btn-primary" id="btnSaveSubConfig">💾 保存配置</button>
@@ -900,14 +903,203 @@ function generateSubRankingSettingsPage() {
 }
 
 async function initSubRankingSettingsPage() {
-    const textarea = document.getElementById('subConfigJson');
+    const cardsContainer = document.getElementById('subCategoryCards');
     const prefixInput = document.getElementById('numberPrefixes');
     const countInput = document.getElementById('numberCount');
     const sortFieldSelect = document.getElementById('sortField');
     const sortOrderSelect = document.getElementById('sortOrder');
     const previewEl = document.getElementById('numberPreview');
 
-    // 更新预览
+    // 可选的筛选/排序字段
+    const fieldOptions = [
+        { value: 'available_qty', label: '可用数' },
+        { value: 'actual_stock', label: '实际库存数' },
+        { value: 'virtual_category', label: '虚拟分类' },
+        { value: 'product_category', label: '商品分类' }
+    ];
+
+    // ========== 分类卡片渲染 ==========
+    function renderCategoryCard(categoryKey, resultLabel, conditions, index) {
+        const card = document.createElement('div');
+        card.className = 'sub-category-card';
+        card.style.cssText = 'background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1rem;';
+        card.dataset.index = index;
+
+        const filterByValue = conditions.filterBy || 'available_qty';
+        const minValue = conditions.min !== undefined ? conditions.min : '';
+        const maxValue = conditions.max !== undefined ? conditions.max : '';
+        const sortByValue = conditions.sortBy || 'available_qty';
+        const sortOrderValue = conditions.sortOrder || 'desc';
+        const limitValue = conditions.limit || 40;
+
+        const fieldOptionsHtml = (selectedValue) => fieldOptions.map(f =>
+            `<option value="${f.value}" ${f.value === selectedValue ? 'selected' : ''}>${f.label}</option>`
+        ).join('');
+
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-weight: 600; font-size: 0.9rem; color: var(--primary-color);">📌 分类 ${index + 1}</span>
+                <button class="btn-delete-category" style="background: none; border: none; color: var(--error-color, #ff4d4f); cursor: pointer; font-size: 0.8rem; padding: 0.2rem 0.5rem;" title="删除此分类">🗑️ 删除</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.85rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">分类名称</label>
+                    <input type="text" class="cat-name" value="${categoryKey}" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;" />
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">结果标签</label>
+                    <input type="text" class="cat-result-label" value="${resultLabel}" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;" />
+                </div>
+            </div>
+
+            <div style="margin-top: 0.6rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; font-size: 0.85rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">筛选字段</label>
+                    <select class="cat-filter-by" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;">
+                        ${fieldOptionsHtml(filterByValue)}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">最小值</label>
+                    <input type="number" class="cat-min" value="${minValue}" placeholder="不限" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;" />
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">最大值</label>
+                    <input type="number" class="cat-max" value="${maxValue}" placeholder="不限" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;" />
+                </div>
+            </div>
+
+            <div style="margin-top: 0.6rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; font-size: 0.85rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">排序字段</label>
+                    <select class="cat-sort-by" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;">
+                        ${fieldOptionsHtml(sortByValue)}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">排序方式</label>
+                    <select class="cat-sort-order" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;">
+                        <option value="desc" ${sortOrderValue === 'desc' ? 'selected' : ''}>从大到小</option>
+                        <option value="asc" ${sortOrderValue === 'asc' ? 'selected' : ''}>从小到大</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.2rem; color: var(--text-muted); font-size: 0.75rem;">提取数量</label>
+                    <input type="number" class="cat-limit" value="${limitValue}" min="1" style="width: 100%; padding: 0.35rem; font-size: 0.85rem;" />
+                </div>
+            </div>
+        `;
+
+        // 删除按钮事件
+        card.querySelector('.btn-delete-category').addEventListener('click', () => {
+            card.remove();
+            reindexCards();
+        });
+
+        return card;
+    }
+
+    // 重新编号卡片标题
+    function reindexCards() {
+        const cards = cardsContainer.querySelectorAll('.sub-category-card');
+        cards.forEach((card, idx) => {
+            card.dataset.index = idx;
+            const titleSpan = card.querySelector('span');
+            if (titleSpan) titleSpan.textContent = `📌 分类 ${idx + 1}`;
+        });
+    }
+
+    // 从UI卡片组装配置对象
+    function collectConfigFromUI() {
+        const cards = cardsContainer.querySelectorAll('.sub-category-card');
+        const 分类排序 = [];
+        const 结果映射 = {};
+        const 筛选条件 = {};
+        const 样品序号规则 = {};
+
+        cards.forEach(card => {
+            const categoryKey = card.querySelector('.cat-name').value.trim();
+            const resultLabel = card.querySelector('.cat-result-label').value.trim();
+            if (!categoryKey || !resultLabel) return;
+
+            分类排序.push(categoryKey);
+            结果映射[categoryKey] = resultLabel;
+
+            const minVal = card.querySelector('.cat-min').value;
+            const maxVal = card.querySelector('.cat-max').value;
+            const conditions = {
+                filterBy: card.querySelector('.cat-filter-by').value,
+                sortBy: card.querySelector('.cat-sort-by').value,
+                sortOrder: card.querySelector('.cat-sort-order').value,
+                limit: parseInt(card.querySelector('.cat-limit').value) || 40
+            };
+            if (minVal !== '') conditions.min = parseFloat(minVal);
+            if (maxVal !== '') conditions.max = parseFloat(maxVal);
+
+            筛选条件[categoryKey] = conditions;
+
+            // 保持样品序号规则兼容
+            样品序号规则[resultLabel] = { prefix: 'S', start: 1, step: 1 };
+        });
+
+        return { 分类排序, 结果映射, 样品序号规则, 筛选条件 };
+    }
+
+    // ========== 加载并渲染配置 ==========
+    function renderConfig(config) {
+        cardsContainer.innerHTML = '';
+        const categoryOrder = config['分类排序'] || [];
+        const resultMapping = config['结果映射'] || {};
+        const filterConditions = config['筛选条件'] || {};
+
+        categoryOrder.forEach((categoryKey, idx) => {
+            const resultLabel = resultMapping[categoryKey] || '';
+            const conditions = filterConditions[categoryKey] || {};
+            const card = renderCategoryCard(categoryKey, resultLabel, conditions, idx);
+            cardsContainer.appendChild(card);
+        });
+    }
+
+    const config = await loadSubRankingConfig();
+    renderConfig(config);
+
+    // ========== 添加分类 ==========
+    document.getElementById('btnAddCategory')?.addEventListener('click', () => {
+        const idx = cardsContainer.querySelectorAll('.sub-category-card').length;
+        const card = renderCategoryCard(`新分类${idx + 1}`, `${idx + 1}.新分类`, {
+            filterBy: 'available_qty',
+            min: 1,
+            max: 99,
+            sortBy: 'available_qty',
+            sortOrder: 'desc',
+            limit: 20
+        }, idx);
+        cardsContainer.appendChild(card);
+    });
+
+    // ========== 保存筛选配置 ==========
+    document.getElementById('btnSaveSubConfig')?.addEventListener('click', async () => {
+        try {
+            const newConfig = collectConfigFromUI();
+            if (newConfig['分类排序'].length === 0) {
+                window.AppUtils?.showToast?.('至少需要一个分类', 'warning');
+                return;
+            }
+            await saveSubRankingConfig(newConfig);
+            window.AppUtils?.showToast?.('筛选配置已保存', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
+
+    // ========== 重置筛选配置 ==========
+    document.getElementById('btnResetSubConfig')?.addEventListener('click', () => {
+        renderConfig(getDefaultSubConfig());
+        window.AppUtils?.showToast?.('已重置为默认配置', 'info');
+    });
+
+    // ========== 以下为序号分配设置（保持不变） ==========
     const updatePreview = () => {
         const prefixes = prefixInput.value.split(',').map(p => p.trim()).filter(p => p);
         const count = parseInt(countInput.value) || 42;
@@ -919,11 +1111,6 @@ async function initSubRankingSettingsPage() {
         previewEl.textContent = preview;
     };
 
-    // 加载筛选配置
-    const config = await loadSubRankingConfig();
-    textarea.value = JSON.stringify(config, null, 2);
-
-    // 加载序号配置
     const numberConfig = await loadNumberConfig();
     prefixInput.value = (numberConfig.prefixes || ['A', 'B']).join(',');
     countInput.value = numberConfig.countPerPrefix || 42;
@@ -931,28 +1118,9 @@ async function initSubRankingSettingsPage() {
     sortOrderSelect.value = numberConfig.sortOrder || 'desc';
     updatePreview();
 
-    // 监听输入变化更新预览
     prefixInput.addEventListener('input', updatePreview);
     countInput.addEventListener('input', updatePreview);
 
-    // 保存筛选配置
-    document.getElementById('btnSaveSubConfig')?.addEventListener('click', async () => {
-        try {
-            const newConfig = JSON.parse(textarea.value);
-            await saveSubRankingConfig(newConfig);
-            window.AppUtils?.showToast?.('筛选配置已保存', 'success');
-        } catch (error) {
-            window.AppUtils?.showToast?.('配置无效: ' + error.message, 'error');
-        }
-    });
-
-    // 重置筛选配置
-    document.getElementById('btnResetSubConfig')?.addEventListener('click', () => {
-        textarea.value = JSON.stringify(getDefaultSubConfig(), null, 2);
-        window.AppUtils?.showToast?.('已重置为默认配置', 'info');
-    });
-
-    // 保存序号配置
     document.getElementById('btnSaveNumberConfig')?.addEventListener('click', async () => {
         try {
             const newNumberConfig = {
@@ -968,7 +1136,6 @@ async function initSubRankingSettingsPage() {
         }
     });
 
-    // 重置序号配置
     document.getElementById('btnResetNumberConfig')?.addEventListener('click', () => {
         const defaultConfig = getDefaultNumberConfig();
         prefixInput.value = defaultConfig.prefixes.join(',');
