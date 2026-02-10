@@ -1110,14 +1110,33 @@ async function loadProductIdMapping() {
     const client = window.supabaseClient;
     if (!client) return {};
 
-    const { data, error } = await client.from('product_id_data').select('product_name, product_id');
-    if (error) {
-        console.warn('加载商品ID失败:', error.message);
-        return {};
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        const { data, error } = await client
+            .from('product_id_data')
+            .select('product_name, product_id')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) {
+            console.warn('加载商品ID失败:', error.message);
+            return {};
+        }
+
+        if (data && data.length > 0) {
+            allData = allData.concat(data);
+            if (data.length < pageSize) hasMore = false;
+            else page++;
+        } else {
+            hasMore = false;
+        }
     }
 
     const mapping = {};
-    (data || []).forEach(item => {
+    allData.forEach(item => {
         if (item.product_name) {
             mapping[item.product_name] = item.product_id || '';
         }
