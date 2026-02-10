@@ -558,12 +558,100 @@ async function initSubRankingPage() {
             renderSubRankingResults(container, currentResults);
             updateStatus(`共 ${currentResults.length} 个商品`);
             bindIdInputListeners();
+            bindDeleteListeners();
         } catch (error) {
             console.error(error);
             container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
             updateStatus('加载失败');
         }
     });
+
+    // 删除并替换逻辑
+    const bindDeleteListeners = () => {
+        container.querySelectorAll('.btn-sub-delete').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const idx = parseInt(btn.dataset.idx);
+                const deletedItem = currentResults[idx];
+                if (!deletedItem) return;
+
+                const deletedCategory = deletedItem.ranking_result;
+                const deletedName = deletedItem.product_name;
+
+                // 从结果中移除
+                currentResults.splice(idx, 1);
+
+                // 尝试找替换品：加载全部商品，排除已选中的，在同分类下筛选
+                try {
+                    const config = await loadSubRankingConfig();
+                    const allProducts = await loadSubRankingData();
+                    const usedNames = new Set(currentResults.map(r => r.product_name));
+                    const categoryOrder = config['分类排序'] || [];
+                    const resultMapping = config['结果映射'] || {};
+                    const filterConditions = config['筛选条件'] || {};
+
+                    // 找到被删除商品所属的分类key
+                    let targetCategoryKey = null;
+                    for (const key of categoryOrder) {
+                        if (resultMapping[key] === deletedCategory) {
+                            targetCategoryKey = key;
+                            break;
+                        }
+                    }
+
+                    let replacement = null;
+                    if (targetCategoryKey) {
+                        const conditions = filterConditions[targetCategoryKey] || {};
+                        let candidates = allProducts.filter(p => !usedNames.has(p.product_name));
+
+                        if (conditions.filterBy && (conditions.min !== undefined || conditions.max !== undefined)) {
+                            const field = conditions.filterBy;
+                            candidates = candidates.filter(p => {
+                                const val = parseFloat(p[field]) || 0;
+                                if (conditions.min !== undefined && val < conditions.min) return false;
+                                if (conditions.max !== undefined && val > conditions.max) return false;
+                                return true;
+                            });
+                        }
+
+                        if (conditions.sortBy) {
+                            const order = conditions.sortOrder === 'asc' ? 1 : -1;
+                            candidates.sort((a, b) => ((a[conditions.sortBy] || 0) - (b[conditions.sortBy] || 0)) * order);
+                        }
+
+                        // 取当前分类已有数量之外的第一个
+                        const currentCategoryCount = currentResults.filter(r => r.ranking_result === deletedCategory).length;
+                        const originalLimit = conditions.limit || 40;
+                        if (currentCategoryCount < originalLimit && candidates.length > 0) {
+                            replacement = candidates[0];
+                        }
+                    }
+
+                    if (replacement) {
+                        // 计算样品仓
+                        const mappingConfig = await loadMappingConfigForSubRanking();
+                        const warehouseRules = mappingConfig?.rules || [];
+                        replacement.ranking_result = deletedCategory;
+                        replacement.sample_number = '';
+                        replacement.sample_warehouse = calculateSampleWarehouseForSubRanking(replacement.warehouse, warehouseRules);
+                        currentResults.push(replacement);
+                        window.AppUtils?.showToast?.(`已替换: ${deletedName} → ${replacement.product_name}`, 'success');
+                    } else {
+                        window.AppUtils?.showToast?.(`已删除 ${deletedName}，无可替换商品`, 'warning');
+                    }
+                } catch (e) {
+                    console.error('替换失败', e);
+                    window.AppUtils?.showToast?.(`已删除 ${deletedName}，替换查找失败`, 'error');
+                }
+
+                // 重新排序、分配序号、渲染
+                resortAndReassign();
+                renderSubRankingResults(container, currentResults);
+                updateStatus(`共 ${currentResults.length} 个商品`);
+                bindIdInputListeners();
+                bindDeleteListeners();
+            });
+        });
+    };
 
     // 复制未匹配商品名称
     document.getElementById('btnCopyUnmatched')?.addEventListener('click', () => {
@@ -765,10 +853,11 @@ function renderSubRankingResults(container, results) {
                     <th style="padding: 0.75rem; text-align: center; width: 180px;">商品ID <span style="font-size: 0.7rem; color: var(--text-muted);">(可编辑)</span></th>
                     <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
-                    <th style="padding: 0.75rem; text-align: center; width: 80px;">样品仓</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 50px;">仓位</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 50px;">样品仓</th>
                     <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
                     <th style="padding: 0.75rem; text-align: center; width: 75px;">实际库存数</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 50px;">操作</th>
                 </tr>
             </thead>
             <tbody>
@@ -802,6 +891,7 @@ function renderSubRankingResults(container, results) {
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.sample_warehouse || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.available_qty || 0}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.actual_stock || 0}</td>
+                            <td style="padding: 0.4rem; text-align: center;"><button class="btn-sub-delete" data-idx="${idx}" style="background: none; border: none; color: var(--error-color, #ff4d4f); cursor: pointer; font-size: 0.8rem; padding: 0.2rem;" title="删除并替换">🗑️</button></td>
                         </tr>
                     `;
     }).join('')}
