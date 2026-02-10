@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>匹配诊断</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .log { white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+        .diff { color: red; font-weight: bold; }
+        .match { color: green; }
+    </style>
+</head>
+<body>
+    <h2>数据库匹配诊断</h2>
+    <div id="output" class="log">正在运行诊断...</div>
+
+    <script type="module">
+        // 导入主程序的配置（假设 secret.js 或类似文件存在，或者直接硬编码，或者只能依赖 main.js 中初始化的 client）
+        // 由于 sub-ranking.js 依赖 window.supabaseClient，我们需要先初始化它。
+        // 为了简单，我们尝试重用现有的 supabase-client.js，但它依赖 window.supabaseClient 已经存在。
+        // 我们需要找到初始化的位置。查看 main.js。
+        
+        async function runDiagnosis() {
+            const output = document.getElementById('output');
+            const log = (msg) => {
+                output.textContent += msg + '\n';
+                console.log(msg);
+            };
+
+            // 动态加载 main.js 以获取初始化逻辑，或者手动读取 main.js 看看配置
+            // 这里我们假设 main.js 会初始化 supabaseClient 到 window
+            
+            // 目标商品列表
+            const targetNames = [
+                "「甜茶穗语」韩国2024秋冬上新秋冬新款大抓夹鲨鱼夹后盘发抓夹",
+                "「醋酸博主套装」韩国26新年百搭气质可爱醋酸梳子",
+                "「清潭洞系列-达姆森花花」韩国25早秋百搭发绳发圈肠圈丸子头"
+            ];
+
+            log("等待 Supabase 初始化...");
+            // 简单的轮询等待
+            let attempts = 0;
+            while (!window.supabaseClient && attempts < 20) {
+                await new Promise(r => setTimeout(r, 500));
+                attempts++;
+            }
+
+            if (!window.supabaseClient) {
+                log("错误: Supabase 未能初始化。请确保已正确加载 main.js 或配置。");
+                return;
+            }
+
+            const client = window.supabaseClient;
+            log("Supabase 已就绪。开始查询...");
+
+            for (const targetName of targetNames) {
+                log(`\n--------------------------------------------------`);
+                log(`正在分析: ${targetName}`);
+
+                // 1. 查询 inventory_data (实际库存)
+                // 模糊查询以找到可能的匹配项
+                const keyword = targetName.substring(0, 5); // 取前5个字尝试搜索
+                const { data: invData, error: invError } = await client
+                    .from('inventory_data')
+                    .select('product_name')
+                    .ilike('product_name', `%${keyword}%`);
+
+                if (invError) {
+                    log(`inventory_data 查询失败: ${invError.message}`);
+                    continue;
+                }
+
+                // 2. 查询 product_id_data (ID库)
+                const { data: idData, error: idError } = await client
+                    .from('product_id_data')
+                    .select('product_name, product_id')
+                    .ilike('product_name', `%${keyword}%`);
+
+                if (idError) {
+                    log(`product_id_data 查询失败: ${idError.message}`);
+                    continue;
+                }
+
+                log(`库存数据中找到 ${invData.length} 个相关项`);
+                log(`ID库中找到 ${idData.length} 个相关项`);
+
+                // 寻找最接近的项进行字符对比
+                const invItem = invData.find(i => i.product_name.includes(keyword)); // 简化逻辑
+                const idItem = idData.find(i => i.product_name.includes(keyword));
+
+                if (invItem) {
+                    log(`\n[库存] 名称: "${invItem.product_name}"`);
+                    log(`[库存] 编码: ${stringToHex(invItem.product_name)}`);
+                } else {
+                    log(`[库存] 未找到类似项`);
+                }
+
+                if (idItem) {
+                    log(`\n[ID库] 名称: "${idItem.product_name}"`);
+                    log(`[ID库] 编码: ${stringToHex(idItem.product_name)}`);
+                    log(`[ID库] ID: ${idItem.product_id}`);
+                } else {
+                    log(`[ID库] 未找到类似项`);
+                }
+
+                if (invItem && idItem) {
+                    if (invItem.product_name === idItem.product_name) {
+                        log(`\n✅ 严格相等匹配`);
+                    } else if (invItem.product_name.trim() === idItem.product_name.trim()) {
+                        log(`\n✅ Trim后相等匹配`);
+                    } else {
+                        log(`\n❌ 不匹配`);
+                        compareStrings(invItem.product_name, idItem.product_name, log);
+                    }
+                }
+            }
+        }
+
+        function stringToHex(str) {
+            let result = '';
+            for (let i = 0; i < str.length; i++) {
+                result += str.charCodeAt(i).toString(16).padStart(4, '0') + ' ';
+            }
+            return result;
+        }
+
+        function compareStrings(a, b, log) {
+            const len = Math.max(a.length, b.length);
+            log(`对比详情:`);
+            for (let i = 0; i < len; i++) {
+                const charA = a[i] || '';
+                const charB = b[i] || '';
+                const codeA = a.charCodeAt(i) || 0;
+                const codeB = b.charCodeAt(i) || 0;
+                
+                if (charA !== charB) {
+                    log(`Pos ${i}: '${charA}'(${codeA.toString(16)}) vs '${charB}'(${codeB.toString(16)}) <--- 差异`);
+                }
+            }
+        }
+
+        // 尝试加载 main.js 以触发初始化
+        /* 这里需要注意，main.js 可能是模块化加载或者依赖其他文件。
+         * 如果 main.js 无法直接运行，可能需要手动初始化 configuration
+         */
+        
+        // 尝试动态获取 main.js 中的配置可能比较复杂。
+        // 为了确保能运行，我们最好查看 main.js 的内容，把初始化代码复制过来。
+        // 但为了简单，先假定引用 main.js 可行。如果不行，我会修改文件。
+    </script>
+    <script src="js/main.js"></script>
+    <script>
+        // 等待 load 事件
+        window.addEventListener('load', () => {
+            runDiagnosis();
+        });
+    </script>
+</body>
+</html>

@@ -196,13 +196,40 @@ async function loadSubRankingData() {
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行加载库存数据和商品ID数据
+    // Helper to fetch all data with pagination
+    const fetchAllData = async (tableName, selectQuery) => {
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+            const { data, error } = await client
+                .from(tableName)
+                .select(selectQuery)
+                .range(page * pageSize, (page + 1) * pageSize - 1);
+
+            if (error) return { data: null, error };
+
+            if (data && data.length > 0) {
+                allData = allData.concat(data);
+                if (data.length < pageSize) hasMore = false;
+                else page++;
+            } else {
+                hasMore = false;
+            }
+        }
+        return { data: allData, error: null };
+    };
+
+    // 并行加载库存数据和商品ID数据 (Use pagination)
     const [inventoryRes, productIdRes] = await Promise.all([
-        client.from('inventory_data').select('*'),
-        client.from('product_id_data').select('product_name, product_id')
+        fetchAllData('inventory_data', '*'),
+        fetchAllData('product_id_data', 'product_name, product_id')
     ]);
 
     if (inventoryRes.error) throw new Error('读取库存数据失败: ' + inventoryRes.error.message);
+    if (productIdRes.error) throw new Error('读取ID数据失败: ' + productIdRes.error.message);
 
     console.log(`📦 [小号数据] 库存数据: ${inventoryRes.data?.length || 0} 条, ID数据: ${productIdRes.data?.length || 0} 条`);
 
