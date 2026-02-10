@@ -210,7 +210,8 @@ async function loadSubRankingData() {
     const productIdMap = new Map();
     (productIdRes.data || []).forEach(item => {
         if (item.product_name && item.product_id) {
-            productIdMap.set(item.product_name, item.product_id);
+            // Trim key to ensuring matching reliability
+            productIdMap.set(String(item.product_name).trim(), item.product_id);
         }
     });
 
@@ -238,7 +239,8 @@ async function loadSubRankingData() {
             if (!existing.image_url && item.image_url) existing.image_url = item.image_url;
         } else {
             // 匹配商品ID
-            const matchedId = productIdMap.get(name) || '';
+            // Try matching with trimmed name to avoid whitespace issues
+            const matchedId = productIdMap.get(String(name).trim()) || '';
             productMap.set(name, {
                 ...item,
                 product_id: matchedId,
@@ -585,6 +587,7 @@ async function initSubRankingPage() {
                     const config = await loadSubRankingConfig();
                     const allProducts = await loadSubRankingData();
                     const usedNames = new Set(currentResults.map(r => r.product_name));
+                    usedNames.add(deletedName); // 关键修复：确保被删除的商品不会立即作为替补出现
                     const categoryOrder = config['分类排序'] || [];
                     const resultMapping = config['结果映射'] || {};
                     const filterConditions = config['筛选条件'] || {};

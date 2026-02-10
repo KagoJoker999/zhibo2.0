@@ -123,9 +123,11 @@ body {
 }
 
 .logo-img {
-    height: 36px;
-    width: auto;
+    height: auto;
+    max-height: 40px;
+    max-width: 110px;
     display: block;
+    object-fit: contain;
 }
 
 .menu-toggle {
