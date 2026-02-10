@@ -473,10 +473,7 @@ function generateSubRankingPage() {
             <!-- 历史记录面板 -->
             <div id="panelHistory" class="tab-panel" style="display: none;">
                 <div class="history-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center;">
-                    <button class="btn btn-secondary" id="btnHistoryCopy1">📋 1-20</button>
-                    <button class="btn btn-secondary" id="btnHistoryCopy2">📋 21-40</button>
-                    <button class="btn btn-secondary" id="btnHistoryCopy3">📋 41-60</button>
-                    <button class="btn btn-secondary" id="btnHistoryCopy4">📋 61-80</button>
+                    <div id="subRankingCopyButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
                     <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
                 <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
@@ -752,34 +749,7 @@ async function initSubRankingPage() {
     tabCalculate?.addEventListener('click', () => switchTab('calculate'));
     tabHistory?.addEventListener('click', () => switchTab('history'));
 
-    // 历史页复制按钮
-    const copyHistoryLinks = (start, end) => {
-        const historyContainer = document.getElementById('mappingHistoryContainer');
-        const rows = historyContainer?.querySelectorAll('tr[data-product-id]');
-        const ids = [];
-        if (rows) {
-            for (let i = start; i < Math.min(end, rows.length); i++) {
-                const id = rows[i]?.dataset?.productId?.trim();
-                if (id) {
-                    ids.push(`https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=${id}&origin_type=604`);
-                }
-            }
-        }
-        if (ids.length === 0) {
-            window.AppUtils?.showToast?.('该范围内没有商品ID', 'warning');
-            return;
-        }
-        navigator.clipboard.writeText(ids.join('\n')).then(() => {
-            window.AppUtils?.showToast?.(`已复制 ${ids.length} 条链接`, 'success');
-        }).catch(() => {
-            window.AppUtils?.showToast?.('复制失败', 'error');
-        });
-    };
 
-    document.getElementById('btnHistoryCopy1')?.addEventListener('click', () => copyHistoryLinks(0, 20));
-    document.getElementById('btnHistoryCopy2')?.addEventListener('click', () => copyHistoryLinks(20, 40));
-    document.getElementById('btnHistoryCopy3')?.addEventListener('click', () => copyHistoryLinks(40, 60));
-    document.getElementById('btnHistoryCopy4')?.addEventListener('click', () => copyHistoryLinks(60, 80));
 
     // 刷新按钮
     document.getElementById('btnHistoryRefresh')?.addEventListener('click', () => {
@@ -804,7 +774,7 @@ async function loadMappingHistoryForSubRanking() {
             .from('sub_ranking_results')
             .select('*')
             .order('sample_number', { ascending: true })
-            .limit(100);
+            .limit(1000);
 
         if (error) throw error;
 
@@ -856,9 +826,64 @@ async function loadMappingHistoryForSubRanking() {
             </table>
         `;
         historyContainer.innerHTML = html;
+        // 渲染完表格后，渲染复制按钮
+        renderSubRankingCopyButtons(data.length);
     } catch (error) {
         console.error('加载历史记录失败:', error);
         historyContainer.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败</p></div>`;
+    }
+}
+
+// 复制历史记录链接的辅助函数
+function copySubRankingHistoryLinks(start, end) {
+    const historyContainer = document.getElementById('mappingHistoryContainer');
+    const rows = historyContainer?.querySelectorAll('tr[data-product-id]');
+    const ids = [];
+    if (rows) {
+        for (let i = start; i < Math.min(end, rows.length); i++) {
+            const id = rows[i]?.dataset?.productId?.trim();
+            if (id) {
+                ids.push(`https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=${id}&origin_type=604`);
+            }
+        }
+    }
+    if (ids.length === 0) {
+        window.AppUtils?.showToast?.('该范围内没有商品ID', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(ids.join('\n')).then(() => {
+        window.AppUtils?.showToast?.(`已复制 ${ids.length} 条链接`, 'success');
+    }).catch(() => {
+        window.AppUtils?.showToast?.('复制失败', 'error');
+    });
+}
+
+// 渲染动态复制按钮
+function renderSubRankingCopyButtons(totalCount) {
+    const btnContainer = document.getElementById('subRankingCopyButtons');
+    if (!btnContainer) return;
+
+    btnContainer.innerHTML = '';
+    const pageSize = 20;
+    const pageCount = Math.ceil(totalCount / pageSize);
+
+    if (pageCount === 0) return;
+
+    for (let i = 0; i < pageCount; i++) {
+        const start = i * pageSize;
+        const end = Math.min((i + 1) * pageSize, totalCount);
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        // 显示为 "📋 1-20" 等
+        btn.textContent = `📋 ${start + 1}-${end}`;
+        btn.style.fontSize = '0.75rem';
+        btn.style.padding = '0.25rem 0.5rem';
+
+        btn.addEventListener('click', () => {
+            copySubRankingHistoryLinks(start, end);
+        });
+
+        btnContainer.appendChild(btn);
     }
 }
 
