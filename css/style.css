@@ -43,7 +43,7 @@
     --info-color: #165DFF;
 
     /* 尺寸 */
-    --sidebar-width: 240px;
+    --sidebar-width: 120px;
     --sidebar-collapsed-width: 64px;
     --header-height: 60px;
 
@@ -2525,8 +2525,8 @@ select:focus {
     left: 50%;
     bottom: calc(100% + 8px);
     transform: translateX(-50%);
-    width: 144px;
-    height: 144px;
+    width: 200px;
+    height: 200px;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
     border: 2px solid var(--border-color);
