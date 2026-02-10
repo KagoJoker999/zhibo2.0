@@ -503,6 +503,9 @@ async function initSubRankingPage() {
     // 存储 numberConfig 供重排序使用
     let cachedNumberConfig = null;
 
+    // 存储本轮计算中所有被删除的商品名称，防止循环替换
+    let deletedHistory = new Set();
+
     // 重排序并重新分配序号的函数
     const resortAndReassign = () => {
         if (!cachedNumberConfig || currentResults.length === 0) return;
@@ -574,6 +577,10 @@ async function initSubRankingPage() {
         try {
             const config = await loadSubRankingConfig();
             cachedNumberConfig = await loadNumberConfig();
+
+            // 重置删除历史
+            deletedHistory.clear();
+
             const products = await loadSubRankingData();
             currentResults = calculateSubRanking(products, config, cachedNumberConfig);
 
@@ -614,7 +621,13 @@ async function initSubRankingPage() {
                     const config = await loadSubRankingConfig();
                     const allProducts = await loadSubRankingData();
                     const usedNames = new Set(currentResults.map(r => r.product_name));
-                    usedNames.add(deletedName); // 关键修复：确保被删除的商品不会立即作为替补出现
+
+                    // 将被删除的商品加入历史记录
+                    deletedHistory.add(deletedName);
+
+                    // 排除所有历史删除商品
+                    deletedHistory.forEach(name => usedNames.add(name));
+
                     const categoryOrder = config['分类排序'] || [];
                     const resultMapping = config['结果映射'] || {};
                     const filterConditions = config['筛选条件'] || {};
