@@ -254,7 +254,7 @@ async function loadHistoryData() {
 function generateMappingPage() {
     return `
         <div class="mapping-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>🔗 排品结果推送 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal; vertical-align: middle;">插件读取</span></h2>
                 <p>合并显示排品结果和新品数据，自动计算样品仓位</p>
             </div>
@@ -434,7 +434,7 @@ function renderMappingTable(container, data) {
 function generateMappingHistoryPage() {
     return `
         <div class="mapping-history-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>📜 历史记录 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; vertical-align: middle;">mapping_history</span></h2>
                 <p>显示上一次保存的对照结果</p>
             </div>
@@ -492,7 +492,7 @@ async function initMappingHistoryPage() {
 function generateMappingSettingsPage() {
     return `
         <div class="mapping-settings-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>⚙️ 对照设置</h2>
                 <p>配置仓位到样品仓位的映射规则</p>
             </div>

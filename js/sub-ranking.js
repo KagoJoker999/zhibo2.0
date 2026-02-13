@@ -436,7 +436,7 @@ async function saveSubRankingResults(results) {
 function generateSubRankingPage() {
     return `
         <div class="sub-ranking-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>📦 小号排品 <span style="color: #ff4d4f; font-weight: bold; font-size: inherit; margin-left: 8px;">需先更新库存</span></h2>
                 <p>← sub_ranking_results | 根据库存数据筛选，使用独立配置。小号的样品仓位映射设置在排品设置中进行。</p>
             </div>
@@ -975,7 +975,7 @@ function renderSubRankingResults(container, results) {
 function generateSubRankingSettingsPage() {
     return `
         <div class="sub-ranking-settings-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>⚙️ 小号排品设置</h2>
                 <p>← sub_ranking_config | 配置筛选规则（独立于主排品）</p>
             </div>

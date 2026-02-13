@@ -765,7 +765,7 @@ async function saveRankingResults(results) {
 function generateRankingPage() {
     return `
         <div class="ranking-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>📋 排品计算</h2>
                 <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
             </div>
@@ -1017,7 +1017,7 @@ function generateRankingExclusionPage() {
 function generateRankingCheckPage() {
     return `
         <div class="ranking-check-page">
-            <div class="page-intro" style="padding: 1.5rem 1.5rem 0;">
+            <div class="page-intro">
                 <h2>🔍 排品检查</h2>
                 <p>查看数据库中已保存的排品结果</p>
             </div>

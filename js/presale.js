@@ -18,7 +18,7 @@ let presaleTotal = 0;
 // ========================================
 function generatePresalePage() {
     return `
-        <div class="presale-page" style="padding: 1.5rem;">
+        <div class="presale-page">
             <div class="upload-block" style="margin-bottom: 1.5rem;">
                 <div class="upload-block-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">📋 关预售表 <span class="db-table-tag">presale_product_ids</span></h3>
