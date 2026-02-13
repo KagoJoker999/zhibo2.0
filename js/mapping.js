@@ -497,7 +497,7 @@ function generateMappingSettingsPage() {
                 <p>配置仓位到样品仓位的映射规则</p>
             </div>
             
-            <div class="settings-content" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="settings-content" style="padding: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <!-- 左侧：仓位映射规则 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <h3 style="margin: 0 0 1rem;">📦 仓位映射规则</h3>

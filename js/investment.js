@@ -147,9 +147,7 @@ function getInvestmentPageHTML() {
         
         <style>
             .investment-page {
-                padding: 1.5rem;
-                max-width: 600px;
-                margin: 0 auto;
+                padding: 0;
             }
             
             .investment-container {
@@ -459,9 +457,6 @@ function getInvestmentPageHTML() {
             
             /* 响应式 */
             @media (max-width: 480px) {
-                .investment-page {
-                    padding: 1rem;
-                }
                 
                 .input-wrapper input {
                     width: 80px;

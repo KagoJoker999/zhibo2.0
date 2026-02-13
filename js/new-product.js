@@ -409,7 +409,7 @@ function initNewProductRules() {
 
 function generateNumberingRulesUI() {
     return `
-        <div class="rules-settings-panel" style="max-width:800px; margin:0 auto; background:var(--bg-secondary); padding:2rem; border-radius:var(--border-radius);">
+        <div class="rules-settings-panel" style="background:var(--bg-secondary); padding:2rem; border-radius:var(--border-radius);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
                 <div>
                     <h3 style="margin:0;">🔢 序号分配规则</h3>
