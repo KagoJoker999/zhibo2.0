@@ -805,7 +805,7 @@ function generateRankingPage() {
                     display: block;
                 }
             </style>
-            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 1.5rem; border-radius: var(--border-radius); white-space: nowrap; overflow-x: auto;">
+            <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 0; border-radius: var(--border-radius); white-space: nowrap; overflow-x: auto;">
                 <!-- 统计数据（横向排列） -->
                 <div class="ranking-stats-inline" style="display: flex; gap: 1.5rem; flex: 1;">
                     <div class="stat-item-inline">
@@ -846,7 +846,7 @@ function generateRankingPage() {
             </div>
             
             <!-- 下部分：排品结果（全宽） -->
-            <div class="upload-block" id="block-ranking-result" style="margin: 0 1.5rem 1.5rem;">
+            <div class="upload-block" id="block-ranking-result" style="margin: 0 0 1.5rem;">
 
                 
                 <div class="scrollable-content" id="rankingResultContent">
@@ -1059,7 +1059,7 @@ function generateRankingCheckPage() {
             </style>
             
             <!-- 已保存排品结果（从数据库读取） -->
-            <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 1.5rem 1.5rem; min-height: 400px;">
+            <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 0 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                     <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
                     <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>

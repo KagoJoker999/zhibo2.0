@@ -442,7 +442,7 @@ function generateSubRankingPage() {
             </div>
             
             <!-- 分页标签 -->
-            <div class="tab-container" style="padding: 1rem 1.5rem 0; border-bottom: 1px solid var(--border-color);">
+            <div class="tab-container" style="padding: 1rem 0 0; border-bottom: 1px solid var(--border-color);">
                 <button class="tab-btn active" id="tabCalculate" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid var(--primary-color); color: var(--text-primary); cursor: pointer; font-weight: 500;">
                     🔄 加载计算
                 </button>
@@ -453,7 +453,7 @@ function generateSubRankingPage() {
             
             <!-- 加载计算面板 -->
             <div id="panelCalculate" class="tab-panel" style="display: block;">
-                <div class="ranking-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div class="ranking-actions" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
                     <button class="btn btn-primary" id="btnSubSave" style="background-color: var(--error-color); border-color: var(--error-color);">💾 保存结果</button>
                     <button class="btn btn-secondary" id="btnCopyUnmatched">📋 批量复制未匹配商品名</button>
@@ -461,7 +461,7 @@ function generateSubRankingPage() {
                     <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
                 </div>
                 
-                <div class="ranking-content" style="padding: 0 1.5rem 1.5rem;">
+                <div class="ranking-content" style="padding: 0 0 1.5rem;">
                     <div id="subRankingResultContainer" class="data-table-container">
                         <div class="placeholder-content">
                             <p>点击"加载并计算"开始</p>
@@ -472,11 +472,11 @@ function generateSubRankingPage() {
             
             <!-- 历史记录面板 -->
             <div id="panelHistory" class="tab-panel" style="display: none;">
-                <div class="history-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center;">
+                <div class="history-actions" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center;">
                     <div id="subRankingCopyButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
                     <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
                 </div>
-                <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
+                <div class="history-content" style="padding: 0 0 1.5rem;">
                     <div id="mappingHistoryContainer" class="data-table-container">
                         <div class="placeholder-content">
                             <p>正在加载历史记录...</p>
@@ -980,7 +980,7 @@ function generateSubRankingSettingsPage() {
                 <p>← sub_ranking_config | 配置筛选规则（独立于主排品）</p>
             </div>
             
-            <div class="settings-content" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="settings-content" style="padding: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <!-- 左侧：筛选配置（可视化） -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
