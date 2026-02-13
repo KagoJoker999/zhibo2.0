@@ -22,437 +22,448 @@ window.loadInvestmentPage = function (page) {
 // ========================================
 function getInvestmentPageHTML() {
     return `
-        <div class="investment-page">
-            <div class="investment-container">
-                <!-- 开播前投放数据 -->
-                <div class="investment-card">
-                    <div class="card-header">
-                        <span class="card-icon">📊</span>
-                        <h3>开播前投放数据</h3>
-                        <button type="button" class="btn btn-secondary" id="resetBtn" style="margin-left: auto;">🔄 重置</button>
-                    </div>
-                    <div class="card-body">
+        <div class="inv">
+            <!-- 页面标题 -->
+            <div class="page-intro" style="display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <h2>💰 追投计算</h2>
+                    <p>实时计算投放消耗速度，辅助追投决策</p>
+                </div>
+                <button type="button" class="btn btn-secondary" id="resetBtn">🔄 重置</button>
+            </div>
 
-                        <div class="input-group">
-                            <label>投放金额</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="preAmount" placeholder="0" min="0" step="1">
-                                <span class="unit">元</span>
+            <!-- 主体：双栏布局 -->
+            <div class="inv-grid">
+                <!-- 左列：输入区 -->
+                <div class="inv-col">
+                    <!-- 开播前投放 -->
+                    <div class="inv-section">
+                        <div class="inv-section-title">📊 开播前投放</div>
+                        <div class="inv-form-row">
+                            <div class="inv-field">
+                                <label>投放金额</label>
+                                <div class="inv-input-box">
+                                    <input type="number" id="preAmount" placeholder="0" min="0" step="1">
+                                    <span class="inv-suffix">元</span>
+                                </div>
+                            </div>
+                            <div class="inv-field">
+                                <label>投放时长</label>
+                                <div class="inv-input-box">
+                                    <input type="number" id="preDuration" placeholder="0" min="0" step="0.1">
+                                    <span class="inv-suffix">小时</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label>投放时长</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="preDuration" placeholder="0" min="0" step="0.1">
-                                <span class="unit">小时</span>
+                    </div>
+
+                    <!-- 已跑时长 -->
+                    <div class="inv-section">
+                        <div class="inv-section-title">⏱️ 已跑时长</div>
+                        <div class="inv-form-row">
+                            <div class="inv-field">
+                                <label>分钟</label>
+                                <div class="inv-input-box">
+                                    <input type="number" id="preRunTimeMinutes" placeholder="0" min="0" step="1">
+                                    <span class="inv-suffix">min</span>
+                                </div>
+                            </div>
+                            <div class="inv-field">
+                                <label>小时</label>
+                                <div class="inv-input-box">
+                                    <input type="number" id="preRunTime" placeholder="0" min="0" step="0.01">
+                                    <span class="inv-suffix">h</span>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="result-section">
-                            <div class="result-item">
-                                <span class="result-label">剩余金额</span>
-                                <span class="result-value" id="preRemaining">--</span>
-                                <span class="result-unit">元</span>
+                        <div class="inv-quick-row">
+                            <button type="button" class="header-quick-btn" data-hours="0.5">0.5h</button>
+                            <button type="button" class="header-quick-btn" data-hours="1">1h</button>
+                            <button type="button" class="header-quick-btn" data-hours="1.5">1.5h</button>
+                            <button type="button" class="header-quick-btn" data-hours="2">2h</button>
+                        </div>
+                    </div>
+
+                    <!-- 追投配置 -->
+                    <div class="inv-section">
+                        <div class="inv-section-title">🚀 追投配置</div>
+                        <div class="inv-form-row">
+                            <div class="inv-field">
+                                <label>追投金额</label>
+                                <div class="inv-input-box">
+                                    <input type="number" id="addAmount" placeholder="0" min="0" step="1">
+                                    <span class="inv-suffix">元</span>
+                                </div>
                             </div>
-                            <div class="result-item">
-                                <span class="result-label">分钟平均消耗</span>
-                                <span class="result-value" id="preMinuteConsume">--</span>
-                                <span class="result-unit">元/分钟</span>
+                            <div class="inv-field">
+                                <label>追投时长</label>
+                                <div class="inv-input-box">
+                                    <input type="number" id="addDuration" placeholder="0" min="0" step="0.1">
+                                    <span class="inv-suffix">小时</span>
+                                </div>
                             </div>
-                            <div class="result-item">
-                                <span class="result-label">5分钟消耗</span>
-                                <span class="result-value" id="pre5MinConsume">--</span>
-                                <span class="result-unit">元</span>
-                            </div>
+                        </div>
+                        <div class="inv-quick-row">
+                            <span class="inv-quick-label">快速填入</span>
+                            <button type="button" class="quick-btn" data-amount="300" data-duration="1">300/1h</button>
+                            <button type="button" class="quick-btn" data-amount="500" data-duration="1">500/1h</button>
+                            <button type="button" class="quick-btn" data-amount="300" data-duration="0.5">300/0.5h</button>
+                            <button type="button" class="quick-btn" data-amount="100" data-duration="5">100/5h</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 追投计划 -->
-                <div class="investment-card">
-                    <div class="card-header card-header-wrap">
-                        <div class="card-header-title">
-                            <span class="card-icon">💰</span>
-                            <h3>追投计划</h3>
-                        </div>
-                        <div class="header-input">
-                            <label>已跑时长</label>
-                            <input type="number" id="preRunTimeMinutes" placeholder="0" min="0" step="1">
-                            <span class="unit">分钟</span>
-                            <span class="separator">=</span>
-                            <input type="number" id="preRunTime" placeholder="0" min="0" step="0.01">
-                            <span class="unit">小时</span>
-                            <div class="header-quick-btns">
-                                <button type="button" class="header-quick-btn" data-hours="0.5">0.5h</button>
-                                <button type="button" class="header-quick-btn" data-hours="1">1h</button>
-                                <button type="button" class="header-quick-btn" data-hours="1.5">1.5h</button>
+                <!-- 右列：结果区 -->
+                <div class="inv-col">
+                    <!-- 开播前指标 -->
+                    <div class="inv-section">
+                        <div class="inv-section-title">📈 开播前消耗指标</div>
+                        <div class="inv-metrics">
+                            <div class="inv-metric-card">
+                                <span class="inv-metric-label">剩余金额</span>
+                                <div class="inv-metric-val-row">
+                                    <span class="inv-metric-value" id="preRemaining">--</span>
+                                    <span class="inv-metric-unit">元</span>
+                                </div>
+                            </div>
+                            <div class="inv-metric-card">
+                                <span class="inv-metric-label">分钟消耗</span>
+                                <div class="inv-metric-val-row">
+                                    <span class="inv-metric-value" id="preMinuteConsume">--</span>
+                                    <span class="inv-metric-unit">元/min</span>
+                                </div>
+                            </div>
+                            <div class="inv-metric-card">
+                                <span class="inv-metric-label">5分钟消耗</span>
+                                <div class="inv-metric-val-row">
+                                    <span class="inv-metric-value" id="pre5MinConsume">--</span>
+                                    <span class="inv-metric-unit">元</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="input-group">
-                            <label>追投金额</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="addAmount" placeholder="0" min="0" step="1">
-                                <span class="unit">元</span>
+
+                    <!-- 追投后指标 -->
+                    <div class="inv-section inv-section-highlight">
+                        <div class="inv-section-title">⚡ 追投后消耗指标</div>
+                        <div class="inv-metrics">
+                            <div class="inv-metric-card inv-metric-accent">
+                                <span class="inv-metric-label">剩余金额</span>
+                                <div class="inv-metric-val-row">
+                                    <span class="inv-metric-value" id="addRemaining">--</span>
+                                    <span class="inv-metric-unit">元</span>
+                                </div>
+                            </div>
+                            <div class="inv-metric-card inv-metric-accent">
+                                <span class="inv-metric-label">分钟消耗</span>
+                                <div class="inv-metric-val-row">
+                                    <span class="inv-metric-value" id="addMinuteConsume">--</span>
+                                    <span class="inv-metric-unit">元/min</span>
+                                </div>
+                            </div>
+                            <div class="inv-metric-card inv-metric-accent">
+                                <span class="inv-metric-label">5分钟消耗</span>
+                                <div class="inv-metric-val-row">
+                                    <span class="inv-metric-value" id="add5MinConsume">--</span>
+                                    <span class="inv-metric-unit">元</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="input-group">
-                            <label>追投时长</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="addDuration" placeholder="0" min="0" step="0.1">
-                                <span class="unit">小时</span>
-                            </div>
+                        <!-- 合计 -->
+                        <div class="inv-total-bar">
+                            <span class="inv-total-label">合计消耗</span>
+                            <span class="inv-total-value" id="totalConsume">--</span>
+                            <span class="inv-total-unit">元</span>
                         </div>
-                        
-                        <div class="quick-options">
-                            <span class="quick-label">快速添加：</span>
-                            <button type="button" class="quick-btn" data-amount="300" data-duration="1">300元/1小时</button>
-                            <button type="button" class="quick-btn" data-amount="500" data-duration="1">500元/1小时</button>
-                            <button type="button" class="quick-btn" data-amount="300" data-duration="0.5">300元/0.5小时</button>
-                            <button type="button" class="quick-btn" data-amount="100" data-duration="5">100元/5小时</button>
-                        </div>
-                        
-                        <div class="result-section">
-                            <div class="result-item highlight">
-                                <span class="result-label">追投后剩余金额</span>
-                                <span class="result-value" id="addRemaining">--</span>
-                                <span class="result-unit">元</span>
-                            </div>
-                            <div class="result-item highlight">
-                                <span class="result-label">追投后分钟消耗</span>
-                                <span class="result-value" id="addMinuteConsume">--</span>
-                                <span class="result-unit">元/分钟</span>
-                            </div>
-                            <div class="result-item highlight">
-                                <span class="result-label">追投后5分钟消耗</span>
-                                <span class="result-value" id="add5MinConsume">--</span>
-                                <span class="result-unit">元</span>
-                            </div>
-                            <div class="result-item total">
-                                <span class="result-label">合计消耗</span>
-                                <span class="result-value" id="totalConsume">--</span>
-                                <span class="result-unit">元</span>
-                            </div>
-                            <div class="consume-hint" id="consumeHint"></div>
-                        </div>
+                        <div class="consume-hint" id="consumeHint"></div>
                     </div>
                 </div>
-
             </div>
         </div>
-        
+
         <style>
-            .investment-page {
-                padding: 0;
+            /* ======== 追投计算页面专用样式 ======== */
+            .inv { padding: 0; }
+
+            .inv-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+                align-items: start;
             }
-            
-            .investment-container {
+
+            .inv-col {
                 display: flex;
                 flex-direction: column;
-                gap: 1.5rem;
+                gap: 1rem;
             }
-            
-            .investment-card {
-                background: var(--card-bg);
-                border-radius: 12px;
-                box-shadow: var(--shadow-sm);
-                overflow: hidden;
-            }
-            
-            .card-header {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                padding: 1rem 1.25rem;
-                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-                color: white;
-            }
-            
-            .card-header.card-header-wrap {
-                flex-wrap: wrap;
-                gap: 0.5rem 1rem;
-            }
-            
-            .card-header-title {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            
-            .card-icon {
-                font-size: 1.25rem;
-            }
-            
-            .card-header h3 {
-                margin: 0;
-                font-size: 1.25rem;
-                font-weight: 600;
-            }
-            
-            .card-body {
+
+            /* 区块 */
+            .inv-section {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
                 padding: 1.25rem;
             }
-            
-            .input-group {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 1rem;
+
+            .inv-section-highlight {
+                border-color: rgba(22, 93, 255, 0.25);
+                background: linear-gradient(135deg, rgba(22, 93, 255, 0.04), rgba(22, 93, 255, 0.01));
             }
-            
-            .input-group label {
+
+            .inv-section-title {
                 font-size: 0.9rem;
-                color: var(--text-secondary);
-                font-weight: 500;
-            }
-            
-            .input-wrapper {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            
-            .input-wrapper input {
-                width: 100px;
-                padding: 0.5rem 0.75rem;
-                border: 1px solid var(--border-color);
-                border-radius: 8px;
-                font-size: 1rem;
-                text-align: right;
-                transition: border-color 0.2s, box-shadow 0.2s;
-            }
-            
-            .input-wrapper input:focus {
-                outline: none;
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            }
-            
-            .input-wrapper .unit {
-                font-size: 0.85rem;
-                color: var(--text-secondary);
-                min-width: 50px;
-            }
-            
-            .result-section {
-                margin-top: 1.25rem;
-                padding: 1rem;
-                background: rgba(0, 0, 0, 0.02);
-                border-radius: 8px;
-                border: 1px solid var(--border-color);
-            }
-            
-            .result-item {
-                display: grid;
-                grid-template-columns: 1fr 100px 70px;
-                align-items: center;
-                padding: 0.5rem 0;
-                gap: 0.5rem;
-            }
-            
-            .result-item + .result-item {
-                border-top: 1px solid rgba(0, 0, 0, 0.05);
-            }
-            
-            .result-label {
-                font-size: 0.9rem;
-                color: var(--text-secondary);
-            }
-            
-            .result-value {
-                font-size: 1.1rem;
                 font-weight: 600;
                 color: var(--text-primary);
-                text-align: right;
-                font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-                font-variant-numeric: tabular-nums;
+                margin-bottom: 1rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid var(--border-color);
             }
-            
-            .result-unit {
+
+            /* 表单行 */
+            .inv-form-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+
+            .inv-field label {
+                display: block;
                 font-size: 0.8rem;
                 color: var(--text-muted);
-                text-align: left;
-            }
-            
-            .result-item.highlight .result-value {
-                color: var(--primary-color);
-            }
-            
-            .result-item.total {
-                margin-top: 0.5rem;
-                padding-top: 0.75rem;
-                border-top: 2px solid var(--primary-color) !important;
-                background: rgba(99, 102, 241, 0.05);
-                margin: 0.5rem -1rem -1rem -1rem;
-                padding: 0.75rem 1rem;
-                border-radius: 0 0 8px 8px;
-            }
-            
-            .result-item.total .result-label {
-                font-weight: 600;
-                color: var(--text-primary);
-            }
-            
-            .result-item.total .result-value {
-                font-size: 1.25rem;
-                color: var(--success-color);
-            }
-            
-            .consume-hint {
-                margin-top: 1rem;
-                padding: 0.75rem 1rem;
-                border-radius: 8px;
-                font-size: 0.9rem;
+                margin-bottom: 0.4rem;
                 font-weight: 500;
-                text-align: center;
             }
-            
-            .consume-hint.decrease {
-                background: rgba(34, 197, 94, 0.15);
-                color: #22c55e;
-                border: 1px solid rgba(34, 197, 94, 0.3);
-            }
-            
-            .consume-hint.increase {
-                background: rgba(239, 68, 68, 0.15);
-                color: #ef4444;
-                border: 1px solid rgba(239, 68, 68, 0.3);
-            }
-            
-            .card-header .btn-secondary {
-                background: rgba(239, 68, 68, 0.15);
-                color: #ef4444;
-                border-color: rgba(239, 68, 68, 0.5);
-            }
-            
-            .card-header .btn-secondary:hover {
-                background: rgba(239, 68, 68, 0.25);
-                border-color: #ef4444;
-            }
-            
-            .header-input {
-                margin-left: auto;
+
+            .inv-input-box {
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                background: var(--bg-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                overflow: hidden;
+                transition: border-color 0.2s, box-shadow 0.2s;
             }
-            
-            .header-input label {
-                font-size: 0.8rem;
-                color: rgba(255, 255, 255, 0.8);
+
+            .inv-input-box:focus-within {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.15);
             }
-            
-            .header-input input {
-                width: 60px;
-                padding: 0.3rem 0.5rem;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                border-radius: 6px;
-                font-size: 0.85rem;
+
+            .inv-input-box input {
+                flex: 1;
+                min-width: 0;
+                border: none;
+                background: transparent;
+                padding: 0.6rem 0.75rem;
+                font-size: 1rem;
+                color: var(--text-primary);
                 text-align: right;
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
-            }
-            
-            .header-input input:focus {
                 outline: none;
-                border-color: rgba(255, 255, 255, 0.6);
-                background: rgba(255, 255, 255, 0.15);
+                font-variant-numeric: tabular-nums;
             }
-            
-            .header-input input::placeholder {
-                color: rgba(255, 255, 255, 0.5);
+
+            .inv-input-box input::placeholder {
+                color: var(--text-disabled);
             }
-            
-            .header-input .unit {
+
+            .inv-suffix {
+                padding: 0 0.75rem;
                 font-size: 0.8rem;
-                color: rgba(255, 255, 255, 0.8);
+                color: var(--text-muted);
+                white-space: nowrap;
+                border-left: 1px solid var(--border-color);
+                background: rgba(255,255,255,0.02);
+                line-height: 2.4;
             }
-            
-            .header-input .separator {
-                font-size: 0.9rem;
-                color: rgba(255, 255, 255, 0.6);
-                margin: 0 0.25rem;
-            }
-            
-            .header-quick-btns {
+
+            /* 快捷按钮行 */
+            .inv-quick-row {
                 display: flex;
+                flex-wrap: wrap;
+                align-items: center;
                 gap: 0.5rem;
-                margin-left: 0.5rem;
+                margin-top: 0.75rem;
             }
-            
-            .header-quick-btn {
-                padding: 0.4rem 0.75rem;
-                border: 1px solid rgba(239, 68, 68, 0.5);
-                border-radius: 16px;
-                background: rgba(239, 68, 68, 0.15);
-                color: #ef4444;
+
+            .inv-quick-label {
                 font-size: 0.8rem;
+                color: var(--text-muted);
+            }
+
+            .header-quick-btn {
+                padding: 0.3rem 0.75rem;
+                border: 1px solid rgba(255, 125, 0, 0.4);
+                border-radius: 14px;
+                background: rgba(255, 125, 0, 0.08);
+                color: var(--warning-color);
+                font-size: 0.78rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s;
             }
-            
+
             .header-quick-btn:hover {
-                background: rgba(239, 68, 68, 0.25);
-                border-color: #ef4444;
+                background: rgba(255, 125, 0, 0.2);
+                border-color: var(--warning-color);
             }
-            
+
             .header-quick-btn:active {
                 transform: scale(0.95);
             }
 
-            .quick-options {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 0.5rem;
-                margin-top: 0.5rem;
-                padding-top: 0.75rem;
-                border-top: 1px dashed var(--border-color);
-            }
-            
-            .quick-label {
-                font-size: 0.85rem;
-                color: var(--text-secondary);
-                margin-right: 0.25rem;
-            }
-            
             .quick-btn {
-                padding: 0.4rem 0.75rem;
-                border: 1px solid var(--primary-color);
-                border-radius: 16px;
-                background: rgba(99, 102, 241, 0.1);
+                padding: 0.3rem 0.75rem;
+                border: 1px solid rgba(22, 93, 255, 0.4);
+                border-radius: 14px;
+                background: rgba(22, 93, 255, 0.08);
                 color: var(--primary-color);
-                font-size: 0.8rem;
+                font-size: 0.78rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s;
             }
-            
+
             .quick-btn:hover {
                 background: var(--primary-color);
                 color: white;
             }
-            
+
             .quick-btn:active {
                 transform: scale(0.95);
             }
-            
+
+            /* 指标卡片网格 */
+            .inv-metrics {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.75rem;
+            }
+
+            .inv-metric-card {
+                background: var(--bg-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 0.75rem;
+                text-align: center;
+                transition: border-color 0.2s;
+            }
+
+            .inv-metric-card:hover {
+                border-color: rgba(255,255,255,0.15);
+            }
+
+            .inv-metric-accent {
+                border-color: rgba(22, 93, 255, 0.2);
+            }
+
+            .inv-metric-accent:hover {
+                border-color: rgba(22, 93, 255, 0.4);
+            }
+
+            .inv-metric-label {
+                display: block;
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+            }
+
+            .inv-metric-val-row {
+                display: flex;
+                align-items: baseline;
+                justify-content: center;
+                gap: 0.25rem;
+            }
+
+            .inv-metric-value {
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: var(--text-primary);
+                font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+                font-variant-numeric: tabular-nums;
+                line-height: 1;
+            }
+
+            .inv-metric-accent .inv-metric-value {
+                color: var(--primary-color);
+            }
+
+            .inv-metric-unit {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+            }
+
+            /* 合计行 */
+            .inv-total-bar {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.75rem;
+                margin-top: 1rem;
+                padding: 0.85rem 1rem;
+                background: linear-gradient(135deg, rgba(0, 180, 42, 0.1), rgba(0, 180, 42, 0.04));
+                border: 1px solid rgba(0, 180, 42, 0.25);
+                border-radius: 8px;
+            }
+
+            .inv-total-label {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--text-secondary);
+            }
+
+            .inv-total-value {
+                font-size: 1.6rem;
+                font-weight: 700;
+                color: var(--success-color);
+                font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .inv-total-unit {
+                font-size: 0.8rem;
+                color: var(--text-muted);
+            }
+
+            /* 消耗提示 */
+            .consume-hint {
+                margin-top: 0.75rem;
+                padding: 0.6rem 1rem;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                text-align: center;
+            }
+
+            .consume-hint:empty {
+                display: none;
+            }
+
+            .consume-hint.decrease {
+                background: rgba(0, 180, 42, 0.1);
+                color: var(--success-color);
+                border: 1px solid rgba(0, 180, 42, 0.25);
+            }
+
+            .consume-hint.increase {
+                background: rgba(245, 63, 63, 0.1);
+                color: var(--error-color);
+                border: 1px solid rgba(245, 63, 63, 0.25);
+            }
+
             /* 响应式 */
+            @media (max-width: 768px) {
+                .inv-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
             @media (max-width: 480px) {
-                
-                .input-wrapper input {
-                    width: 80px;
+                .inv-metrics {
+                    grid-template-columns: 1fr;
                 }
-                
-                .quick-options {
-                    justify-content: flex-start;
-                }
-                
-                .quick-btn {
-                    font-size: 0.75rem;
-                    padding: 0.35rem 0.6rem;
+                .inv-form-row {
+                    grid-template-columns: 1fr;
                 }
             }
         </style>
