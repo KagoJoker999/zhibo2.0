@@ -321,14 +321,14 @@ function getInvestmentPageHTML() {
             }
             
             .card-header .btn-secondary {
-                background: rgba(255, 255, 255, 0.15);
-                color: white;
-                border-color: rgba(255, 255, 255, 0.3);
+                background: rgba(239, 68, 68, 0.15);
+                color: #ef4444;
+                border-color: rgba(239, 68, 68, 0.5);
             }
             
             .card-header .btn-secondary:hover {
-                background: rgba(255, 255, 255, 0.25);
-                border-color: rgba(255, 255, 255, 0.5);
+                background: rgba(239, 68, 68, 0.25);
+                border-color: #ef4444;
             }
             
             .header-input {
@@ -383,10 +383,10 @@ function getInvestmentPageHTML() {
             
             .header-quick-btn {
                 padding: 0.4rem 0.75rem;
-                border: 1px solid rgba(255, 255, 255, 0.5);
+                border: 1px solid rgba(239, 68, 68, 0.5);
                 border-radius: 16px;
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
+                background: rgba(239, 68, 68, 0.15);
+                color: #ef4444;
                 font-size: 0.8rem;
                 font-weight: 500;
                 cursor: pointer;
@@ -394,8 +394,8 @@ function getInvestmentPageHTML() {
             }
             
             .header-quick-btn:hover {
-                background: rgba(255, 255, 255, 0.25);
-                border-color: rgba(255, 255, 255, 0.8);
+                background: rgba(239, 68, 68, 0.25);
+                border-color: #ef4444;
             }
             
             .header-quick-btn:active {
