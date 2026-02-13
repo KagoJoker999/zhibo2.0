@@ -377,17 +377,17 @@ function getInvestmentPageHTML() {
             
             .header-quick-btns {
                 display: flex;
-                gap: 0.25rem;
+                gap: 0.5rem;
                 margin-left: 0.5rem;
             }
             
             .header-quick-btn {
-                padding: 0.2rem 0.5rem;
-                border: 1px solid rgba(255, 255, 255, 0.4);
-                border-radius: 4px;
+                padding: 0.4rem 0.75rem;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 16px;
                 background: rgba(255, 255, 255, 0.1);
-                color: rgba(255, 255, 255, 0.9);
-                font-size: 0.7rem;
+                color: white;
+                font-size: 0.8rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.2s;
@@ -395,7 +395,7 @@ function getInvestmentPageHTML() {
             
             .header-quick-btn:hover {
                 background: rgba(255, 255, 255, 0.25);
-                border-color: rgba(255, 255, 255, 0.6);
+                border-color: rgba(255, 255, 255, 0.8);
             }
             
             .header-quick-btn:active {
