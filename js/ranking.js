@@ -856,11 +856,11 @@ function generateRankingPage() {
                 </div>
                 
                 <div class="upload-actions" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button class="btn btn-primary" id="btnSaveResults" disabled style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <button class="btn btn-primary" id="btnSaveResults" disabled style="display: inline-flex; align-items: center; gap: 0.5rem; height: 40px; line-height: 1;">
                         保存结果到数据库 <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: normal; font-family: monospace;">ranking_results</span>
                     </button>
-                    <span style="font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0.5rem 0.75rem; border-radius: 6px; color: #fff; font-weight: 500;">影刀读取</span>
-                    <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem;">📦 历史排品</button>
+                    <span style="display: inline-flex; align-items: center; font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0 0.75rem; border-radius: 6px; color: #fff; font-weight: 500; height: 40px;">影刀读取</span>
+                    <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem; height: 40px; line-height: 1;">📦 历史排品</button>
                 </div>
             </div>
         </div>
