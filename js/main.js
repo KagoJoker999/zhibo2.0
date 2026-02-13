@@ -18,7 +18,6 @@ const AppState = {
 const DOM = {
     sidebar: document.getElementById('sidebar'),
     menuToggle: document.getElementById('menuToggle'),
-    pageTitle: document.getElementById('pageTitle'),
     contentBody: document.getElementById('contentBody'),
     welcomeSection: document.getElementById('welcomeSection'),
     pageContainer: document.getElementById('pageContainer'),
@@ -258,8 +257,7 @@ function updateNavState(page) {
 function loadPage(page) {
     const config = PageConfig[page] || PageConfig['welcome'];
 
-    // 更新页面标题
-    DOM.pageTitle.textContent = config.title;
+    // 更新浏览器标签标题
     document.title = `${config.title} - 直播辅助工具`;
 
     // 显示对应内容
