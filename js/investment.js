@@ -29,10 +29,7 @@ function getInvestmentPageHTML() {
                     <div class="card-header">
                         <span class="card-icon">📊</span>
                         <h3>开播前投放数据</h3>
-                        <button type="button" class="btn-reset" id="resetBtn">
-                            <span class="btn-icon">🔄</span>
-                            重置
-                        </button>
+                        <button type="button" class="btn btn-secondary" id="resetBtn" style="margin-left: auto;">🔄 重置</button>
                     </div>
                     <div class="card-body">
 
@@ -189,7 +186,7 @@ function getInvestmentPageHTML() {
             
             .card-header h3 {
                 margin: 0;
-                font-size: 1rem;
+                font-size: 1.25rem;
                 font-weight: 600;
             }
             
@@ -323,28 +320,15 @@ function getInvestmentPageHTML() {
                 border: 1px solid rgba(239, 68, 68, 0.3);
             }
             
-            .btn-reset {
-                margin-left: auto;
-                display: flex;
-                align-items: center;
-                gap: 0.35rem;
-                padding: 0.4rem 0.75rem;
-                border: none;
-                border-radius: 6px;
-                font-size: 0.8rem;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s;
+            .card-header .btn-secondary {
                 background: rgba(255, 255, 255, 0.15);
                 color: white;
+                border-color: rgba(255, 255, 255, 0.3);
             }
             
-            .btn-reset:hover {
+            .card-header .btn-secondary:hover {
                 background: rgba(255, 255, 255, 0.25);
-            }
-            
-            .btn-reset .btn-icon {
-                font-size: 0.85rem;
+                border-color: rgba(255, 255, 255, 0.5);
             }
             
             .header-input {
