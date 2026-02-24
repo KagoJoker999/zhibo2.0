@@ -566,9 +566,27 @@ async function initSubRankingPage() {
     };
 
     // 加载并计算
-    document.getElementById('btnSubCalculate')?.addEventListener('click', async () => {
+    const btnSubCalculate = document.getElementById('btnSubCalculate');
+    btnSubCalculate?.addEventListener('click', async () => {
+        // 防止重复点击
+        if (btnSubCalculate.disabled) return;
+
         // 显示红色悬浮提示，提醒用户需要先更新库存
         window.AppUtils?.showCenterAlert?.('请务必先更新库存，才可有效');
+
+        // 按钮进入加载状态
+        btnSubCalculate.disabled = true;
+        const originalBtnText = btnSubCalculate.textContent;
+        btnSubCalculate.textContent = '⏳ 计算中...';
+        btnSubCalculate.style.opacity = '0.6';
+        btnSubCalculate.style.cursor = 'not-allowed';
+
+        // 容器显示加载动画
+        container.innerHTML = `<div class="placeholder-content" style="display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3rem;">
+            <div style="width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">正在加载数据并计算排品，请稍候...</p>
+            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+        </div>`;
 
         updateStatus('加载中...');
         try {
@@ -596,6 +614,12 @@ async function initSubRankingPage() {
             console.error(error);
             container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
             updateStatus('加载失败');
+        } finally {
+            // 恢复按钮状态
+            btnSubCalculate.disabled = false;
+            btnSubCalculate.textContent = originalBtnText;
+            btnSubCalculate.style.opacity = '';
+            btnSubCalculate.style.cursor = '';
         }
     });
 
