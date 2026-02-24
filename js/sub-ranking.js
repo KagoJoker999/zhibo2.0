@@ -788,12 +788,12 @@ async function loadMappingHistoryForSubRanking() {
             <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                 <thead>
                     <tr style="background: var(--bg-secondary);">
+                        <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
                         <th style="padding: 0.75rem; text-align: center; width: 50px;">图片</th>
-                        <th style="padding: 0.75rem; text-align: left;">商品名称</th>
+                        <th style="padding: 0.75rem; text-align: left; width: 200px;">商品名称</th>
                         <th style="padding: 0.75rem; text-align: center; width: 100px;">商品编码</th>
                         <th style="padding: 0.75rem; text-align: center; width: 150px;">商品ID</th>
                         <th style="padding: 0.75rem; text-align: center; width: 70px;">分类</th>
-                        <th style="padding: 0.75rem; text-align: center; width: 60px;">序号</th>
                         <th style="padding: 0.75rem; text-align: center; width: 80px;">仓位</th>
                         <th style="padding: 0.75rem; text-align: center; width: 80px;">样品仓</th>
                         <th style="padding: 0.75rem; text-align: center; width: 55px;">可用数</th>
@@ -809,12 +809,12 @@ async function loadMappingHistoryForSubRanking() {
             const productId = item.product_id || '';
             return `
                         <tr style="border-bottom: 1px solid var(--border-color);" data-product-id="${productId}">
+                            <td style="padding: 0.4rem; text-align: center;">${item.sample_number || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${imageHtml}</td>
                             <td style="padding: 0.4rem; font-size: 0.8rem;">${item.product_name || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-family: monospace;">${item.product_code || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-family: monospace; font-size: 0.8rem;">${productId || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.ranking_result || '--'}</td>
-                            <td style="padding: 0.4rem; text-align: center;">${item.sample_number || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.warehouse || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center; font-size: 0.8rem;">${item.sample_warehouse || '--'}</td>
                             <td style="padding: 0.4rem; text-align: center;">${item.available_qty || 0}</td>
