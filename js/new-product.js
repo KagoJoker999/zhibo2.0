@@ -1360,6 +1360,15 @@ function assignNewProductNumbers(records, rules) {
 
     sortedRecords.forEach(record => {
         const name = record.product_name;
+        const tag = record.product_tag || '';
+
+        // 商品标签包含"福利"的商品不分配序号
+        if (tag.includes('福利')) {
+            record.sample_number = '';
+            nameToNumber.set(name, '');
+            return;
+        }
+
         if (nameToNumber.has(name)) {
             record.sample_number = nameToNumber.get(name);
         } else {
