@@ -425,6 +425,14 @@ function generateNumberingRulesUI() {
 
             <button class="btn btn-secondary" id="btnAddRule" style="margin-top:1.5rem; width:100%; border-style:dashed;">+ 添加分配规则</button>
 
+            <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:rgba(234, 179, 8, 0.1); border:1px solid rgba(234, 179, 8, 0.3); border-radius:var(--border-radius-sm); display:flex; align-items:center; gap:0.75rem;">
+                <span style="font-size:1.25rem;">🎁</span>
+                <div>
+                    <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">福利商品自动跳过</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">商品标签（product_tag）包含"福利"二字的商品，不分配序号，也不占用序号位</div>
+                </div>
+            </div>
+
             <div class="rules-preview" style="margin-top:2rem; padding:1.5rem; background:var(--bg-tertiary); border-radius:var(--border-radius-sm);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <h4 style="margin:0; font-size:0.9rem;">👁️ 规则预览</h4>
