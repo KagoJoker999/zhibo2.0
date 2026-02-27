@@ -766,7 +766,7 @@ function generateRankingPage() {
     return `
         <div class="ranking-page">
             <div class="page-intro">
-                <h2 style="color: #999;">📋 排品计算（从评分和库存表汇总数据，按配置规则进行排品计算）</h2>
+                <h2><span style="color: white;">📋 排品计算</span><span style="color: #999;">（从评分和库存表汇总数据，按配置规则进行排品计算）</span></h2>
                 <p>
                     <span style="color: yellow; background-color: rgba(255, 255, 0, 0.2); padding: 2px 4px; border-radius: 4px;">需与主播核对评分品预售状态</span>
                     <span style="color: yellow;">计算后需保存，才可执行影刀【控库存】操作。</span>
