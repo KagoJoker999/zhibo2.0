@@ -770,7 +770,7 @@ function generateRankingPage() {
                 <p>
                     <span style="color: #888;">从评分和库存表汇总数据，按配置规则进行排品计算。</span>
                     <span style="color: yellow;">计算后需保存，才可执行影刀【控库存】操作。</span>
-                    <span style="color: red; font-weight: bold;">更新排品后，需要执行排品推送，才可生成对照表。</span>
+                    <span style="color: red; font-weight: bold;">更新排品后，需要执行<a href="https://zhibo.qzz.io/#mapping" target="_blank" style="color: red;">排品推送</a>，才可生成对照表。</span>
                 </p>
             </div>
             
