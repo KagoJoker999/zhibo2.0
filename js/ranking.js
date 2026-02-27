@@ -767,7 +767,7 @@ function generateRankingPage() {
         <div class="ranking-page">
             <div class="page-intro">
                 <h2>📋 排品计算</h2>
-                <p>从评分视图和库存表汇总数据，按配置规则进行排品计算</p>
+                <p style="color: red; font-weight: bold;">从评分和库存表汇总数据，按配置规则进行排品计算。计算后需保存，才能有效执行影刀【控库存】操作。更新排品后，需要执行排品对照，才可生成对照表。</p>
             </div>
             
             <!-- 上部分：数据统计 + 选项 + 按钮（横向排列） -->
