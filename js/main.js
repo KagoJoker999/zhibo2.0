@@ -78,6 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 更新数据库空间显示
     updateDbUsage();
 
+    // 加载快捷链接
+    setTimeout(() => {
+        if (window.loadQuickLinks) window.loadQuickLinks();
+    }, 100);
+
     // 监听 hash 变化
     window.addEventListener('hashchange', handleHashChange);
 

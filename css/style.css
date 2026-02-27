@@ -2589,3 +2589,272 @@ td .hover-zoom-img {
         transform: translateX(-50%) scale(1);
     }
 }
+
+/* ========================================
+   侧边栏底部按钮
+   ======================================== */
+.sidebar-footer {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-footer-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    border-radius: var(--border-radius);
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.nav-footer-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   标题栏快捷链接
+   ======================================== */
+.quick-links-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.quick-link-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.quick-link-chip:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* ========================================
+   快捷链接管理弹窗
+   ======================================== */
+.ql-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.ql-modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    width: 90%;
+    max-width: 560px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+}
+
+.ql-modal-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    gap: 0.75rem;
+}
+
+.ql-modal-header h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.ql-modal-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+.ql-modal-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.125rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+}
+
+.ql-modal-close:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.ql-modal-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* 添加表单 */
+.ql-add-form {
+    margin-bottom: 1rem;
+}
+
+.ql-add-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.ql-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    background: var(--bg-hover);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    outline: none;
+    transition: var(--transition-fast);
+}
+
+.ql-input:focus {
+    background: var(--bg-primary);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.ql-input-url {
+    flex: 2;
+}
+
+.ql-add-btn {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* 链接列表 */
+.ql-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.ql-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--bg-hover);
+    border-radius: var(--border-radius);
+    transition: var(--transition-fast);
+}
+
+.ql-item:hover {
+    background: var(--bg-active);
+}
+
+.ql-item-order {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ql-item-name {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 60px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ql-item-url {
+    flex: 1;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.ql-item-url:hover {
+    color: var(--primary-color);
+}
+
+.ql-item-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.ql-btn-sort,
+.ql-btn-del {
+    background: none;
+    border: none;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+    color: var(--text-muted);
+}
+
+.ql-btn-sort:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.ql-btn-del:hover {
+    background: rgba(245, 63, 63, 0.15);
+    color: var(--error-color);
+}
+
+.ql-empty,
+.ql-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
