@@ -1,11 +1,661 @@
 /**
  * 排品功能模块
  * ========================================
- * 数据：从 product_ranking_view + inventory_data 汇总
+ * 数据：从 ranking_data + inventory_data 汇总（前端计算评分）
  * 新品：从 new_product_data 读取
  * 配置：从 ranking_config 表读取
+ * 公式：从 ranking_config (scoring_formulas) 读取，AES-GCM 加密存储
  * 输出：写入 ranking_results 表
  */
+
+// ========================================
+// AES-GCM 加密/解密引擎
+// ========================================
+const ScoringCrypto = {
+    // 从密码派生 AES 密钥
+    async deriveKey(password, salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+        );
+        return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    },
+
+    // 加密 JSON 对象
+    async encrypt(data, password) {
+        const enc = new TextEncoder();
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await this.deriveKey(password, salt);
+        const ciphertext = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            enc.encode(JSON.stringify(data))
+        );
+        return {
+            salt: btoa(String.fromCharCode(...salt)),
+            iv: btoa(String.fromCharCode(...iv)),
+            ciphertext: btoa(String.fromCharCode(...new Uint8Array(ciphertext)))
+        };
+    },
+
+    // 解密得到 JSON 对象
+    async decrypt(encryptedData, password) {
+        const salt = Uint8Array.from(atob(encryptedData.salt), c => c.charCodeAt(0));
+        const iv = Uint8Array.from(atob(encryptedData.iv), c => c.charCodeAt(0));
+        const ciphertext = Uint8Array.from(atob(encryptedData.ciphertext), c => c.charCodeAt(0));
+        const key = await this.deriveKey(password, salt);
+        const decrypted = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            ciphertext
+        );
+        return JSON.parse(new TextDecoder().decode(decrypted));
+    }
+};
+
+// ========================================
+// 评分公式管理
+// ========================================
+function getDefaultScoringFormulas() {
+    return {
+        "当前公式": "默认公式",
+        "公式列表": {
+            "默认公式": {
+                "数据平滑": { "讲解次数": 0.5, "成交金额": 0.5 },
+                "表现得分权重": {
+                    "转化能力": { "权重": 0.6, "点击成交率分值": 0.5, "成交金额分值": 0.5 },
+                    "讲解效率": { "权重": 0.4, "讲解效率分值": 0.6, "曝光点击率分值": 0.4 }
+                },
+                "潜力得分权重": { "点击成交率分值": 0.42, "讲解效率分值": 0.42, "潜力因子": 0.16 },
+                "总分权重": { "表现得分": 0.8, "潜力得分": 0.2 }
+            }
+        }
+    };
+}
+
+// 从数据库加载公式（需要密码解密）
+async function loadScoringFormulas(password) {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    const { data, error } = await client
+        .from('ranking_config')
+        .select('config_value')
+        .eq('config_key', 'scoring_formulas')
+        .single();
+
+    if (error || !data) {
+        console.warn('⚠️ 未找到评分公式配置，使用默认');
+        return getDefaultScoringFormulas();
+    }
+
+    const config = data.config_value;
+
+    // 未加密（首次使用或未设置密码）
+    if (!config.encrypted) {
+        return config;
+    }
+
+    // 需要密码解密
+    if (!password) throw new Error('NEED_PASSWORD');
+    try {
+        return await ScoringCrypto.decrypt(config, password);
+    } catch (e) {
+        throw new Error('PASSWORD_WRONG');
+    }
+}
+
+// 保存公式到数据库（加密后保存）
+async function saveScoringFormulas(formulas, password) {
+    const client = window.supabaseClient;
+    if (!client) throw new Error('Supabase 未初始化');
+
+    let configValue;
+    if (password) {
+        const encrypted = await ScoringCrypto.encrypt(formulas, password);
+        configValue = { encrypted: true, ...encrypted, "当前公式": formulas["当前公式"] };
+    } else {
+        configValue = { encrypted: false, ...formulas };
+    }
+
+    const { error } = await client
+        .from('ranking_config')
+        .upsert({
+            config_key: 'scoring_formulas',
+            config_value: configValue,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'config_key' });
+
+    if (error) throw new Error('保存公式失败: ' + error.message);
+}
+
+// ========================================
+// 前端评分计算引擎
+// ========================================
+function calculateProductScores(rawProducts, formula) {
+    if (!rawProducts || rawProducts.length === 0) return [];
+
+    const smooth = formula["数据平滑"] || { "讲解次数": 0.5, "成交金额": 0.5 };
+
+    // 步骤1: 数据平滑 + 讲解效率
+    const processed = rawProducts.map(p => {
+        const lectureSmooth = (p.lecture_count || 0) + smooth["讲解次数"];
+        const salesSmooth = (p.sales_amount || 0) + smooth["成交金额"];
+        return {
+            ...p,
+            lecture_smooth: lectureSmooth,
+            sales_smooth: salesSmooth,
+            lecture_efficiency: salesSmooth / lectureSmooth,
+            exposure_rate_val: p.exposure_rate || 0,
+            conversion_rate_val: p.conversion_rate || 0
+        };
+    });
+
+    // 步骤2: 归一化辅助函数
+    const minMax = (arr, getter) => {
+        let min = Infinity, max = -Infinity;
+        arr.forEach(item => {
+            const v = getter(item);
+            if (v < min) min = v;
+            if (v > max) max = v;
+        });
+        return { min, max, range: max - min || 1 };
+    };
+
+    const mmExposure = minMax(processed, p => p.exposure_rate_val);
+    const mmConversion = minMax(processed, p => p.conversion_rate_val);
+    const mmLecture = minMax(processed, p => p.lecture_count || 0);
+    const mmEfficiency = minMax(processed, p => p.lecture_efficiency);
+    const mmLectureSmooth = minMax(processed, p => p.lecture_smooth);
+
+    // 步骤3: 计算各项分值（0-100）
+    const scored = processed.map(p => {
+        const exposureScore = ((p.exposure_rate_val - mmExposure.min) / mmExposure.range) * 100;
+        const conversionScore = ((p.conversion_rate_val - mmConversion.min) / mmConversion.range) * 100;
+        const lectureScore = (((p.lecture_count || 0) - mmLecture.min) / mmLecture.range) * 100;
+        const efficiencyScore = ((p.lecture_efficiency - mmEfficiency.min) / mmEfficiency.range) * 100;
+        const salesScore = efficiencyScore; // 成交金额分值 = 讲解效率分值
+        // 讲解潜力分值（反向归一化）
+        const lecturePotentialScore = ((mmLectureSmooth.max - p.lecture_smooth) / mmLectureSmooth.range) * 100;
+
+        return { ...p, exposureScore, conversionScore, lectureScore, efficiencyScore, salesScore, lecturePotentialScore };
+    });
+
+    // 步骤4: 加权计算
+    const perfW = formula["表现得分权重"] || {};
+    const convertAbility = perfW["转化能力"] || { "权重": 0.6, "点击成交率分值": 0.5, "成交金额分值": 0.5 };
+    const lectureAbility = perfW["讲解效率"] || { "权重": 0.4, "讲解效率分值": 0.6, "曝光点击率分值": 0.4 };
+
+    const potW = formula["潜力得分权重"] || { "点击成交率分值": 0.42, "讲解效率分值": 0.42, "潜力因子": 0.16 };
+    const totalW = formula["总分权重"] || { "表现得分": 0.8, "潜力得分": 0.2 };
+
+    return scored.map(p => {
+        // 潜力因子
+        const potentialFactor = (1 - p.lectureScore / 100) * ((p.conversionScore / 100 + p.efficiencyScore / 100) / 2) * 100;
+
+        // 表现得分
+        const performanceScore =
+            (p.conversionScore * convertAbility["点击成交率分值"] + p.salesScore * convertAbility["成交金额分值"]) * convertAbility["权重"] +
+            (p.efficiencyScore * lectureAbility["讲解效率分值"] + p.exposureScore * lectureAbility["曝光点击率分值"]) * lectureAbility["权重"];
+
+        // 潜力得分
+        const potentialScore =
+            p.conversionScore * potW["点击成交率分值"] +
+            p.efficiencyScore * potW["讲解效率分值"] +
+            potentialFactor * potW["潜力因子"];
+
+        // 产品总分
+        const totalScore =
+            performanceScore * totalW["表现得分"] +
+            potentialScore * totalW["潜力得分"];
+
+        return {
+            ...p,
+            potential_factor: Math.round(potentialFactor * 100) / 100,
+            performance_score: Math.round(performanceScore * 100) / 100,
+            potential_score: Math.round(potentialScore * 100) / 100,
+            total_score: Math.round(totalScore * 100) / 100
+        };
+    });
+}
+
+// ========================================
+// 密码弹窗
+// ========================================
+function showPasswordDialog(title = '请输入评分密码', isSetup = false) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; display:flex; align-items:center; justify-content:center;';
+        overlay.innerHTML = `
+            <div style="background:var(--bg-secondary, #1e1e2e); border:1px solid var(--border-color, #333); border-radius:12px; padding:2rem; width:340px; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
+                <div style="text-align:center; margin-bottom:1.5rem;">
+                    <div style="font-size:2rem; margin-bottom:0.5rem;">🔐</div>
+                    <h3 style="color:var(--text-primary, #fff); margin:0; font-size:1.1rem;">${title}</h3>
+                </div>
+                <input type="password" id="scoringPwdInput" placeholder="输入密码" autocomplete="off"
+                    style="width:100%; padding:0.75rem; border:1px solid var(--border-color, #444); border-radius:8px;
+                    background:var(--bg-tertiary, #2a2a3e); color:var(--text-primary, #fff); font-size:1rem;
+                    outline:none; box-sizing:border-box; margin-bottom:${isSetup ? '0.75rem' : '1rem'};">
+                ${isSetup ? `<input type="password" id="scoringPwdConfirm" placeholder="确认密码" autocomplete="off"
+                    style="width:100%; padding:0.75rem; border:1px solid var(--border-color, #444); border-radius:8px;
+                    background:var(--bg-tertiary, #2a2a3e); color:var(--text-primary, #fff); font-size:1rem;
+                    outline:none; box-sizing:border-box; margin-bottom:1rem;">` : ''}
+                <div id="scoringPwdError" style="color:#ff4d4f; font-size:0.85rem; margin-bottom:0.75rem; min-height:1.2em;"></div>
+                <div style="display:flex; gap:0.75rem;">
+                    <button id="scoringPwdCancel" style="flex:1; padding:0.6rem; border:1px solid var(--border-color, #444);
+                        border-radius:8px; background:transparent; color:var(--text-secondary, #999); cursor:pointer; font-size:0.9rem;">取消</button>
+                    <button id="scoringPwdConfirmBtn" style="flex:1; padding:0.6rem; border:none; border-radius:8px;
+                        background:var(--primary-color, #6366f1); color:#fff; cursor:pointer; font-size:0.9rem; font-weight:500;">确认</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const input = overlay.querySelector('#scoringPwdInput');
+        const errorDiv = overlay.querySelector('#scoringPwdError');
+        const confirmInput = overlay.querySelector('#scoringPwdConfirm');
+        input.focus();
+
+        const doConfirm = () => {
+            const pwd = input.value.trim();
+            if (!pwd) { errorDiv.textContent = '请输入密码'; return; }
+            if (isSetup) {
+                const pwd2 = confirmInput?.value.trim();
+                if (pwd !== pwd2) { errorDiv.textContent = '两次密码不一致'; return; }
+            }
+            document.body.removeChild(overlay);
+            resolve(pwd);
+        };
+
+        overlay.querySelector('#scoringPwdConfirmBtn').addEventListener('click', doConfirm);
+        overlay.querySelector('#scoringPwdCancel').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve(null);
+        });
+
+        // Enter 确认
+        const handleEnter = (e) => { if (e.key === 'Enter') doConfirm(); };
+        input.addEventListener('keydown', handleEnter);
+        if (confirmInput) confirmInput.addEventListener('keydown', handleEnter);
+    });
+}
+
+// 获取会话密码
+function getScoringPassword() {
+    return sessionStorage.getItem('scoring_pwd');
+}
+function setScoringPassword(pwd) {
+    sessionStorage.setItem('scoring_pwd', pwd);
+}
+
+// 带密码交互的公式加载
+async function loadScoringFormulasWithAuth() {
+    // 先尝试用会话密码
+    let password = getScoringPassword();
+
+    try {
+        const formulas = await loadScoringFormulas(password);
+        return formulas;
+    } catch (e) {
+        if (e.message === 'NEED_PASSWORD' || e.message === 'PASSWORD_WRONG') {
+            // 弹出密码框
+            const msg = e.message === 'PASSWORD_WRONG' ? '密码错误，请重新输入' : '请输入评分密码';
+            password = await showPasswordDialog(msg);
+            if (!password) return null;
+            try {
+                const formulas = await loadScoringFormulas(password);
+                setScoringPassword(password);
+                return formulas;
+            } catch (e2) {
+                if (e2.message === 'PASSWORD_WRONG') {
+                    window.AppUtils?.showToast?.('密码错误', 'error');
+                    return null;
+                }
+                throw e2;
+            }
+        }
+        throw e;
+    }
+}
+
+// ========================================
+// 评分设置页面
+// ========================================
+function generateScoringSettingsPage() {
+    return `
+        <div class="ranking-page">
+            <div class="page-intro">
+                <h2><span style="color: white;">⚙️ 评分设置</span> <span style="color: #999;">（评分公式加密存储在 ranking_config 表中）</span></h2>
+                <p>
+                    <span style="color: #ff9800;">🔒 公式数据已加密保护，需要密码才能查看和编辑。</span>
+                </p>
+            </div>
+
+            <div id="scoringAuthGate" style="display:flex; align-items:center; justify-content:center; padding:4rem 0;">
+                <div style="text-align:center;">
+                    <div style="font-size:3rem; margin-bottom:1rem;">🔐</div>
+                    <p style="color:var(--text-secondary); margin-bottom:1.5rem;">请输入密码以访问评分设置</p>
+                    <button class="btn btn-primary" id="btnScoringUnlock">输入密码</button>
+                </div>
+            </div>
+
+            <div id="scoringContent" style="display:none;">
+                <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; padding:1rem 0; border-bottom:1px solid var(--border-color);">
+                    <label style="color:var(--text-secondary); font-weight:500;">当前公式：</label>
+                    <select id="scoringFormulaSelect" style="padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-tertiary); color:var(--text-primary); font-size:0.9rem; min-width:160px;"></select>
+                    <button class="btn btn-secondary" id="btnNewFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ 新建</button>
+                    <button class="btn btn-secondary" id="btnCopyFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem;">📋 复制</button>
+                    <button class="btn btn-secondary" id="btnDeleteFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem; color:var(--error-color);">🗑️ 删除</button>
+                    <div style="margin-left:auto; display:flex; gap:0.5rem;">
+                        <button class="btn btn-primary" id="btnSaveFormula" style="font-size:0.85rem;">💾 保存公式</button>
+                        <button class="btn btn-secondary" id="btnChangeScoringPwd" style="font-size:0.8rem; padding:0.4rem 0.8rem;">🔑 修改密码</button>
+                    </div>
+                </div>
+
+                <div id="scoringFormulaEditor" style="padding:1.5rem 0;">
+                    <!-- 动态生成 -->
+                </div>
+
+                <div style="padding:1rem; background:var(--bg-tertiary); border-radius:8px; border:1px solid var(--border-color);">
+                    <h4 style="color:var(--text-secondary); margin:0 0 0.75rem 0;">📝 公式预览</h4>
+                    <pre id="scoringFormulaPreview" style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin:0; white-space:pre-wrap;"></pre>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderFormulaEditor(formula, container) {
+    const smooth = formula["数据平滑"] || {};
+    const perfW = formula["表现得分权重"] || {};
+    const convertA = perfW["转化能力"] || {};
+    const lectureA = perfW["讲解效率"] || {};
+    const potW = formula["潜力得分权重"] || {};
+    const totalW = formula["总分权重"] || {};
+
+    const makeInput = (id, value, label, unit = '') => `
+        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+            <label style="color:var(--text-secondary); min-width:140px; font-size:0.9rem;">${label}</label>
+            <input type="number" id="${id}" value="${value}" step="0.01" min="0" max="1"
+                style="width:80px; padding:0.4rem 0.5rem; border:1px solid var(--border-color); border-radius:6px;
+                background:var(--bg-tertiary); color:var(--text-primary); font-size:0.9rem; text-align:center;">
+            <span style="color:var(--text-muted); font-size:0.85rem;">${unit}</span>
+        </div>
+    `;
+
+    container.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div style="padding:1rem; background:var(--bg-tertiary); border-radius:8px; border:1px solid var(--border-color);">
+                <h4 style="color:var(--primary-color); margin:0 0 1rem 0;">📐 数据平滑参数</h4>
+                ${makeInput('sf_smooth_lecture', smooth["讲解次数"] ?? 0.5, '讲解次数平滑值')}
+                ${makeInput('sf_smooth_sales', smooth["成交金额"] ?? 0.5, '成交金额平滑值')}
+            </div>
+
+            <div style="padding:1rem; background:var(--bg-tertiary); border-radius:8px; border:1px solid var(--border-color);">
+                <h4 style="color:var(--primary-color); margin:0 0 1rem 0;">📊 总分权重</h4>
+                ${makeInput('sf_total_perf', totalW["表现得分"] ?? 0.8, '表现得分权重')}
+                ${makeInput('sf_total_pot', totalW["潜力得分"] ?? 0.2, '潜力得分权重')}
+            </div>
+
+            <div style="padding:1rem; background:var(--bg-tertiary); border-radius:8px; border:1px solid var(--border-color);">
+                <h4 style="color:#22c55e; margin:0 0 1rem 0;">📈 表现得分 - 转化能力</h4>
+                ${makeInput('sf_convert_weight', convertA["权重"] ?? 0.6, '模块权重')}
+                ${makeInput('sf_convert_click', convertA["点击成交率分值"] ?? 0.5, '点击成交率分值')}
+                ${makeInput('sf_convert_sales', convertA["成交金额分值"] ?? 0.5, '成交金额分值')}
+                <hr style="border-color:var(--border-color); margin:0.75rem 0;">
+                <h4 style="color:#22c55e; margin:0 0 1rem 0;">📈 表现得分 - 讲解效率</h4>
+                ${makeInput('sf_lecture_weight', lectureA["权重"] ?? 0.4, '模块权重')}
+                ${makeInput('sf_lecture_eff', lectureA["讲解效率分值"] ?? 0.6, '讲解效率分值')}
+                ${makeInput('sf_lecture_exp', lectureA["曝光点击率分值"] ?? 0.4, '曝光点击率分值')}
+            </div>
+
+            <div style="padding:1rem; background:var(--bg-tertiary); border-radius:8px; border:1px solid var(--border-color);">
+                <h4 style="color:#a855f7; margin:0 0 1rem 0;">🔮 潜力得分权重</h4>
+                ${makeInput('sf_pot_click', potW["点击成交率分值"] ?? 0.42, '点击成交率分值')}
+                ${makeInput('sf_pot_eff', potW["讲解效率分值"] ?? 0.42, '讲解效率分值')}
+                ${makeInput('sf_pot_factor', potW["潜力因子"] ?? 0.16, '潜力因子')}
+            </div>
+        </div>
+    `;
+}
+
+function readFormulaFromEditor() {
+    const val = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+    return {
+        "数据平滑": {
+            "讲解次数": val('sf_smooth_lecture'),
+            "成交金额": val('sf_smooth_sales')
+        },
+        "表现得分权重": {
+            "转化能力": {
+                "权重": val('sf_convert_weight'),
+                "点击成交率分值": val('sf_convert_click'),
+                "成交金额分值": val('sf_convert_sales')
+            },
+            "讲解效率": {
+                "权重": val('sf_lecture_weight'),
+                "讲解效率分值": val('sf_lecture_eff'),
+                "曝光点击率分值": val('sf_lecture_exp')
+            }
+        },
+        "潜力得分权重": {
+            "点击成交率分值": val('sf_pot_click'),
+            "讲解效率分值": val('sf_pot_eff'),
+            "潜力因子": val('sf_pot_factor')
+        },
+        "总分权重": {
+            "表现得分": val('sf_total_perf'),
+            "潜力得分": val('sf_total_pot')
+        }
+    };
+}
+
+function updateFormulaPreview() {
+    const preview = document.getElementById('scoringFormulaPreview');
+    if (!preview) return;
+    const f = readFormulaFromEditor();
+    const tw = f["总分权重"];
+    const ca = f["表现得分权重"]["转化能力"];
+    const la = f["表现得分权重"]["讲解效率"];
+    const pw = f["潜力得分权重"];
+    const sm = f["数据平滑"];
+
+    preview.textContent =
+        `数据平滑：讲解次数 + ${sm["讲解次数"]}，成交金额 + ${sm["成交金额"]}
+讲解效率 = 成交金额平滑 / 讲解次数平滑
+
+分值归一化（Min-Max → 0~100）：
+  曝光点击率分值、点击成交率分值、讲解次数分值、讲解效率分值
+  成交金额分值 = 讲解效率分值
+
+潜力因子 = (1 - 讲解次数分值/100) × (点击成交率分值/100 + 讲解效率分值/100) / 2 × 100
+
+表现得分 = (点击成交率×${ca["点击成交率分值"]} + 成交金额×${ca["成交金额分值"]})×${ca["权重"]} + (讲解效率×${la["讲解效率分值"]} + 曝光点击率×${la["曝光点击率分值"]})×${la["权重"]}
+
+潜力得分 = 点击成交率×${pw["点击成交率分值"]} + 讲解效率×${pw["讲解效率分值"]} + 潜力因子×${pw["潜力因子"]}
+
+产品总分 = 表现得分×${tw["表现得分"]} + 潜力得分×${tw["潜力得分"]}`;
+}
+
+async function initScoringSettings() {
+    let cachedFormulas = null;
+    let currentPassword = getScoringPassword();
+
+    const authGate = document.getElementById('scoringAuthGate');
+    const content = document.getElementById('scoringContent');
+    const select = document.getElementById('scoringFormulaSelect');
+    const editor = document.getElementById('scoringFormulaEditor');
+
+    // 解锁按钮
+    document.getElementById('btnScoringUnlock')?.addEventListener('click', async () => {
+        await unlockScoring();
+    });
+
+    async function unlockScoring() {
+        // 先尝试会话密码
+        currentPassword = getScoringPassword();
+        try {
+            cachedFormulas = await loadScoringFormulas(currentPassword);
+            if (!cachedFormulas.encrypted && cachedFormulas.encrypted !== false) {
+                // 正常解密成功
+            }
+            showScoringContent();
+            return;
+        } catch (e) {
+            if (e.message === 'NEED_PASSWORD' || e.message === 'PASSWORD_WRONG') {
+                currentPassword = await showPasswordDialog(e.message === 'PASSWORD_WRONG' ? '密码错误，请重试' : '请输入评分密码');
+                if (!currentPassword) return;
+                try {
+                    cachedFormulas = await loadScoringFormulas(currentPassword);
+                    setScoringPassword(currentPassword);
+                    showScoringContent();
+                } catch (e2) {
+                    window.AppUtils?.showToast?.(e2.message === 'PASSWORD_WRONG' ? '密码错误' : e2.message, 'error');
+                }
+            } else {
+                // 未加密的，检查是否需要首次设置密码
+                cachedFormulas = await loadScoringFormulas(null);
+                // 引导设置密码
+                currentPassword = await showPasswordDialog('首次使用，请设置评分密码', true);
+                if (currentPassword) {
+                    setScoringPassword(currentPassword);
+                    await saveScoringFormulas(cachedFormulas, currentPassword);
+                    window.AppUtils?.showToast?.('密码已设置，公式已加密保存', 'success');
+                }
+                showScoringContent();
+            }
+        }
+    }
+
+    function showScoringContent() {
+        authGate.style.display = 'none';
+        content.style.display = 'block';
+        populateFormulaSelect();
+        loadCurrentFormula();
+    }
+
+    function populateFormulaSelect() {
+        select.innerHTML = '';
+        const formulas = cachedFormulas["公式列表"] || {};
+        Object.keys(formulas).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            if (name === cachedFormulas["当前公式"]) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function loadCurrentFormula() {
+        const name = select.value;
+        const formula = cachedFormulas["公式列表"]?.[name];
+        if (formula) {
+            renderFormulaEditor(formula, editor);
+            updateFormulaPreview();
+            // 监听所有输入框变化实时更新预览
+            editor.querySelectorAll('input[type="number"]').forEach(inp => {
+                inp.addEventListener('input', updateFormulaPreview);
+            });
+        }
+    }
+
+    select.addEventListener('change', () => {
+        cachedFormulas["当前公式"] = select.value;
+        loadCurrentFormula();
+    });
+
+    // 新建公式
+    document.getElementById('btnNewFormula')?.addEventListener('click', () => {
+        const name = prompt('请输入新公式名称：');
+        if (!name || !name.trim()) return;
+        if (cachedFormulas["公式列表"][name]) {
+            window.AppUtils?.showToast?.('该名称已存在', 'warning');
+            return;
+        }
+        cachedFormulas["公式列表"][name] = getDefaultScoringFormulas()["公式列表"]["默认公式"];
+        cachedFormulas["当前公式"] = name;
+        populateFormulaSelect();
+        loadCurrentFormula();
+        window.AppUtils?.showToast?.(`已新建公式：${name}`, 'success');
+    });
+
+    // 复制公式
+    document.getElementById('btnCopyFormula')?.addEventListener('click', () => {
+        const currentName = select.value;
+        const name = prompt('请输入复制后的公式名称：', currentName + ' (副本)');
+        if (!name || !name.trim()) return;
+        if (cachedFormulas["公式列表"][name]) {
+            window.AppUtils?.showToast?.('该名称已存在', 'warning');
+            return;
+        }
+        cachedFormulas["公式列表"][name] = JSON.parse(JSON.stringify(cachedFormulas["公式列表"][currentName]));
+        cachedFormulas["当前公式"] = name;
+        populateFormulaSelect();
+        loadCurrentFormula();
+        window.AppUtils?.showToast?.(`已复制为：${name}`, 'success');
+    });
+
+    // 删除公式
+    document.getElementById('btnDeleteFormula')?.addEventListener('click', () => {
+        const name = select.value;
+        const keys = Object.keys(cachedFormulas["公式列表"]);
+        if (keys.length <= 1) {
+            window.AppUtils?.showToast?.('至少保留一个公式', 'warning');
+            return;
+        }
+        if (!confirm(`确认删除公式「${name}」？`)) return;
+        delete cachedFormulas["公式列表"][name];
+        cachedFormulas["当前公式"] = Object.keys(cachedFormulas["公式列表"])[0];
+        populateFormulaSelect();
+        loadCurrentFormula();
+        window.AppUtils?.showToast?.(`已删除公式：${name}`, 'success');
+    });
+
+    // 保存公式
+    document.getElementById('btnSaveFormula')?.addEventListener('click', async () => {
+        try {
+            // 将编辑器中的值读回
+            const currentName = select.value;
+            cachedFormulas["公式列表"][currentName] = readFormulaFromEditor();
+            cachedFormulas["当前公式"] = currentName;
+
+            await saveScoringFormulas(cachedFormulas, currentPassword);
+            window.AppUtils?.showToast?.('公式已加密保存', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
+        }
+    });
+
+    // 修改密码
+    document.getElementById('btnChangeScoringPwd')?.addEventListener('click', async () => {
+        const newPwd = await showPasswordDialog('请设置新密码', true);
+        if (!newPwd) return;
+        try {
+            currentPassword = newPwd;
+            setScoringPassword(newPwd);
+            // 用编辑器中的最新值
+            const currentName = select.value;
+            cachedFormulas["公式列表"][currentName] = readFormulaFromEditor();
+            await saveScoringFormulas(cachedFormulas, newPwd);
+            window.AppUtils?.showToast?.('密码已修改，公式已重新加密', 'success');
+        } catch (error) {
+            window.AppUtils?.showToast?.('修改失败: ' + error.message, 'error');
+        }
+    });
+
+    // 自动尝试解锁
+    if (currentPassword) {
+        await unlockScoring();
+    }
+}
+
 
 // ========================================
 // 字段映射 (配置中文 -> 数据字段英文)
@@ -40,40 +690,43 @@ const FILTERABLE_FIELDS = [
 ];
 
 // ========================================
-// 数据汇总 - 从 product_ranking_view + inventory_data 读取并融合
+// 数据汇总 - 从 ranking_data + inventory_data 读取并前端计算评分
 // ========================================
 async function loadCombinedProductData() {
     console.log('📥 [数据加载] 开始加载库存+评分数据...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行读取排名数据（视图）、库存表和不可佩戴品列表
+    // 并行读取排名原始数据、库存表和不可佩戴品列表
     const [rankingRes, inventoryRes, nonWearableRes] = await Promise.all([
-        client.from('product_ranking_view').select('*'),
+        client.from('ranking_data').select('*'),
         client.from('inventory_data').select('*'),
         client.from('excluded_non_wearables').select('product_name')
     ]);
 
-    if (rankingRes.error) throw new Error('读取 product_ranking_view 失败: ' + rankingRes.error.message);
+    if (rankingRes.error) throw new Error('读取 ranking_data 失败: ' + rankingRes.error.message);
     if (inventoryRes.error) throw new Error('读取 inventory_data 失败: ' + inventoryRes.error.message);
 
-    // 步骤1：构建排名数据 Map（从视图读取已计算好的产品总分）
-    // 视图字段为中文：产品名称、讲解次数、成交金额、产品总分等
+    // 步骤1：加载评分公式并在前端计算评分
+    const formulas = await loadScoringFormulasWithAuth();
+    const currentFormulaName = formulas?.["当前公式"] || "默认公式";
+    const currentFormula = formulas?.["公式列表"]?.[currentFormulaName] || getDefaultScoringFormulas()["公式列表"]["默认公式"];
+
+    // 用前端引擎计算评分
+    const rawRanking = rankingRes.data || [];
+    const scoredProducts = calculateProductScores(rawRanking, currentFormula);
+    console.log(`📊 [前端评分] 使用公式「${currentFormulaName}」计算了 ${scoredProducts.length} 个商品的评分`);
+
+    // 构建排名数据 Map
     const rankingMap = new Map();
-    (rankingRes.data || []).forEach(item => {
-        // 视图使用中文字段名
-        const productName = item['产品名称'] || item.product_name;
-        if (!productName) return;
-
-        // 直接使用视图中已计算好的产品总分
-        const totalScore = parseFloat(item['产品总分']) || 0;
-
-        rankingMap.set(productName, {
-            total_score: totalScore,
-            sales_amount: parseFloat(item['成交金额']) || 0,
-            lecture_count: parseInt(item['讲解次数']) || 0,
-            performance_score: parseFloat(item['表现得分']) || 0,
-            potential_score: parseFloat(item['潜力得分']) || 0
+    scoredProducts.forEach(item => {
+        if (!item.product_name) return;
+        rankingMap.set(item.product_name, {
+            total_score: item.total_score || 0,
+            sales_amount: item.sales_amount || 0,
+            lecture_count: item.lecture_count || 0,
+            performance_score: item.performance_score || 0,
+            potential_score: item.potential_score || 0
         });
     });
 
@@ -87,7 +740,6 @@ async function loadCombinedProductData() {
     const mergeTextField = (existing, newValue) => {
         if (!newValue) return existing;
         if (!existing) return newValue;
-        // 将现有值和新值拆分为数组，合并后去重
         const existingSet = new Set(existing.split(',').map(s => s.trim()).filter(Boolean));
         const newValues = newValue.split(',').map(s => s.trim()).filter(Boolean);
         newValues.forEach(v => existingSet.add(v));
@@ -101,25 +753,17 @@ async function loadCombinedProductData() {
         const isWearable = !nonWearableSet.has(item.product_name);
 
         if (inventoryMap.has(item.product_name)) {
-            // 同名商品：合并数据
             const existing = inventoryMap.get(item.product_name);
-
-            // 数值字段相加
             existing.available_qty += item.available_qty || 0;
             existing.actual_stock += item.actual_stock || 0;
-
-            // 文本字段去重合并
             existing.virtual_category = mergeTextField(existing.virtual_category, item.virtual_category);
             existing.product_category = mergeTextField(existing.product_category, item.product_category);
             existing.product_code = mergeTextField(existing.product_code, item.product_code);
             existing.warehouse = mergeTextField(existing.warehouse, item.warehouse);
-
-            // 图片取第一个非空值
             if (!existing.image_url && item.image_url) {
                 existing.image_url = item.image_url;
             }
         } else {
-            // 新商品：创建记录
             inventoryMap.set(item.product_name, {
                 product_name: item.product_name,
                 available_qty: item.available_qty || 0,
@@ -130,7 +774,6 @@ async function loadCombinedProductData() {
                 image_url: item.image_url || '',
                 warehouse: item.warehouse || '',
                 is_wearable: isWearable,
-                // 初始化评分相关字段
                 total_score: 0,
                 rating_rank: 999999,
                 sales_amount: 0,
@@ -149,18 +792,19 @@ async function loadCombinedProductData() {
         }
     });
 
-    // 步骤4：生成排名（按总分降序）
+    // 步骤5：生成排名（按总分降序）
     const products = Array.from(inventoryMap.values());
     products
-        .filter(p => p.total_score > 0)  // 只对有评分的商品排名
+        .filter(p => p.total_score > 0)
         .sort((a, b) => b.total_score - a.total_score)
         .forEach((p, idx) => {
-            p.rating_rank = idx + 1;  // 排名从1开始
+            p.rating_rank = idx + 1;
         });
 
-    console.log(`✅ [数据加载] 完成: 评分数据 ${rankingRes.data?.length || 0} 条, 库存数据 ${inventoryRes.data?.length || 0} 条, 汇总商品 ${products.length} 个`);
+    console.log(`✅ [数据加载] 完成: 评分数据 ${rawRanking.length} 条, 库存数据 ${inventoryRes.data?.length || 0} 条, 汇总商品 ${products.length} 个`);
     return products;
 }
+
 
 // 读取新品数据（含本地去重）
 async function loadNewProductData() {
@@ -1190,7 +1834,7 @@ async function initRankingPage() {
                 // 获取各表统计
                 const client = window.supabaseClient;
                 const [r1, r2, r3] = await Promise.all([
-                    client.from('product_ranking_view').select('*', { count: 'exact', head: true }),
+                    client.from('ranking_data').select('*', { count: 'exact', head: true }),
                     client.from('inventory_data').select('*', { count: 'exact', head: true }),
                     client.from('new_product_data').select('*', { count: 'exact', head: true })
                 ]);
@@ -2738,6 +3382,12 @@ window.loadRankingPage = function (pageId) {
         return {
             html: generateRankingCheckPage(),
             init: initRankingCheckPage
+        };
+    }
+    if (pageId === 'ranking-scoring') {
+        return {
+            html: generateScoringSettingsPage(),
+            init: initScoringSettings
         };
     }
     return null;
