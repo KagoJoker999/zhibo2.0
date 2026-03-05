@@ -62,7 +62,8 @@ const PageConfig = {
     'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
     'livestream-data': { title: '直播数据', icon: '📊' },
     'livestream-additional-investment': { title: '追投计算', icon: '💰' },
-    'presale': { title: '关预售表', icon: '📋' }
+    'presale': { title: '关预售表', icon: '📋' },
+    'shadowbot': { title: '影刀转换', icon: '🤖' }
 };
 
 // ========================================
@@ -373,6 +374,17 @@ function loadPage(page) {
             if (presalePage) {
                 DOM.pageContainer.innerHTML = presalePage.html;
                 setTimeout(() => presalePage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 检查是否有影刀转换页面加载器
+        if (window.loadShadowbotPage && page === 'shadowbot') {
+            const shadowbotPage = window.loadShadowbotPage(page);
+            if (shadowbotPage) {
+                DOM.pageContainer.innerHTML = shadowbotPage.html;
+                setTimeout(() => shadowbotPage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }
