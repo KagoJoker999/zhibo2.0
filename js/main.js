@@ -60,7 +60,7 @@ const PageConfig = {
     'mapping-settings': { title: '对照设置', icon: '⚙️' },
     'sub-ranking': { title: '小号排品', icon: '📦' },
     'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
-    'livestream-data': { title: '直播数据', icon: '📊' },
+    'other-tools': { title: '其他功能', icon: '🧰' },
     'livestream-additional-investment': { title: '追投计算', icon: '💰' },
     'presale': { title: '关预售表', icon: '📋' },
     'shadowbot': { title: '影刀转换', icon: '🤖' }
