@@ -63,7 +63,8 @@ const PageConfig = {
     'other-tools': { title: '其他功能', icon: '🧰' },
     'livestream-additional-investment': { title: '追投计算', icon: '💰' },
     'presale': { title: '关预售表', icon: '📋' },
-    'shadowbot': { title: '影刀转换', icon: '🤖' }
+    'shadowbot': { title: '影刀转换', icon: '🤖' },
+    'id-converter': { title: 'ID 转换', icon: '🔄' }
 };
 
 // ========================================
@@ -385,6 +386,17 @@ function loadPage(page) {
             if (shadowbotPage) {
                 DOM.pageContainer.innerHTML = shadowbotPage.html;
                 setTimeout(() => shadowbotPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 检查是否有ID转换页面加载器
+        if (window.loadIdConverterPage && page === 'id-converter') {
+            const idConverterPage = window.loadIdConverterPage(page);
+            if (idConverterPage) {
+                DOM.pageContainer.innerHTML = idConverterPage.html;
+                setTimeout(() => idConverterPage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }
