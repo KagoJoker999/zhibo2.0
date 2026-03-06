@@ -425,11 +425,19 @@ function generateNumberingRulesUI() {
 
             <button class="btn btn-secondary" id="btnAddRule" style="margin-top:1.5rem; width:100%; border-style:dashed;">+ 添加分配规则</button>
 
-            <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:rgba(234, 179, 8, 0.1); border:1px solid rgba(234, 179, 8, 0.3); border-radius:var(--border-radius-sm); display:flex; align-items:center; gap:0.75rem;">
-                <span style="font-size:1.25rem;">🎁</span>
-                <div>
-                    <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">福利商品自动跳过</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">商品标签（product_tag）包含"福利"二字的商品，不分配序号，也不占用序号位</div>
+            <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:rgba(234, 179, 8, 0.1); border:1px solid rgba(234, 179, 8, 0.3); border-radius:var(--border-radius-sm);">
+                <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+                    <span style="font-size:1.25rem; flex-shrink:0; margin-top:2px;">🎁</span>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">福利商品序号设置</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">商品标签（product_tag）包含"福利"二字的商品可单独指定序号。留空则不分配序号，也不占用序号位。</div>
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.75rem;">
+                            <label style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">福利商品序号：</label>
+                            <input type="text" id="welfareNumberInput" placeholder="留空 = 跳过不分配（可输入中文）" class="input input-sm" style="flex:1; max-width:260px;">
+                            <button class="btn btn-sm btn-secondary" id="btnSaveWelfareNumber">💾 保存</button>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.35rem;">数据库表: ranking_config (config_key='new_product_welfare_number')</div>
+                    </div>
                 </div>
             </div>
 
@@ -617,9 +625,9 @@ function initNewProductUpload() {
             // 分配序号
             updateStatus('分配序号...', 55);
             try {
-                const rules = await loadNumberingRules();
-                console.log('加载到的规则:', rules);
-                records = assignNewProductNumbers(records, rules);
+                const [rules, welfareNumber] = await Promise.all([loadNumberingRules(), loadWelfareNumber()]);
+                console.log('加载到的规则:', rules, '福利序号:', welfareNumber);
+                records = assignNewProductNumbers(records, rules, welfareNumber);
                 console.log('分配后的第一条记录:', records[0]);
             } catch (e) { console.warn('序号分配失败', e); }
 
@@ -1340,6 +1348,33 @@ async function loadNumberingRules() {
     }
 }
 
+async function loadWelfareNumber() {
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('ranking_config')
+            .select('config_value')
+            .eq('config_key', 'new_product_welfare_number')
+            .single();
+        if (error || !data) return '';
+        // config_value 存为字符串（text 类型的 JSON 值）
+        const val = data.config_value;
+        return typeof val === 'string' ? val : (val?.text ?? '');
+    } catch (e) {
+        return '';
+    }
+}
+
+async function saveWelfareNumber(number) {
+    const { error } = await window.supabaseClient
+        .from('ranking_config')
+        .upsert({
+            config_key: 'new_product_welfare_number',
+            config_value: number,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'config_key' });
+    if (error) throw error;
+}
+
 async function saveNumberingRules(rules) {
     const { error } = await window.supabaseClient
         .from('ranking_config')
@@ -1351,9 +1386,11 @@ async function saveNumberingRules(rules) {
     if (error) throw error;
 }
 
-function assignNewProductNumbers(records, rules) {
+function assignNewProductNumbers(records, rules, welfareNumber) {
     if (!rules || rules.length === 0) return records;
     const sortedRules = [...rules].sort((a, b) => a.range_start - b.range_start);
+    // 福利商品自定义序号（空字符串表示跳过不分配）
+    const welfareNum = (typeof welfareNumber === 'string') ? welfareNumber.trim() : '';
 
     // 1. 先按商品编码从小到大排序
     const sortedRecords = [...records].sort((a, b) => {
@@ -1370,10 +1407,10 @@ function assignNewProductNumbers(records, rules) {
         const name = record.product_name;
         const tag = record.product_tag || '';
 
-        // 商品标签包含"福利"的商品不分配序号
+        // 商品标签包含"福利"的商品：使用自定义序号（留空则跳过不分配，且不占序号位）
         if (tag.includes('福利')) {
-            record.sample_number = '';
-            nameToNumber.set(name, '');
+            record.sample_number = welfareNum;
+            nameToNumber.set(name, welfareNum);
             return;
         }
 
@@ -1403,15 +1440,34 @@ function initNumberingRulesLogic() {
     const saveBtn = document.getElementById('btnSaveRules');
     const previewBtn = document.getElementById('btnPreviewRules');
     const previewText = document.getElementById('rulesPreviewText');
+    const welfareInput = document.getElementById('welfareNumberInput');
+    const saveWelfareBtn = document.getElementById('btnSaveWelfareNumber');
 
     let rules = [];
 
-    loadNumberingRules().then(data => {
+    // 加载序号规则 + 福利序号
+    Promise.all([loadNumberingRules(), loadWelfareNumber()]).then(([data, welfareNum]) => {
         rules = data && data.length ? data : [
             { range_start: 1, range_end: 20, prefix: 'A', start_num: 1, step: 2 },
             { range_start: 21, range_end: 99999, prefix: 'A', start_num: 41, step: 1 }
         ];
+        if (welfareInput) welfareInput.value = welfareNum || '';
         renderRules();
+    });
+
+    // 福利序号保存
+    saveWelfareBtn?.addEventListener('click', async () => {
+        try {
+            saveWelfareBtn.disabled = true;
+            saveWelfareBtn.textContent = '保存中...';
+            await saveWelfareNumber(welfareInput ? welfareInput.value : '');
+            window.AppUtils?.showToast?.('福利商品序号已保存', 'success');
+        } catch (e) {
+            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
+        } finally {
+            saveWelfareBtn.disabled = false;
+            saveWelfareBtn.textContent = '💾 保存';
+        }
     });
 
     function renderRules() {
