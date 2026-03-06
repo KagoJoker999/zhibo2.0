@@ -62,7 +62,7 @@ const PageConfig = {
     'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
     'other-tools': { title: '其他功能', icon: '🧰' },
     'livestream-additional-investment': { title: '追投计算', icon: '💰' },
-    'presale': { title: '关预售表', icon: '📋' },
+    'presale': { title: '关闭预售', icon: '📋' },
     'shadowbot': { title: '影刀转换', icon: '🤖' },
     'id-converter': { title: 'ID 转换', icon: '🔄' }
 };
@@ -200,6 +200,17 @@ function initNavigation() {
                     if (item !== navItem) item.classList.remove('expanded');
                 });
                 navItem.classList.toggle('expanded');
+
+                // 【核心修改】主菜单如果有子菜单（并且不是像 mapping/arrangement 这种自身也是一个页面的情况），
+                // 且明确不想要展示未开发页面（如 other-tools），在这里做拦截。
+                // 我们直接将只展开菜单的父节点，不进行页面导航，除非它指定需要导航。
+                // 为了兼容旧的，目前 other-tools 会在 loadPage 触发兜底的“开发中”页面。
+                // 解决办法：如果点击的是 other-tools，只展开，不导航。
+                if (page === 'other-tools') {
+                    // 如果本身停留在 welcome ，或者不想改变 hash，直接 return
+                    return;
+                }
+
                 // 如果有 data-page，同时也加载页面
                 if (page) {
                     navigateTo(page);

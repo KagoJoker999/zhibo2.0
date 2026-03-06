@@ -21,7 +21,7 @@ function generatePresalePage() {
         <div class="presale-page">
             <div class="upload-block" style="margin-bottom: 1.5rem;">
                 <div class="upload-block-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">📋 关预售表 <span class="db-table-tag">presale_product_ids</span></h3>
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">📋 关闭预售 <span class="db-table-tag">presale_product_ids</span></h3>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span class="presale-stats" id="presaleStats" style="color: var(--text-muted); font-size: 0.875rem;">加载中...</span>
                         <button class="btn btn-secondary" id="clearAllBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 一键清除</button>
