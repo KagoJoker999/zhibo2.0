@@ -500,7 +500,7 @@ function generateMappingSettingsPage() {
             <div class="settings-content" style="padding: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <!-- 左侧：仓位映射规则 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
-                    <h3 style="margin: 0 0 1rem;">📦 仓位映射规则</h3>
+                    <h3 style="margin: 0 0 1rem;">📦 样品仓仓位映射规则</h3>
                     <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
                         仓位格式为 X-Y-Z，第二位 Y 在区间内时替换为对应样品仓位
                     </p>
