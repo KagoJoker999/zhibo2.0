@@ -1411,11 +1411,26 @@ function generateRankingPage() {
         <div class="ranking-page">
             <div class="page-intro">
                 <h2><span style="color: white;">📋 排品计算</span><span style="color: #999;">（从评分和库存表汇总数据，按配置规则进行排品计算）</span></h2>
-                <p>
-                    <span style="color: yellow; background-color: rgba(255, 255, 0, 0.2); padding: 2px 4px; border-radius: 4px;">需与主播核对评分品预售状态</span>
-                    <span style="color: yellow;">计算后需保存，才可执行影刀【控库存】操作。</span>
-                    <span style="color: red;">更新排品后，需要执行<a href="#mapping" style="color: red; text-decoration: underline; cursor: pointer;">【排品推送】</a>才可生成对照表。</span>
-                </p>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px; padding: 0.75rem; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-left: 3px solid #eab308; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #eab308; font-weight: bold; margin-bottom: 0.25rem;">
+                            <span style="font-size: 1.1rem;">⚠️</span> <span style="letter-spacing: 1px;">步骤 1: 核对状态</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.9; line-height: 1.4;">需与主播核对<br/>评分品预售状态</div>
+                    </div>
+                    <div style="flex: 1; min-width: 200px; padding: 0.75rem; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-left: 3px solid #eab308; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #eab308; font-weight: bold; margin-bottom: 0.25rem;">
+                            <span style="font-size: 1.1rem;">💾</span> <span style="letter-spacing: 1px;">步骤 2: 保存结果</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.9; line-height: 1.4;">计算后需保存，<br/>才可执行影刀<span style="color: #eab308; font-weight: bold;">【控库存】</span>操作。</div>
+                    </div>
+                    <div style="flex: 1; min-width: 200px; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-left: 3px solid #ef4444; border-radius: 6px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #ef4444; font-weight: bold; margin-bottom: 0.25rem;">
+                            <span style="font-size: 1.1rem;">🚀</span> <span style="letter-spacing: 1px;">步骤 3: 推送排品</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.9; line-height: 1.4;">更新排品后，需要执行<br/><a href="#mapping" style="color: #ef4444; text-decoration: underline; cursor: pointer; font-weight: bold;">【排品推送】</a>才可生成对照表。</div>
+                    </div>
+                </div>
             </div>
             
             <!-- 上部分：数据统计 + 选项 + 按钮（横向排列） -->
