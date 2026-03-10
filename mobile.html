@@ -531,16 +531,16 @@
                 this.classList.remove('active');
             });
 
-            // 加载当前方案名称
+            // 加载推送时保存的方案名称
             async function loadCurrentSchemeName() {
                 try {
                     const { data, error } = await supabaseClient
                         .from('ranking_config')
                         .select('config_value')
-                        .eq('config_key', 'ranking_schemes')
+                        .eq('config_key', 'pushed_scheme_name')
                         .single();
-                    if (!error && data?.config_value?.当前方案) {
-                        return data.config_value.当前方案;
+                    if (!error && data?.config_value?.name) {
+                        return data.config_value.name;
                     }
                 } catch (e) {
                     console.warn('加载方案名称失败:', e);

@@ -354,6 +354,26 @@ async function initMappingPage() {
         }
         try {
             const count = await saveToHistory(window._currentMappingData);
+            // 同步推送当前方案名称
+            try {
+                const client = window.supabaseClient;
+                if (client) {
+                    const { data } = await client
+                        .from('ranking_config')
+                        .select('config_value')
+                        .eq('config_key', 'ranking_schemes')
+                        .single();
+                    const schemeName = data?.config_value?.当前方案 || '默认方案';
+                    await client.from('ranking_config').upsert({
+                        config_key: 'pushed_scheme_name',
+                        config_value: { name: schemeName },
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'config_key' });
+                    console.log(`✅ [推送] 方案名称已同步: ${schemeName}`);
+                }
+            } catch (e) {
+                console.warn('推送方案名称失败:', e);
+            }
             window.AppUtils?.showToast?.(`已成功推送 ${count} 条`, 'success');
         } catch (error) {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
