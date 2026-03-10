@@ -82,29 +82,30 @@ function convertSingleWarehouse(warehouse, rules) {
 // ========================================
 // 数据加载与合并
 // ========================================
-async function loadMappingData() {
-    console.log('📥 [对照数据] 开始加载排品结果和新品数据...');
+async function loadMappingData(includeNew = true) {
+    console.log(`📥 [对照数据] 开始加载排品结果${includeNew ? '和新品数据' : '（不含新品）'}...`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
-    // 并行加载两个表的数据
-    const [rankingRes, newProductRes] = await Promise.all([
-        client.from('ranking_results').select('*'),
-        client.from('new_product_data').select('*')
-    ]);
-
+    // 加载排品结果
+    const rankingRes = await client.from('ranking_results').select('*');
     if (rankingRes.error) throw new Error('加载排品结果失败: ' + rankingRes.error.message);
-    if (newProductRes.error) throw new Error('加载新品数据失败: ' + newProductRes.error.message);
-
     const rankingData = rankingRes.data || [];
-    const newProductData = newProductRes.data || [];
-    console.log(`📊 [对照数据] ranking_results: ${rankingData.length} 条, new_product_data: ${newProductData.length} 条`);
+
+    let newProductData = [];
+    if (includeNew) {
+        const newProductRes = await client.from('new_product_data').select('*');
+        if (newProductRes.error) throw new Error('加载新品数据失败: ' + newProductRes.error.message);
+        newProductData = newProductRes.data || [];
+    }
+    console.log(`📊 [对照数据] ranking_results: ${rankingData.length} 条${includeNew ? ', new_product_data: ' + newProductData.length + ' 条' : ''}`);
 
     // 合并数据并附加源统计信息
     const mergedData = mergeAndDeduplicate(rankingData, newProductData);
     mergedData._sourceStats = {
         rankingCount: rankingData.length,
-        newProductCount: newProductData.length
+        newProductCount: newProductData.length,
+        includeNew: includeNew
     };
     console.log(`✅ [对照数据] 合并完成, 共 ${mergedData.length} 个商品`);
     return mergedData;
@@ -262,8 +263,17 @@ function generateMappingPage() {
             <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机/插件</button>
                 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ mapping_history</span>
+                <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <button type="button" class="toggle-btn active" id="btnIncludeNewProduct" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">
+                        包含新品
+                    </button>
+                    <button type="button" class="toggle-btn" id="btnExcludeNewProduct" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;">
+                        仅排品
+                    </button>
+                </div>
+                <input type="hidden" id="mappingIncludeNew" value="true">
                 <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">🔄 刷新数据</button>
-                <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
+                <span class="db-table-tag" id="dbSourceTag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">← ranking_results + new_product_data</span>
                 <span id="sourceStats" style="color: var(--text-muted); font-size: 0.8rem;"></span>
                 <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color);">📦 更新仓位</button>
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
@@ -321,15 +331,46 @@ async function initMappingPage() {
     const config = await loadMappingConfig();
     const rules = config?.rules || [];
 
+    // 新品开关逻辑
+    const btnIncludeNew = document.getElementById('btnIncludeNewProduct');
+    const btnExcludeNew = document.getElementById('btnExcludeNewProduct');
+    const hiddenIncludeNew = document.getElementById('mappingIncludeNew');
+    const dbSourceTag = document.getElementById('dbSourceTag');
+
+    function setNewProductToggle(include) {
+        hiddenIncludeNew.value = include ? 'true' : 'false';
+        if (include) {
+            btnIncludeNew.style.background = 'var(--primary-color)';
+            btnIncludeNew.style.color = 'white';
+            btnExcludeNew.style.background = 'var(--bg-secondary)';
+            btnExcludeNew.style.color = 'var(--text-secondary)';
+            if (dbSourceTag) dbSourceTag.textContent = '← ranking_results + new_product_data';
+        } else {
+            btnExcludeNew.style.background = 'var(--primary-color)';
+            btnExcludeNew.style.color = 'white';
+            btnIncludeNew.style.background = 'var(--bg-secondary)';
+            btnIncludeNew.style.color = 'var(--text-secondary)';
+            if (dbSourceTag) dbSourceTag.textContent = '← ranking_results';
+        }
+    }
+
+    btnIncludeNew?.addEventListener('click', () => setNewProductToggle(true));
+    btnExcludeNew?.addEventListener('click', () => setNewProductToggle(false));
+
     // 刷新数据
     const refreshData = async () => {
+        const includeNew = hiddenIncludeNew.value === 'true';
         updateStatus('加载中...');
         try {
-            const data = await loadMappingData();
+            const data = await loadMappingData(includeNew);
             // 显示数据来源统计
             const sourceStatsSpan = document.getElementById('sourceStats');
             if (sourceStatsSpan && data._sourceStats) {
-                sourceStatsSpan.textContent = `排品获取 ranking_results: ${data._sourceStats.rankingCount}个 | 新品获取 new_product_data: ${data._sourceStats.newProductCount}个`;
+                if (includeNew) {
+                    sourceStatsSpan.textContent = `排品获取 ranking_results: ${data._sourceStats.rankingCount}个 | 新品获取 new_product_data: ${data._sourceStats.newProductCount}个`;
+                } else {
+                    sourceStatsSpan.textContent = `排品获取 ranking_results: ${data._sourceStats.rankingCount}个`;
+                }
             }
             // 计算样品仓位
             data.forEach(item => {
