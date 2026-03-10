@@ -76,8 +76,12 @@ async function initWelfareRanking() {
             if (err2) throw err2;
 
             // 标记来源
-            const formattedInventory = (inventoryData || []).map(r => ({ ...r, __source: '福利品' }));
-            const formattedNew = (newProductData || []).map(r => ({ ...r, __source: '新品福利品' }));
+            const formattedInventory = (inventoryData || [])
+                .filter(r => r.available_qty === null || r.available_qty > 0)
+                .map(r => ({ ...r, __source: '福利品' }));
+            const formattedNew = (newProductData || [])
+                .filter(r => r.available_qty === null || r.available_qty > 0)
+                .map(r => ({ ...r, __source: '新品福利品' }));
 
             // 按照需求组合，新品在上，库存(倒序)在下
             currentData = [...formattedNew, ...formattedInventory];
