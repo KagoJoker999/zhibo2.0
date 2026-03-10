@@ -665,13 +665,15 @@ function initNewProductUpload() {
             }
 
             updateStatus('完成！', 100);
-            statusDetail.innerHTML = `<span class="success">✅ 成功处理 ${records.length} 条商品</span>`;
+            statusDetail.innerHTML = `<span class="success">✅ 成功处理 ${records.length} 条商品 (普通新品：${normalRecords.length}，福利新品：${welfareRecords.length})</span>`;
 
             // 显示结果摘要
             resultContent.innerHTML = `
                 <div class="result-summary">
                     <p>✅ 处理完成</p>
-                    <p>商品数量：${records.length}</p>
+                    <p>商品总量：${records.length}</p>
+                    <p> - 普通新品：${normalRecords.length}</p>
+                    <p> - 福利新品：${welfareRecords.length}</p>
                     <p>已应用名称公式</p>
                     <p>已生成上架分类</p>
                 </div>
