@@ -273,6 +273,10 @@ function generateMappingPage() {
                         <div style="color: #f59e0b; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📦 新品数据源</div>
                         <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">new_product_data <span id="newProductCountBadge" style="color: #f59e0b; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
+                    <div id="welfareSourceCard" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.2); border-left: 4px solid #ec4899; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
+                        <div style="color: #ec4899; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">🎁 福利品数据源</div>
+                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">welfare_data <span id="welfareCountBadge" style="color: #ec4899; margin-left: 4px; font-weight: bold;"></span></div>
+                    </div>
                 </div>
             </div>
             
@@ -292,10 +296,21 @@ function generateMappingPage() {
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
-            <div class="mapping-content" style="padding: 0 1.5rem 1.5rem;">
-                <div id="mappingTableContainer" class="data-table-container">
-                    <div class="placeholder-content">
-                        <p>正在加载数据...</p>
+            <div class="mapping-content" style="padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="welfare-section">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">🎁 福利排品商品<span style="font-size: 0.75rem; background: rgba(236,72,153,0.2); color: #ec4899; padding: 2px 6px; border-radius: 4px;">独立表格显示，合并推送</span></h3>
+                    <div id="welfareTableContainer" class="data-table-container" style="border: 1px solid rgba(236,72,153,0.3); border-radius: var(--border-radius);">
+                        <div class="placeholder-content">
+                            <p>正在加载福利数据...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ranking-section">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">📋 常规排品商品</h3>
+                    <div id="mappingTableContainer" class="data-table-container">
+                        <div class="placeholder-content">
+                            <p>正在加载数据...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -334,6 +349,7 @@ function generateMappingPage() {
 
 async function initMappingPage() {
     const container = document.getElementById('mappingTableContainer');
+    const welfareContainer = document.getElementById('welfareTableContainer');
     const statusSpan = document.getElementById('mappingStatus');
 
     const updateStatus = (text) => {
@@ -353,6 +369,7 @@ async function initMappingPage() {
     const newProductSourceCard = document.getElementById('newProductSourceCard');
     const rankingCountBadge = document.getElementById('rankingCountBadge');
     const newProductCountBadge = document.getElementById('newProductCountBadge');
+    const welfareCountBadge = document.getElementById('welfareCountBadge');
 
     function updateDataSourceBlock(includeNew, stats) {
         if (newProductSourceCard) {
@@ -361,9 +378,11 @@ async function initMappingPage() {
         if (stats) {
             if (rankingCountBadge) rankingCountBadge.textContent = `(${stats.rankingCount}个)`;
             if (newProductCountBadge && includeNew) newProductCountBadge.textContent = `(${stats.newProductCount}个)`;
+            if (welfareCountBadge) welfareCountBadge.textContent = `(${stats.welfareCount || 0}个)`;
         } else {
             if (rankingCountBadge) rankingCountBadge.textContent = '';
             if (newProductCountBadge) newProductCountBadge.textContent = '';
+            if (welfareCountBadge) welfareCountBadge.textContent = '';
         }
     }
 
@@ -391,21 +410,47 @@ async function initMappingPage() {
         const includeNew = hiddenIncludeNew.value === 'true';
         updateStatus('加载中...');
         try {
-            const data = await loadMappingData(includeNew);
+            // 并发加载常规排品数据和福利品数据
+            const mappingDataPromise = loadMappingData(includeNew);
+            const welfareDataPromise = window.supabaseClient.from('welfare_arranged_data').select('*');
+
+            const [data, welfareRes] = await Promise.all([mappingDataPromise, welfareDataPromise]);
+
+            // 处理福利品数据
+            const rawWelfareData = welfareRes.data || [];
+            const processedWelfareData = rawWelfareData.map(item => ({
+                product_name: item.product_name,
+                product_id: '',
+                ranking_result: '福利品',
+                sample_number: '',
+                image_url: item.image_url || '',
+                warehouse: '',
+                available_qty: item.available_qty || 0,
+                actual_stock: 0,
+                sample_warehouse: ''
+            }));
+
             // 更新数据来源信息块
             if (data._sourceStats) {
+                data._sourceStats.welfareCount = rawWelfareData.length;
                 updateDataSourceBlock(includeNew, data._sourceStats);
             }
-            // 计算样品仓位
+            // 计算常规商品的样品仓位
             data.forEach(item => {
                 item.sample_warehouse = calculateSampleWarehouse(item.warehouse, rules);
             });
+
+            // 渲染两个表格
             renderMappingTable(container, data);
-            updateStatus(`共 ${data.length} 个商品`);
+            if (welfareContainer) renderMappingTable(welfareContainer, processedWelfareData);
+
+            updateStatus(`常规 ${data.length} 个 / 福利 ${processedWelfareData.length} 个`);
             window._currentMappingData = data; // 缓存用于保存
+            window._currentWelfareData = processedWelfareData;
         } catch (error) {
             console.error(error);
             container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
+            if (welfareContainer) welfareContainer.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败</p></div>`;
             updateStatus('加载失败');
         }
     };
@@ -413,12 +458,14 @@ async function initMappingPage() {
     // 绑定事件
     document.getElementById('btnRefreshMapping')?.addEventListener('click', refreshData);
     document.getElementById('btnSaveHistory')?.addEventListener('click', async () => {
-        if (!window._currentMappingData) {
+        if (!window._currentMappingData || !window._currentWelfareData) {
             window.AppUtils?.showToast?.('请先刷新数据', 'warning');
             return;
         }
         try {
-            const count = await saveToHistory(window._currentMappingData);
+            // 合并常规商品和福利品后一起推送到历史记录
+            const allData = [...window._currentWelfareData, ...window._currentMappingData];
+            const count = await saveToHistory(allData);
             // 同步推送当前方案名称
             try {
                 const client = window.supabaseClient;
@@ -439,7 +486,7 @@ async function initMappingPage() {
             } catch (e) {
                 console.warn('推送方案名称失败:', e);
             }
-            window.AppUtils?.showToast?.(`已成功推送 ${count} 条`, 'success');
+            window.AppUtils?.showToast?.(`已成功推送 ${count} 条 (常规 ${window._currentMappingData.length} + 福利 ${window._currentWelfareData.length})`, 'success');
         } catch (error) {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         }
@@ -470,7 +517,8 @@ function renderMappingTable(container, data) {
         '3.周边品': 'rgba(128, 0, 128, 0.15)',    // 紫檀
         '4.评分品B': 'rgba(184, 134, 11, 0.15)',  // 金琥珀
         '5.库存品': 'rgba(85, 107, 47, 0.15)',    // 墨绿
-        '新品': 'rgba(70, 130, 180, 0.15)'         // 靛蓝
+        '新品': 'rgba(70, 130, 180, 0.15)',        // 靛蓝
+        '福利品': 'rgba(236,72,153, 0.15)'         // 绒花粉
     };
 
     const html = `
