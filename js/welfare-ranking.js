@@ -21,6 +21,7 @@ function generateWelfareRankingPage() {
                     <p class="text-muted" style="margin:0;">从此列表勾选要参与福利排品的商品。点击保存后将替换原有的安排数据。</p>
                 </div>
                 <div>
+                    <button class="btn btn-secondary" id="btnSelectAllNewWelfare" style="margin-right: 0.5rem;" title="快速勾选所有新品福利品">✨ 全选所有新品福利</button>
                     <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled>💾 保存选中的商品</button>
                 </div>
             </div>
@@ -52,6 +53,7 @@ async function initWelfareRanking() {
     const tbody = document.getElementById('welfareRankingTbody');
     const saveBtn = document.getElementById('btnSaveWelfareRanking');
     const selectAllCheckbox = document.getElementById('welfareSelectAll');
+    const selectAllNewBtn = document.getElementById('btnSelectAllNewWelfare');
 
     let currentData = [];
 
@@ -158,6 +160,29 @@ async function initWelfareRanking() {
         const checkboxes = document.querySelectorAll('.welfare-checkbox:checked');
         saveBtn.disabled = checkboxes.length === 0;
     }
+
+    // 一键勾选所有新品福利品
+    selectAllNewBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('.welfare-checkbox');
+        let selectedCount = 0;
+
+        checkboxes.forEach((cb, index) => {
+            const rowData = currentData[index];
+            if (rowData && rowData.__source === '新品福利品') {
+                cb.checked = true;
+                selectedCount++;
+            }
+        });
+
+        syncSelectAllState();
+        checkSaveButtonState();
+
+        if (selectedCount > 0) {
+            AppUtils.showToast(`已为您勾选 ${selectedCount} 款新品福利品`, 'success');
+        } else {
+            AppUtils.showToast(`当前列表没有新品福利品`, 'info');
+        }
+    });
 
     // 保存选中项
     saveBtn.addEventListener('click', async () => {
