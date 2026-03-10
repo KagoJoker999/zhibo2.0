@@ -79,8 +79,8 @@ async function initWelfareRanking() {
             const formattedInventory = (inventoryData || []).map(r => ({ ...r, __source: '福利品' }));
             const formattedNew = (newProductData || []).map(r => ({ ...r, __source: '新品福利品' }));
 
-            // 按照需求组合，库存(倒序)在上，新品在下
-            currentData = [...formattedInventory, ...formattedNew];
+            // 按照需求组合，新品在上，库存(倒序)在下
+            currentData = [...formattedNew, ...formattedInventory];
 
             renderTable();
             checkSaveButtonState();
@@ -101,7 +101,7 @@ async function initWelfareRanking() {
 
         tbody.innerHTML = currentData.map((row, index) => {
             const qtyStr = typeof row.available_qty === 'number' ? row.available_qty : '-';
-            const sourceStyle = row.__source === '福利品' ? 'background: rgba(34, 197, 94, 0.1); color: var(--success-color);' : 'background: rgba(59, 130, 246, 0.1); color: var(--primary-color);';
+            const sourceStyle = row.__source === '福利品' ? 'background: rgba(34, 197, 94, 0.1); color: var(--success-color);' : 'background: rgba(239, 68, 68, 0.1); color: #ef4444;';
             return `
                 <tr class="welfare-row">
                     <td style="text-align: center;">
