@@ -434,7 +434,13 @@ function initUploadBlock(key, config) {
             }
 
             updateStatus('完成！', 100);
-            statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
+            if (key === 'inventory') {
+                const normalLen = tableToRecords[0].records.length;
+                const welfareLen = tableToRecords[1].records.length;
+                statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条 (普通库存：${normalLen}，福利库存：${welfareLen})</span>`;
+            } else {
+                statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
+            }
             // 保存最后上传时间
             const now = new Date();
             const timeStr = now.toLocaleString('zh-CN', {
