@@ -337,25 +337,11 @@
 </head>
 
 <body>
-    <!-- 选择页面 -->
-    <div class="select-page" id="selectPage">
-        <h1>📦 排品速查</h1>
-        <button class="select-btn" data-type="main">
-            <span class="icon">📋</span>
-            <span>排品</span>
-        </button>
-        <button class="select-btn" data-type="sub">
-            <span class="icon">📦</span>
-            <span>小号排品</span>
-        </button>
-    </div>
-
     <!-- 列表页面 -->
-    <div class="list-page" id="listPage">
+    <div class="list-page active" id="listPage">
         <header class="header">
-            <h1 id="pageTitle">排品列表</h1>
+            <h1 id="pageTitle">📋 排品</h1>
             <div class="header-actions">
-                <button class="action-btn" id="switchBtn">🔀 切换</button>
                 <button class="action-btn primary" id="refreshBtn">🔄 刷新</button>
             </div>
         </header>
@@ -382,8 +368,6 @@
             const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54';
 
             const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-            let currentType = null;
 
             // 显示 Toast
             function showToast(msg) {
@@ -461,15 +445,13 @@
             }
 
             // 加载数据
-            async function loadData(type) {
+            async function loadData() {
                 const container = document.getElementById('cardList');
-                const tableName = type === 'main' ? 'mapping_history' : 'sub_ranking_results';
-
                 container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中...</div>';
 
                 try {
                     const { data, error } = await supabaseClient
-                        .from(tableName)
+                        .from('mapping_history')
                         .select('*')
                         .order('sample_number', { ascending: true })
                         .limit(200);
@@ -548,44 +530,21 @@
                 return '默认方案';
             }
 
-            // 进入列表页
-            async function showListPage(type) {
-                currentType = type;
-                document.getElementById('selectPage').style.display = 'none';
-                document.getElementById('listPage').classList.add('active');
-
-                if (type === 'main') {
-                    const schemeName = await loadCurrentSchemeName();
-                    document.getElementById('pageTitle').textContent = `📋 排品 · ${schemeName}`;
-                } else {
-                    document.getElementById('pageTitle').textContent = '📦 小号排品';
-                }
-
-                // 显示加载提示
+            // 初始化：加载方案名称并加载数据
+            async function init() {
+                const schemeName = await loadCurrentSchemeName();
+                document.getElementById('pageTitle').textContent = `📋 排品 · ${schemeName}`;
                 showToast('图片加载缓慢，请不要关闭页面，等待加载。。。');
-
-                loadData(type);
+                loadData();
             }
-
-            // 选择按钮
-            document.querySelectorAll('.select-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    showListPage(this.dataset.type);
-                });
-            });
-
-            // 切换按钮（刷新页面回到选择页）
-            document.getElementById('switchBtn').addEventListener('click', function () {
-                location.reload();
-            });
 
             // 刷新按钮
             document.getElementById('refreshBtn').addEventListener('click', function () {
-                if (currentType) {
-                    loadData(currentType);
-                    showToast('刷新中...');
-                }
+                loadData();
+                showToast('刷新中...');
             });
+
+            init();
         });
     </script>
 </body>
