@@ -346,6 +346,17 @@ function loadPage(page) {
             }
         }
 
+        // 检查是否有福利排品页面加载器
+        if (window.loadWelfareRankingPage && page === 'welfare-ranking') {
+            const welfarePage = window.loadWelfareRankingPage();
+            if (welfarePage) {
+                DOM.pageContainer.innerHTML = welfarePage.html;
+                setTimeout(() => welfarePage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
         // 检查是否有小号排品页面加载器
         if (window.loadSubRankingPage && (page === 'sub-ranking' || page.startsWith('sub-ranking-'))) {
             const subRankingPage = window.loadSubRankingPage(page);
