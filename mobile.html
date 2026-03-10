@@ -342,7 +342,7 @@
         <h1>📦 排品速查</h1>
         <button class="select-btn" data-type="main">
             <span class="icon">📋</span>
-            <span>大号排品</span>
+            <span>排品</span>
         </button>
         <button class="select-btn" data-type="sub">
             <span class="icon">📦</span>
@@ -531,12 +531,35 @@
                 this.classList.remove('active');
             });
 
+            // 加载当前方案名称
+            async function loadCurrentSchemeName() {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('ranking_config')
+                        .select('config_value')
+                        .eq('config_key', 'ranking_schemes')
+                        .single();
+                    if (!error && data?.config_value?.当前方案) {
+                        return data.config_value.当前方案;
+                    }
+                } catch (e) {
+                    console.warn('加载方案名称失败:', e);
+                }
+                return '默认方案';
+            }
+
             // 进入列表页
-            function showListPage(type) {
+            async function showListPage(type) {
                 currentType = type;
                 document.getElementById('selectPage').style.display = 'none';
                 document.getElementById('listPage').classList.add('active');
-                document.getElementById('pageTitle').textContent = type === 'main' ? '📋 大号排品' : '📦 小号排品';
+
+                if (type === 'main') {
+                    const schemeName = await loadCurrentSchemeName();
+                    document.getElementById('pageTitle').textContent = `📋 排品 · ${schemeName}`;
+                } else {
+                    document.getElementById('pageTitle').textContent = '📦 小号排品';
+                }
 
                 // 显示加载提示
                 showToast('图片加载缓慢，请不要关闭页面，等待加载。。。');
