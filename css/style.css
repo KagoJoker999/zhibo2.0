@@ -2858,3 +2858,21 @@ td .hover-zoom-img {
     color: var(--text-muted);
     font-size: 0.875rem;
 }
+
+/* ========================================
+   复选框美化 (福利排品等页面使用)
+   ======================================== */
+.welfare-checkbox,
+#welfareSelectAll {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    border-radius: 4px;
+    transition: transform var(--transition-fast);
+}
+
+.welfare-checkbox:hover,
+#welfareSelectAll:hover {
+    transform: scale(1.1);
+}
