@@ -1026,6 +1026,72 @@ async function saveRankingConfig(configKey, configValue) {
     return true;
 }
 
+// ========================================
+// 排品方案管理
+// ========================================
+let cachedSchemes = null; // 缓存方案数据
+
+function getDefaultSchemes() {
+    return {
+        当前方案: '默认方案',
+        方案列表: {
+            '默认方案': getDefaultRankingConfig()
+        }
+    };
+}
+
+async function loadRankingSchemes() {
+    console.log('⚙️ [方案加载] 正在加载排品方案...');
+    const client = window.supabaseClient;
+    if (!client) return getDefaultSchemes();
+
+    const { data, error } = await client
+        .from('ranking_config')
+        .select('config_value')
+        .eq('config_key', 'ranking_schemes')
+        .single();
+
+    if (error || !data?.config_value) {
+        console.log('⚙️ [方案加载] 无方案数据，尝试迁移旧配置...');
+        const schemes = await migrateOldConfig();
+        return schemes;
+    }
+    console.log('✅ [方案加载] 成功');
+    cachedSchemes = data.config_value;
+    return data.config_value;
+}
+
+async function saveRankingSchemes(schemes) {
+    console.log('💾 [方案保存] 正在保存排品方案...');
+    cachedSchemes = schemes;
+    await saveRankingConfig('ranking_schemes', schemes);
+    // 同步更新 filter_config 为当前方案的配置（兼容其他读取 filter_config 的地方）
+    const currentConfig = schemes.方案列表[schemes.当前方案];
+    if (currentConfig) {
+        await saveRankingConfig('filter_config', currentConfig);
+    }
+    console.log('✅ [方案保存] 成功');
+}
+
+function getSchemeConfig(schemes, schemeName) {
+    return schemes.方案列表[schemeName] || getDefaultRankingConfig();
+}
+
+async function migrateOldConfig() {
+    console.log('🔄 [迁移] 将旧 filter_config 迁移为默认方案...');
+    const oldConfig = await loadRankingConfig('filter_config');
+    const schemes = {
+        当前方案: '默认方案',
+        方案列表: {
+            '默认方案': oldConfig || getDefaultRankingConfig()
+        }
+    };
+    await saveRankingConfig('ranking_schemes', schemes);
+    cachedSchemes = schemes;
+    console.log('✅ [迁移] 完成');
+    return schemes;
+}
+
 // 默认配置
 function getDefaultRankingConfig() {
     return {
@@ -1493,6 +1559,14 @@ function generateRankingPage() {
                     </div>
                 </div>
                 
+                <!-- 方案选择 -->
+                <div class="stat-item-inline" style="border-left: 1px solid var(--border-color); padding-left: 1rem;">
+                    <span class="stat-label-sm">排品方案</span>
+                    <select id="rankingSchemeSelect" class="input" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; min-width: 120px;">
+                        <option>加载中...</option>
+                    </select>
+                </div>
+
                 <!-- 切换选项 -->
                 <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
                     <button type="button" class="toggle-btn active" id="btnExcludeNew" onclick="setNewProductMode(false)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">
@@ -1536,6 +1610,19 @@ function generateRankingSettingsPage() {
             <div class="page-intro">
                 <h2>⚙️ 排品设置</h2>
                 <p>配置筛选分类及其对应的筛选条件</p>
+            </div>
+            
+            <!-- 方案管理栏 -->
+            <div class="scheme-manager-bar" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:var(--bg-secondary); border-radius:var(--border-radius); margin-bottom:1rem; flex-wrap:wrap;">
+                <span style="font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">📑 排品方案</span>
+                <select id="schemeSelector" class="input" style="min-width:160px; padding:0.4rem 0.6rem; font-size:0.85rem;">
+                    <option>加载中...</option>
+                </select>
+                <div style="display:flex; gap:0.4rem;">
+                    <button class="btn btn-sm btn-primary" id="btnNewScheme" title="新建方案">+ 新建</button>
+                    <button class="btn btn-sm btn-secondary" id="btnRenameScheme" title="重命名方案">✏️ 重命名</button>
+                    <button class="btn btn-sm btn-secondary" id="btnDeleteScheme" title="删除方案" style="color:#ef4444;">🗑️ 删除</button>
+                </div>
             </div>
             
             <div class="settings-split-container">
@@ -1847,6 +1934,16 @@ function setNewProductMode(include) {
 async function initRankingPage() {
     const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
     const btnSaveResults = document.getElementById('btnSaveResults');
+    const rankingSchemeSelect = document.getElementById('rankingSchemeSelect');
+
+    // 加载方案列表并填充下拉框
+    const schemes = await loadRankingSchemes();
+    if (rankingSchemeSelect) {
+        const names = Object.keys(schemes.方案列表);
+        rankingSchemeSelect.innerHTML = names.map(name =>
+            `<option value="${name}" ${name === schemes.当前方案 ? 'selected' : ''}>${name}</option>`
+        ).join('');
+    }
 
     // 不再自动加载缓存结果，等待用户手动点击按钮
 
@@ -1932,8 +2029,9 @@ async function initRankingPage() {
                 // === 自动执行计算 ===
                 btnLoadAndCalculate.textContent = '计算中...';
 
-                // 加载配置并重置排除列表
-                const config = await loadRankingConfig();
+                // 加载当前选中方案的配置
+                const selectedScheme = rankingSchemeSelect?.value || schemes.当前方案;
+                const config = getSchemeConfig(schemes, selectedScheme);
                 cachedConfig = config;  // 缓存配置用于删除后重新计算
                 categoryExcluded = {};  // 重置分类排除列表
                 deletedItems = [];      // 重置删除记录
@@ -2477,7 +2575,105 @@ function loadCachedResults() {
 }
 
 async function initRankingSettings() {
-    let config = await loadRankingConfig();
+    // ========== 方案管理 ==========
+    let schemes = await loadRankingSchemes();
+    let currentSchemeName = schemes.当前方案;
+    let config = getSchemeConfig(schemes, currentSchemeName);
+
+    const schemeSelector = document.getElementById('schemeSelector');
+    const btnNewScheme = document.getElementById('btnNewScheme');
+    const btnRenameScheme = document.getElementById('btnRenameScheme');
+    const btnDeleteScheme = document.getElementById('btnDeleteScheme');
+
+    function populateSchemeSelector() {
+        if (!schemeSelector) return;
+        const names = Object.keys(schemes.方案列表);
+        schemeSelector.innerHTML = names.map(name =>
+            `<option value="${name}" ${name === currentSchemeName ? 'selected' : ''}>${name}</option>`
+        ).join('');
+    }
+
+    function switchScheme(schemeName) {
+        currentSchemeName = schemeName;
+        schemes.当前方案 = schemeName;
+        config = getSchemeConfig(schemes, schemeName);
+        selectedCategory = null;
+        renderCategories();
+        renderSampleRules();
+        if (filterContainer) filterContainer.innerHTML = '<div class="placeholder-content" style="padding:2rem 0;"><p>请点击左侧分类以编辑筛选条件</p></div>';
+        if (filterTitle) filterTitle.textContent = '筛选条件设置';
+        if (filterSubtitle) filterSubtitle.textContent = '请从左侧选择一个分类进行配置';
+    }
+
+    populateSchemeSelector();
+
+    if (schemeSelector) {
+        schemeSelector.addEventListener('change', (e) => {
+            switchScheme(e.target.value);
+            saveRankingSchemes(schemes);
+        });
+    }
+
+    if (btnNewScheme) {
+        btnNewScheme.addEventListener('click', () => {
+            const name = prompt('请输入新方案名称：');
+            if (!name || !name.trim()) return;
+            const trimmed = name.trim();
+            if (schemes.方案列表[trimmed]) {
+                window.AppUtils?.showToast?.('方案名称已存在', 'error');
+                return;
+            }
+            // 深拷贝当前方案作为新方案
+            schemes.方案列表[trimmed] = JSON.parse(JSON.stringify(config));
+            currentSchemeName = trimmed;
+            schemes.当前方案 = trimmed;
+            config = getSchemeConfig(schemes, trimmed);
+            populateSchemeSelector();
+            switchScheme(trimmed);
+            saveRankingSchemes(schemes);
+            window.AppUtils?.showToast?.(`已创建方案: ${trimmed}`, 'success');
+        });
+    }
+
+    if (btnRenameScheme) {
+        btnRenameScheme.addEventListener('click', () => {
+            const newName = prompt('请输入新名称：', currentSchemeName);
+            if (!newName || !newName.trim() || newName.trim() === currentSchemeName) return;
+            const trimmed = newName.trim();
+            if (schemes.方案列表[trimmed]) {
+                window.AppUtils?.showToast?.('方案名称已存在', 'error');
+                return;
+            }
+            schemes.方案列表[trimmed] = schemes.方案列表[currentSchemeName];
+            delete schemes.方案列表[currentSchemeName];
+            schemes.当前方案 = trimmed;
+            currentSchemeName = trimmed;
+            config = getSchemeConfig(schemes, trimmed);
+            populateSchemeSelector();
+            saveRankingSchemes(schemes);
+            window.AppUtils?.showToast?.(`已重命名为: ${trimmed}`, 'success');
+        });
+    }
+
+    if (btnDeleteScheme) {
+        btnDeleteScheme.addEventListener('click', () => {
+            const names = Object.keys(schemes.方案列表);
+            if (names.length <= 1) {
+                window.AppUtils?.showToast?.('至少需要保留一个方案', 'error');
+                return;
+            }
+            if (!confirm(`确定删除方案 "${currentSchemeName}" 吗？`)) return;
+            delete schemes.方案列表[currentSchemeName];
+            const remaining = Object.keys(schemes.方案列表);
+            currentSchemeName = remaining[0];
+            schemes.当前方案 = currentSchemeName;
+            config = getSchemeConfig(schemes, currentSchemeName);
+            populateSchemeSelector();
+            switchScheme(currentSchemeName);
+            saveRankingSchemes(schemes);
+            window.AppUtils?.showToast?.('方案已删除', 'success');
+        });
+    }
 
     // 预加载商品分类选项（从 listing_category_mapping 表获取）
     let productCategoryOptions = [];
@@ -3090,7 +3286,8 @@ async function initRankingSettings() {
     }
 
     async function saveConfigQuietly() {
-        await saveRankingConfig('filter_config', config);
+        schemes.方案列表[currentSchemeName] = config;
+        await saveRankingSchemes(schemes);
     }
 
     renderCategories();
