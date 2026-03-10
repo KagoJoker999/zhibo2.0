@@ -97,7 +97,8 @@ function processInventoryData(rows) {
                 warehouse: new Set(),
                 available_qty: 0,
                 actual_stock: 0,
-                product_category: new Set()
+                product_category: new Set(),
+                product_tag: new Set()
             });
         }
         const data = productMap.get(productName);
@@ -117,6 +118,7 @@ function processInventoryData(rows) {
         addToSet(data.product_code, row[2]);       // C列(索引2): 商品编码
         addToSet(data.warehouse, row[7]);          // H列(索引7): 主仓位
         addToSet(data.product_category, row[4]);   // E列(索引4): 分类
+        addToSet(data.product_tag, row[5]);        // F列(索引5): 商品标签
 
         data.available_qty += Math.round(parseNumber(row[8]));  // I列(索引8): 可用数
         data.actual_stock += Math.round(parseNumber(row[9]));   // J列(索引9): 实际库存
@@ -132,7 +134,8 @@ function processInventoryData(rows) {
             warehouse: Array.from(data.warehouse).filter(Boolean).join(','),
             available_qty: data.available_qty,
             actual_stock: data.actual_stock,
-            product_category: Array.from(data.product_category).filter(Boolean).join(',')
+            product_category: Array.from(data.product_category).filter(Boolean).join(','),
+            _product_tag: Array.from(data.product_tag).filter(Boolean).join(',') // 临时存放，不存入数据库，用来在后面分类
         });
     });
     console.log(`✅ [库存数据处理] 完成, 商品数: ${records.length}, 已合并同名商品`);
@@ -219,6 +222,7 @@ const UploadConfigs = {
             { source: 'C列 商品编码', target: 'product_code' },
             { source: 'D列 虚拟分类', target: 'virtual_category' },
             { source: 'E列 分类', target: 'product_category' },
+            { source: 'F列 商品标签', target: 'product_tag (分类福利品)' },
             { source: 'H列 主仓位', target: 'warehouse' },
             { source: 'I列 可用数', target: 'available_qty' },
             { source: 'J列 实际库存数', target: 'actual_stock' }
@@ -390,14 +394,45 @@ function initUploadBlock(key, config) {
             const records = config.processor(data);
             updateStatus(`已处理 ${records.length} 条`, 50);
             if (records.length === 0) throw new Error('无有效数据');
+
+            // 特殊处理库存上传逻辑，基于福利二字拆分
+            let tableToRecords = [];
+            if (key === 'inventory') {
+                const normalRecords = [];
+                const welfareRecords = [];
+                records.forEach(r => {
+                    // 读取并将临时字段从最终插入的数据中剔除
+                    const tag = String(r._product_tag || '');
+                    delete r._product_tag;
+                    if (tag.includes('福利')) {
+                        welfareRecords.push(r);
+                    } else {
+                        normalRecords.push(r);
+                    }
+                });
+
+                tableToRecords.push({ tableName: config.tableName, records: normalRecords });
+                tableToRecords.push({ tableName: 'welfare_inventory_data', records: welfareRecords });
+            } else {
+                tableToRecords.push({ tableName: config.tableName, records: records });
+            }
+
             if (isFullMode) {
-                console.log(`🗑️ 开始清空表 ${config.tableName}...`);
+                console.log(`🗑️ 开始清空表...`);
                 updateStatus('清空旧数据...', 60);
-                await clearTable(config.tableName);
-                console.log(`✅ 表 ${config.tableName} 已清空`);
+                for (const item of tableToRecords) {
+                    await clearTable(item.tableName);
+                    console.log(`✅ 表 ${item.tableName} 已清空`);
+                }
             }
             updateStatus('上传中...', 70);
-            await uploadData(config.tableName, records);
+
+            for (const item of tableToRecords) {
+                if (item.records.length > 0) {
+                    await uploadData(item.tableName, item.records);
+                }
+            }
+
             updateStatus('完成！', 100);
             statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
             // 保存最后上传时间
@@ -410,7 +445,7 @@ function initUploadBlock(key, config) {
             updateLastUploadTime(timeStr);
             // 提取纯文本标题（去除 HTML 标签）
             const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
-            window.AppUtils?.showToast?.(`${plainTitle} 成功上传 ${records.length} 条`, 'success');
+            window.AppUtils?.showToast?.(`${plainTitle} 成功处理并上传 ${records.length} 条`, 'success');
         } catch (error) {
             console.error('上传失败:', error);
             statusText.textContent = '上传失败';
