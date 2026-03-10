@@ -21,6 +21,7 @@ function generateWelfareRankingPage() {
                     <p class="text-muted" style="margin:0;">从此列表勾选要参与福利排品的商品。点击保存后将替换原有的安排数据。</p>
                 </div>
                 <div>
+                    <button class="btn btn-secondary" id="btnRefreshWelfareRanking" style="margin-right: 0.5rem;" title="刷新表格数据">🔄 刷新</button>
                     <button class="btn btn-secondary" id="btnSelectAllNewWelfare" style="margin-right: 0.5rem;" title="快速勾选所有新品福利品">✨ 全选所有新品福利</button>
                     <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled>💾 保存选中的商品</button>
                 </div>
@@ -54,6 +55,7 @@ async function initWelfareRanking() {
     const saveBtn = document.getElementById('btnSaveWelfareRanking');
     const selectAllCheckbox = document.getElementById('welfareSelectAll');
     const selectAllNewBtn = document.getElementById('btnSelectAllNewWelfare');
+    const refreshBtn = document.getElementById('btnRefreshWelfareRanking');
 
     let currentData = [];
 
@@ -159,6 +161,11 @@ async function initWelfareRanking() {
         const checkboxes = document.querySelectorAll('.welfare-checkbox:checked');
         saveBtn.disabled = checkboxes.length === 0;
     }
+
+    // 刷新数据
+    refreshBtn.addEventListener('click', () => {
+        loadData();
+    });
 
     // 一键勾选所有新品福利品
     selectAllNewBtn.addEventListener('click', () => {
