@@ -260,26 +260,35 @@ function generateMappingPage() {
                     <h2>🔗 排品结果推送 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal; vertical-align: middle;">插件读取</span></h2>
                     <p>合并显示排品结果和新品数据，自动计算样品仓位</p>
                 </div>
-                <div id="dataSourceInfo" style="background: rgba(30, 25, 10, 0.8); border: 1px solid rgba(202, 166, 57, 0.5); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.78rem; color: #caa639; line-height: 1.6; white-space: nowrap;">
-                    ⚡ 推送 → <strong>mapping_history</strong><br>
-                    📥 来源 ← <strong>ranking_results</strong> + <strong>new_product_data</strong><br>
-                    <span id="sourceStats" style="opacity: 0.85;">等待加载...</span>
+                <div id="dataSourceCards" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-left: 4px solid #3b82f6; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
+                        <div style="color: #3b82f6; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📤 推送保存至</div>
+                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">mapping_history</div>
+                    </div>
+                    <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-left: 4px solid #10b981; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
+                        <div style="color: #10b981; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📥 排品数据源</div>
+                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">ranking_results <span id="rankingCountBadge" style="color: #10b981; margin-left: 4px; font-weight: bold;"></span></div>
+                    </div>
+                    <div id="newProductSourceCard" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-left: 4px solid #f59e0b; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
+                        <div style="color: #f59e0b; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📦 新品数据源</div>
+                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">new_product_data <span id="newProductCountBadge" style="color: #f59e0b; margin-left: 4px; font-weight: bold;"></span></div>
+                    </div>
                 </div>
             </div>
             
             <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机/插件</button>
-                <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
-                    <button type="button" class="toggle-btn active" id="btnIncludeNewProduct" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">
+                <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); height: 36px; align-items: stretch;">
+                    <button type="button" class="toggle-btn active" id="btnIncludeNewProduct" style="padding: 0 1rem; font-size: 0.875rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
                         包含新品
                     </button>
-                    <button type="button" class="toggle-btn" id="btnExcludeNewProduct" style="padding: 0.4rem 0.75rem; font-size: 0.75rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;">
-                        仅排品
+                    <button type="button" class="toggle-btn" id="btnExcludeNewProduct" style="padding: 0 1rem; font-size: 0.875rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+                        不含新品
                     </button>
                 </div>
                 <input type="hidden" id="mappingIncludeNew" value="true">
-                <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary);">🔄 刷新数据</button>
-                <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color);">📦 更新仓位</button>
+                <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); height: 36px;">🔄 刷新数据</button>
+                <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color); height: 36px;">📦 更新仓位</button>
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
@@ -339,20 +348,23 @@ async function initMappingPage() {
     const btnIncludeNew = document.getElementById('btnIncludeNewProduct');
     const btnExcludeNew = document.getElementById('btnExcludeNewProduct');
     const hiddenIncludeNew = document.getElementById('mappingIncludeNew');
-    const dataSourceInfo = document.getElementById('dataSourceInfo');
+
+    // 来源信息卡片节点
+    const newProductSourceCard = document.getElementById('newProductSourceCard');
+    const rankingCountBadge = document.getElementById('rankingCountBadge');
+    const newProductCountBadge = document.getElementById('newProductCountBadge');
 
     function updateDataSourceBlock(includeNew, stats) {
-        if (!dataSourceInfo) return;
-        const sourceLine = includeNew
-            ? '📥 来源 ← <strong>ranking_results</strong> + <strong>new_product_data</strong>'
-            : '📥 来源 ← <strong>ranking_results</strong>';
-        let statsLine = '等待加载...';
-        if (stats) {
-            statsLine = includeNew
-                ? `📊 排品: ${stats.rankingCount}个 | 新品: ${stats.newProductCount}个`
-                : `📊 排品: ${stats.rankingCount}个`;
+        if (newProductSourceCard) {
+            newProductSourceCard.style.display = includeNew ? 'block' : 'none';
         }
-        dataSourceInfo.innerHTML = `⚡ 推送 → <strong>mapping_history</strong><br>${sourceLine}<br><span id="sourceStats" style="opacity: 0.85;">${statsLine}</span>`;
+        if (stats) {
+            if (rankingCountBadge) rankingCountBadge.textContent = `(${stats.rankingCount}个)`;
+            if (newProductCountBadge && includeNew) newProductCountBadge.textContent = `(${stats.newProductCount}个)`;
+        } else {
+            if (rankingCountBadge) rankingCountBadge.textContent = '';
+            if (newProductCountBadge) newProductCountBadge.textContent = '';
+        }
     }
 
     function setNewProductToggle(include) {
