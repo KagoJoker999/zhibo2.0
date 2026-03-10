@@ -314,10 +314,8 @@ function loadPage(page) {
             let rankingPageId = null;
             if (page === 'arrangement' || page === 'arrangement-main') {
                 rankingPageId = 'ranking';
-            } else if (page === 'arrangement-settings') {
+            } else if (page === 'arrangement-settings' || page === 'arrangement-assignment') {
                 rankingPageId = 'ranking-settings';
-            } else if (page === 'arrangement-assignment') {
-                rankingPageId = 'ranking-assignment';
             } else if (page === 'arrangement-exclusion') {
                 rankingPageId = 'ranking-exclusion';
             } else if (page === 'arrangement-check') {

@@ -1575,6 +1575,20 @@ function generateRankingSettingsPage() {
                     </div>
                 </div>
             </div>
+
+            <!-- 排品序号分配区域 -->
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size:1rem; margin:0;">🔢 排品序号分配</h3>
+                        <p class="text-muted" style="font-size:0.8rem; margin:0.25rem 0 0;">配置各分类的生成样品序号规则</p>
+                    </div>
+                    <button class="btn btn-primary" id="btnSaveAssignment">保存规则</button>
+                </div>
+                <div id="sampleRulesContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:1rem;">
+                    <p>加载中...</p>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -3114,6 +3128,7 @@ async function initRankingSettings() {
             newCategoryInput.value = '';
             if (addContainer) addContainer.style.display = 'none';
             renderCategories();
+            renderSampleRules();
             saveConfigQuietly();
         });
     }
@@ -3131,6 +3146,77 @@ async function initRankingSettings() {
                 btnSave.disabled = false;
                 btnSave.textContent = '保存设置';
             }
+        });
+    }
+
+    // ========================================
+    // 排品序号分配（嵌入排品设置页面）
+    // ========================================
+    const sampleRulesContainer = document.getElementById('sampleRulesContainer');
+    const btnSaveAssignment = document.getElementById('btnSaveAssignment');
+
+    if (!config.样品序号规则) config.样品序号规则 = {};
+
+    function renderSampleRules() {
+        if (!sampleRulesContainer) return;
+        const categories = config.分类排序 || [];
+        if (categories.length === 0) {
+            sampleRulesContainer.innerHTML = '<p class="text-muted">请先在上方添加分类</p>';
+        } else {
+            sampleRulesContainer.innerHTML = categories.map((catKey, idx) => {
+                const displayName = config.结果映射[catKey] || catKey;
+                let rule = config.样品序号规则[displayName] || { prefix: '', start: 1, step: 1 };
+                if (!config.样品序号规则[displayName]) config.样品序号规则[displayName] = rule;
+
+                return `
+                    <div class="rules-card" style="background:var(--bg-tertiary); padding:1rem; border-radius:var(--border-radius-sm); border-left: 3px solid var(--primary-color);">
+                        <div style="display:flex; gap:1rem; margin-bottom:0.5rem; align-items:center;">
+                            <strong>${idx + 1}. ${displayName}</strong>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem;">
+                            <div class="input-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">前缀</label>
+                                <input type="text" class="input input-sm rule-input-assignment" data-cat="${displayName}" data-field="prefix" value="${rule.prefix || ''}">
+                            </div>
+                            <div class="input-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">起始号</label>
+                                <input type="number" class="input input-sm rule-input-assignment" data-cat="${displayName}" data-field="start" value="${rule.start || 1}">
+                            </div>
+                            <div class="input-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">步长</label>
+                                <input type="number" class="input input-sm rule-input-assignment" data-cat="${displayName}" data-field="step" value="${rule.step || 1}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            sampleRulesContainer.querySelectorAll('.rule-input-assignment').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const catName = e.target.dataset.cat;
+                    const key = e.target.dataset.field;
+                    const val = e.target.value;
+                    if (!config.样品序号规则[catName]) config.样品序号规则[catName] = {};
+                    if (key === 'start' || key === 'step') {
+                        config.样品序号规则[catName][key] = parseInt(val) || 1;
+                    } else {
+                        config.样品序号规则[catName][key] = val;
+                    }
+                });
+            });
+        }
+    }
+
+    renderSampleRules();
+
+    if (btnSaveAssignment) {
+        btnSaveAssignment.addEventListener('click', async () => {
+            btnSaveAssignment.disabled = true;
+            btnSaveAssignment.textContent = '保存中...';
+            await saveConfigQuietly();
+            window.AppUtils?.showToast?.('规则已保存', 'success');
+            btnSaveAssignment.disabled = false;
+            btnSaveAssignment.textContent = '保存规则';
         });
     }
 }
