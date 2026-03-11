@@ -634,46 +634,25 @@ function initNewProductUpload() {
             if (isFullMode) {
                 updateStatus('清空旧数据...', 60);
                 await window.supabaseClient.from('new_product_data').delete().gte('id', 0);
-                await window.supabaseClient.from('welfare_new_product_data').delete().gte('id', 0);
             }
 
-            updateStatus('拆分福利数据...', 65);
-            const normalRecords = [];
-            const welfareRecords = [];
-            records.forEach(r => {
-                const tag = String(r.product_tag || '');
-                if (tag.includes('福利')) {
-                    welfareRecords.push(r);
-                } else {
-                    normalRecords.push(r);
-                }
-            });
-
-            updateStatus('上传数据...', 70);
-            // 分批上传普通商品
+            updateStatus('上传数据...', 65);
+            // 分批上传商品
             const batchSize = 100;
-            for (let i = 0; i < normalRecords.length; i += batchSize) {
-                const batch = normalRecords.slice(i, i + batchSize);
+            for (let i = 0; i < records.length; i += batchSize) {
+                const batch = records.slice(i, i + batchSize);
                 const { error } = await window.supabaseClient.from('new_product_data').insert(batch);
-                if (error) throw new Error('普通新品上传失败: ' + error.message);
-            }
-            // 分批上传福利商品
-            for (let i = 0; i < welfareRecords.length; i += batchSize) {
-                const batch = welfareRecords.slice(i, i + batchSize);
-                const { error } = await window.supabaseClient.from('welfare_new_product_data').insert(batch);
-                if (error) throw new Error('福利新品上传失败: ' + error.message);
+                if (error) throw new Error('新品上传失败: ' + error.message);
             }
 
             updateStatus('完成！', 100);
-            statusDetail.innerHTML = `<span class="success">✅ 成功处理 ${records.length} 条商品 (普通新品：${normalRecords.length}，福利新品：${welfareRecords.length})</span>`;
+            statusDetail.innerHTML = `<span class="success">✅ 成功处理 ${records.length} 条商品</span>`;
 
             // 显示结果摘要
             resultContent.innerHTML = `
                 <div class="result-summary">
                     <p>✅ 处理完成</p>
                     <p>商品总量：${records.length}</p>
-                    <p> - 普通新品：${normalRecords.length}</p>
-                    <p> - 福利新品：${welfareRecords.length}</p>
                     <p>已应用名称公式</p>
                     <p>已生成上架分类</p>
                 </div>
