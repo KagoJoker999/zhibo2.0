@@ -464,6 +464,18 @@
                         return;
                     }
 
+                    // 排序逻辑：带有“福利”字样的排在最前面
+                    data.sort((a, b) => {
+                        const strA = (a.sample_number || '') + (a.ranking_result || '');
+                        const strB = (b.sample_number || '') + (b.ranking_result || '');
+                        const isAWelfare = strA.includes('福利');
+                        const isBWelfare = strB.includes('福利');
+
+                        if (isAWelfare && !isBWelfare) return -1;
+                        if (!isAWelfare && isBWelfare) return 1;
+                        return 0; // 如果都是福利或都不是，保持 supabase 的原始 order
+                    });
+
                     container.innerHTML = data.map(renderCard).join('');
                     bindCardEvents(container);
                 } catch (err) {
