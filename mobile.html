@@ -562,7 +562,7 @@
             // 初始化：加载方案名称并加载数据
             async function init() {
                 const schemeName = await loadCurrentSchemeName();
-                document.getElementById('pageTitle').textContent = `<i data-lucide="clipboard-list"></i> 排品 · ${schemeName}`;
+                document.getElementById('pageTitle').innerHTML = `<i data-lucide="clipboard-list"></i> 排品 · ${schemeName}`;
                 showToast('图片加载缓慢，请不要关闭页面，等待加载。。。');
                 loadData();
             }
