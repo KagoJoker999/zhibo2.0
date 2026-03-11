@@ -51,7 +51,7 @@ function parsePercentage(value) {
 // 列映射: B=商品名称, C=讲解次数, F=用户支付金额, J=曝光点击率, K=点击成交率
 // ========================================
 function processRankingData(rows) {
-    console.log(`📊 [排名数据处理] 开始, 原始行数: ${rows?.length || 0}`);
+    console.log(`<i data-lucide="bar-chart-2"></i> [排名数据处理] 开始, 原始行数: ${rows?.length || 0}`);
     const records = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -147,7 +147,7 @@ function processInventoryData(rows) {
 // 列映射: A=商品ID, B=商品名称, D=二级分类(备用), E=三级分类, N=商品价格
 // ========================================
 function processProductIdData(rows) {
-    console.log(`🆔 [ID数据处理] 开始, 原始行数: ${rows?.length || 0}`);
+    console.log(`<i data-lucide="tag"></i> [ID数据处理] 开始, 原始行数: ${rows?.length || 0}`);
     const seenProducts = new Set();
     const records = [];
     for (let i = 1; i < rows.length; i++) {
@@ -189,7 +189,7 @@ function processProductIdData(rows) {
 // ========================================
 const UploadConfigs = {
     ranking: {
-        title: '📊 排名上传 <span style=\"font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;\">只需下播更新</span>',
+        title: '<i data-lucide="bar-chart-2"></i> 排名上传 <span style=\"font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;\">只需下播更新</span>',
         tableName: 'ranking_data',
         processor: processRankingData,
         rules: [
@@ -229,7 +229,7 @@ const UploadConfigs = {
         ]
     },
     productId: {
-        title: '🆔 ID上传',
+        title: '<i data-lucide="tag"></i> ID上传',
         tableName: 'product_id_data',
         processor: processProductIdData,
         rules: [
