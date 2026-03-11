@@ -2892,3 +2892,12 @@ td .hover-zoom-img {
 #welfareSelectAll:hover {
     transform: scale(1.1);
 }
+
+/* ========================================
+   全局 Lucide 图标自适应文字大小
+   ======================================== */
+.lucide, [data-lucide] {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+}
