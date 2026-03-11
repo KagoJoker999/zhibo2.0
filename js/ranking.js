@@ -92,7 +92,7 @@ async function loadScoringFormulas(password) {
         .single();
 
     if (error || !data) {
-        console.warn('⚠️ 未找到评分公式配置，使用默认');
+        console.warn('<i data-lucide="alert-triangle"></i> 未找到评分公式配置，使用默认');
         return getDefaultScoringFormulas();
     }
 
@@ -351,10 +351,10 @@ function generateScoringSettingsPage() {
                     <label style="color:var(--text-secondary); font-weight:500;">当前公式：</label>
                     <select id="scoringFormulaSelect" style="padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-tertiary); color:var(--text-primary); font-size:0.9rem; min-width:160px;"></select>
                     <button class="btn btn-secondary" id="btnNewFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem;">➕ 新建</button>
-                    <button class="btn btn-secondary" id="btnCopyFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem;">📋 复制</button>
+                    <button class="btn btn-secondary" id="btnCopyFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem;"><i data-lucide="clipboard-list"></i> 复制</button>
                     <button class="btn btn-secondary" id="btnDeleteFormula" style="font-size:0.8rem; padding:0.4rem 0.8rem; color:var(--error-color);">🗑️ 删除</button>
                     <div style="margin-left:auto; display:flex; gap:0.5rem;">
-                        <button class="btn btn-primary" id="btnSaveFormula" style="font-size:0.85rem;">💾 保存公式</button>
+                        <button class="btn btn-primary" id="btnSaveFormula" style="font-size:0.85rem;"><i data-lucide="save"></i> 保存公式</button>
                         <button class="btn btn-secondary" id="btnChangeScoringPwd" style="font-size:0.8rem; padding:0.4rem 0.8rem;">🔑 修改密码</button>
                     </div>
                 </div>
@@ -801,7 +801,7 @@ async function loadCombinedProductData() {
             p.rating_rank = idx + 1;
         });
 
-    console.log(`✅ [数据加载] 完成: 评分数据 ${rawRanking.length} 条, 库存数据 ${inventoryRes.data?.length || 0} 条, 汇总商品 ${products.length} 个`);
+    console.log(`<i data-lucide="check-circle"></i> [数据加载] 完成: 评分数据 ${rawRanking.length} 条, 库存数据 ${inventoryRes.data?.length || 0} 条, 汇总商品 ${products.length} 个`);
     return products;
 }
 
@@ -897,7 +897,7 @@ async function loadNewProductData() {
         after: deduplicatedCount
     };
 
-    console.log(`✅ [新品加载] 完成: 原始 ${rawCount} 条, 去重后 ${deduplicatedCount} 个商品`);
+    console.log(`<i data-lucide="check-circle"></i> [新品加载] 完成: 原始 ${rawCount} 条, 去重后 ${deduplicatedCount} 个商品`);
     return products;
 }
 
@@ -998,15 +998,15 @@ async function loadRankingConfig(configKey = 'filter_config') {
         .single();
 
     if (error) {
-        console.warn(`⚠️ [配置加载] 失败, 使用默认配置:`, error.message);
+        console.warn(`<i data-lucide="alert-triangle"></i> [配置加载] 失败, 使用默认配置:`, error.message);
         return getDefaultRankingConfig();
     }
-    console.log(`✅ [配置加载] 成功加载配置: ${configKey}`);
+    console.log(`<i data-lucide="check-circle"></i> [配置加载] 成功加载配置: ${configKey}`);
     return data?.config_value || getDefaultRankingConfig();
 }
 
 async function saveRankingConfig(configKey, configValue) {
-    console.log(`💾 [配置保存] 正在保存配置: ${configKey}`);
+    console.log(`<i data-lucide="save"></i> [配置保存] 正在保存配置: ${configKey}`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -1019,10 +1019,10 @@ async function saveRankingConfig(configKey, configValue) {
         }, { onConflict: 'config_key' });
 
     if (error) {
-        console.error(`❌ [配置保存] 失败:`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [配置保存] 失败:`, error.message);
         throw new Error('保存配置失败: ' + error.message);
     }
-    console.log(`✅ [配置保存] 成功: ${configKey}`);
+    console.log(`<i data-lucide="check-circle"></i> [配置保存] 成功: ${configKey}`);
     return true;
 }
 
@@ -1056,13 +1056,13 @@ async function loadRankingSchemes() {
         const schemes = await migrateOldConfig();
         return schemes;
     }
-    console.log('✅ [方案加载] 成功');
+    console.log('<i data-lucide="check-circle"></i> [方案加载] 成功');
     cachedSchemes = data.config_value;
     return data.config_value;
 }
 
 async function saveRankingSchemes(schemes) {
-    console.log('💾 [方案保存] 正在保存排品方案...');
+    console.log('<i data-lucide="save"></i> [方案保存] 正在保存排品方案...');
     cachedSchemes = schemes;
     await saveRankingConfig('ranking_schemes', schemes);
     // 同步更新 filter_config 为当前方案的配置（兼容其他读取 filter_config 的地方）
@@ -1070,7 +1070,7 @@ async function saveRankingSchemes(schemes) {
     if (currentConfig) {
         await saveRankingConfig('filter_config', currentConfig);
     }
-    console.log('✅ [方案保存] 成功');
+    console.log('<i data-lucide="check-circle"></i> [方案保存] 成功');
 }
 
 function getSchemeConfig(schemes, schemeName) {
@@ -1078,7 +1078,7 @@ function getSchemeConfig(schemes, schemeName) {
 }
 
 async function migrateOldConfig() {
-    console.log('🔄 [迁移] 将旧 filter_config 迁移为默认方案...');
+    console.log('<i data-lucide="refresh-cw"></i> [迁移] 将旧 filter_config 迁移为默认方案...');
     const oldConfig = await loadRankingConfig('filter_config');
     const schemes = {
         当前方案: '默认方案',
@@ -1088,7 +1088,7 @@ async function migrateOldConfig() {
     };
     await saveRankingConfig('ranking_schemes', schemes);
     cachedSchemes = schemes;
-    console.log('✅ [迁移] 完成');
+    console.log('<i data-lucide="check-circle"></i> [迁移] 完成');
     return schemes;
 }
 
@@ -1432,7 +1432,7 @@ function assignSampleNumbers(rankingResults, config) {
 // 结果保存到数据库
 // ========================================
 async function saveRankingResults(results) {
-    console.log(`💾 [结果保存] 开始保存排品结果到 ranking_results, 共 ${results.length} 条`);
+    console.log(`<i data-lucide="save"></i> [结果保存] 开始保存排品结果到 ranking_results, 共 ${results.length} 条`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -1460,12 +1460,12 @@ async function saveRankingResults(results) {
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
-        console.log(`📤 [结果保存] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
+        console.log(`<i data-lucide="upload"></i> [结果保存] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
         const { error } = await client.from('ranking_results').insert(batch);
         if (error) throw new Error('保存结果失败: ' + error.message);
     }
 
-    console.log(`✅ [结果保存] 完成, 共保存 ${records.length} 条记录`);
+    console.log(`<i data-lucide="check-circle"></i> [结果保存] 完成, 共保存 ${records.length} 条记录`);
     return records.length;
 }
 
@@ -1476,23 +1476,23 @@ function generateRankingPage() {
     return `
         <div class="ranking-page">
             <div class="page-intro">
-                <h2><span style="color: white;">📋 排品计算</span><span style="color: #999;">（从评分和库存表汇总数据，按配置规则进行排品计算）</span></h2>
+                <h2><span style="color: white;"><i data-lucide="clipboard-list"></i> 排品计算</span><span style="color: #999;">（从评分和库存表汇总数据，按配置规则进行排品计算）</span></h2>
                 <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 200px; padding: 0.75rem; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2); border-left: 3px solid #eab308; border-radius: 6px;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: #eab308; font-weight: bold; margin-bottom: 0.25rem;">
-                            <span style="font-size: 1.1rem;">⚠️</span> <span style="letter-spacing: 1px;">步骤 1: 核对状态</span>
+                            <span style="font-size: 1.1rem;"><i data-lucide="alert-triangle"></i></span> <span style="letter-spacing: 1px;">步骤 1: 核对状态</span>
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.9; line-height: 1.4; white-space: nowrap;">需与主播核对评分品<span style="color: #eab308; font-weight: bold;">【预售状态】</span></div>
                     </div>
                     <div style="flex: 1; min-width: 200px; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-left: 3px solid #10b981; border-radius: 6px;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981; font-weight: bold; margin-bottom: 0.25rem;">
-                            <span style="font-size: 1.1rem;">💾</span> <span style="letter-spacing: 1px;">步骤 2: 保存结果</span>
+                            <span style="font-size: 1.1rem;"><i data-lucide="save"></i></span> <span style="letter-spacing: 1px;">步骤 2: 保存结果</span>
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.9; line-height: 1.4; white-space: nowrap;">计算后需保存，才可执行影刀<span style="color: #10b981; font-weight: bold;">【控库存】</span>操作。</div>
                     </div>
                     <div style="flex: 1; min-width: 200px; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-left: 3px solid #ef4444; border-radius: 6px;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: #ef4444; font-weight: bold; margin-bottom: 0.25rem;">
-                            <span style="font-size: 1.1rem;">🚀</span> <span style="letter-spacing: 1px;">步骤 3: 推送排品</span>
+                            <span style="font-size: 1.1rem;"><i data-lucide="rocket"></i></span> <span style="letter-spacing: 1px;">步骤 3: 推送排品</span>
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.9; line-height: 1.4; white-space: nowrap;">更新排品后，需要执行<a href="#mapping" style="color: #ef4444; text-decoration: underline; cursor: pointer; font-weight: bold;">【排品推送】</a>才可生成对照表。</div>
                     </div>
@@ -1597,7 +1597,7 @@ function generateRankingPage() {
                         保存结果到数据库 <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: normal; font-family: monospace;">ranking_results</span>
                     </button>
                     <span style="display: inline-flex; align-items: center; font-size: 0.875rem; background: rgba(220, 38, 38, 0.8); padding: 0 0.75rem; border-radius: 6px; color: #fff; font-weight: 500; height: 40px;">影刀读取</span>
-                    <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem; height: 40px; line-height: 1;">📦 历史排品</button>
+                    <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem; height: 40px; line-height: 1;"><i data-lucide="package"></i> 历史排品</button>
                 </div>
             </div>
         </div>
@@ -1825,8 +1825,8 @@ function generateRankingCheckPage() {
             <!-- 已保存排品结果（从数据库读取） -->
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 0 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">📦 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
-                    <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
+                    <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="package"></i> 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
+                    <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;"><i data-lucide="refresh-cw"></i> 刷新</button>
                 </div>
                 <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 600px; overflow-y: auto;">
                     <div class="placeholder-content">
@@ -1851,7 +1851,7 @@ async function initRankingCheckPage() {
             btnRefreshSavedResults.textContent = '刷新中...';
             await loadAndRenderSavedResults();
             btnRefreshSavedResults.disabled = false;
-            btnRefreshSavedResults.textContent = '🔄 刷新';
+            btnRefreshSavedResults.innerHTML = '<i data-lucide="refresh-cw"></i> 刷新';
             window.AppUtils?.showToast?.('已刷新', 'success');
         });
     }
@@ -2217,7 +2217,7 @@ function renderRankingResults(results) {
     // 未匹配商品警告提示
     const unmatchedWarning = unmatchedCount > 0
         ? `<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--warning-color); border-radius: var(--border-radius-sm); padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-               <span style="font-size: 1.25rem;">⚠️</span>
+               <span style="font-size: 1.25rem;"><i data-lucide="alert-triangle"></i></span>
                <span style="color: var(--warning-color); font-weight: 500;">有 ${unmatchedCount} 个商品疑似未上架</span>
                <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: 0.5rem;">可手动填写商品ID后点击保存</span>
                <button onclick="copyToClipboard('${unmatchedCodes}')" style="margin-left: auto; padding: 0.25rem 0.75rem; font-size: 0.75rem; background: var(--warning-color); color: #fff; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;">批量复制未匹配商品ID编码</button>
@@ -2247,8 +2247,8 @@ function renderRankingResults(results) {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <h4 style="margin: 0;">${category} <span class="count">(${items.length})</span></h4>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-sm" onclick="copyToClipboard('${codes}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">📋 复制编码</button>
-                        <button class="btn btn-sm" onclick="copyToClipboard('${ids}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">📋 复制ID</button>
+                        <button class="btn btn-sm" onclick="copyToClipboard('${codes}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制编码</button>
+                        <button class="btn btn-sm" onclick="copyToClipboard('${ids}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制ID</button>
                     </div>
                 </div>
                 <div class="result-items-table">
@@ -2270,14 +2270,14 @@ function renderRankingResults(results) {
             // 为无ID商品显示输入框和保存按钮，否则显示ID和复制按钮
             const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
             const idDisplay = productId
-                ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`
+                ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`
                 : `<div style="display: flex; align-items: center; gap: 0.5rem;">
                        <input type="text" class="manual-product-id-input" data-product-name="${escapedProductName}" 
                               placeholder="输入商品ID" 
                               style="width: 120px; padding: 0.25rem 0.5rem; font-size: 0.8rem; border: 1px solid var(--warning-color); border-radius: 4px; background: var(--bg-tertiary); color: var(--text-primary);">
                        <button onclick="saveManualProductId('${escapedProductName}', this)" 
                                style="padding: 0.25rem 0.5rem; font-size: 0.7rem; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;">
-                           💾 保存
+                           <i data-lucide="save"></i> 保存
                        </button>
                        <span style="color: var(--warning-color); font-size: 0.75rem;">疑似未上架</span>
                    </div>`;
@@ -2298,11 +2298,11 @@ function renderRankingResults(results) {
                 const codes = productCode.split(',').map(c => c.trim()).filter(c => c);
                 const allCodes = codes.join(',');
                 if (codes.length <= 2) {
-                    codeDisplay = `${allCodes} <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`;
+                    codeDisplay = `${allCodes} <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
                 } else {
                     const displayCodes = codes.slice(0, 2).join(',');
                     const moreCount = codes.length - 2;
-                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码">📋</button>`;
+                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码"><i data-lucide="clipboard-list"></i></button>`;
                 }
             }
             // 无ID商品红底
@@ -2314,7 +2314,7 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button onclick="copyToClipboard('${escapedProductName}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称">📋</button></td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button onclick="copyToClipboard('${escapedProductName}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称"><i data-lucide="clipboard-list"></i></button></td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
@@ -2397,7 +2397,7 @@ async function saveManualProductId(productName, buttonElement) {
         const tdElement = buttonElement.closest('td');
         const trElement = buttonElement.closest('tr');
         if (tdElement) {
-            tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制">📋</button>`;
+            tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
         }
         // 移除红色背景
         if (trElement) {
@@ -2412,7 +2412,7 @@ async function saveManualProductId(productName, buttonElement) {
         console.error('保存商品ID失败:', error);
         window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         buttonElement.disabled = false;
-        buttonElement.textContent = '💾 保存';
+        buttonElement.innerHTML = '<i data-lucide="save"></i> 保存';
     }
 }
 

@@ -13,7 +13,7 @@ async function loadQuickLinks() {
         });
         renderQuickLinks(data || []);
     } catch (e) {
-        console.error('❌ 加载快捷链接失败:', e);
+        console.error('<i data-lucide="x-circle"></i> 加载快捷链接失败:', e);
     }
 }
 
@@ -128,7 +128,7 @@ async function refreshLinkList(overlay) {
         `).join('');
     } catch (e) {
         listEl.innerHTML = '<div class="ql-empty" style="color:var(--error-color);">加载失败</div>';
-        console.error('❌ 加载链接列表失败:', e);
+        console.error('<i data-lucide="x-circle"></i> 加载链接列表失败:', e);
     }
 }
 
@@ -177,7 +177,7 @@ async function handleAddLink(overlay) {
         await loadQuickLinks(); // 刷新标题栏
     } catch (e) {
         showToast('添加失败: ' + e.message, 'error');
-        console.error('❌ 添加链接失败:', e);
+        console.error('<i data-lucide="x-circle"></i> 添加链接失败:', e);
     }
 }
 
@@ -193,7 +193,7 @@ async function deleteLink(id, btnEl) {
         await loadQuickLinks();
     } catch (e) {
         showToast('删除失败', 'error');
-        console.error('❌ 删除链接失败:', e);
+        console.error('<i data-lucide="x-circle"></i> 删除链接失败:', e);
     }
 }
 
@@ -222,7 +222,7 @@ async function moveLink(id, direction, btnEl) {
         await loadQuickLinks();
     } catch (e) {
         showToast('排序失败', 'error');
-        console.error('❌ 排序失败:', e);
+        console.error('<i data-lucide="x-circle"></i> 排序失败:', e);
     }
 }
 

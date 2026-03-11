@@ -71,7 +71,7 @@ function processRankingData(rows) {
             conversion_rate: parsePercentage(row[10])           // K列(索引10): 商品点击-成交转化率
         });
     }
-    console.log(`✅ [排名数据处理] 完成, 有效记录: ${records.length} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [排名数据处理] 完成, 有效记录: ${records.length} 条`);
     return records;
 }
 
@@ -80,7 +80,7 @@ function processRankingData(rows) {
 // 列映射: A=图片, B=商品名称, C=商品编码, D=虚拟分类, E=分类, H=主仓位, I=可用数, J=实际库存
 // ========================================
 function processInventoryData(rows) {
-    console.log(`📦 [库存数据处理] 开始, 原始行数: ${rows?.length || 0}`);
+    console.log(`<i data-lucide="package"></i> [库存数据处理] 开始, 原始行数: ${rows?.length || 0}`);
     const productMap = new Map();
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -138,7 +138,7 @@ function processInventoryData(rows) {
             _product_tag: Array.from(data.product_tag).filter(Boolean).join(',') // 临时存放，不存入数据库，用来在后面分类
         });
     });
-    console.log(`✅ [库存数据处理] 完成, 商品数: ${records.length}, 已合并同名商品`);
+    console.log(`<i data-lucide="check-circle"></i> [库存数据处理] 完成, 商品数: ${records.length}, 已合并同名商品`);
     return records;
 }
 
@@ -180,7 +180,7 @@ function processProductIdData(rows) {
 
         records.push(record);
     }
-    console.log(`✅ [ID数据处理] 完成, 有效记录: ${records.length} 条, 已去重`);
+    console.log(`<i data-lucide="check-circle"></i> [ID数据处理] 完成, 有效记录: ${records.length} 条, 已去重`);
     return records;
 }
 
@@ -208,7 +208,7 @@ const UploadConfigs = {
         ]
     },
     inventory: {
-        title: '📦 库存上传 <span style=\"font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;\">需先清空样品仓</span>',
+        title: '<i data-lucide="package"></i> 库存上传 <span style=\"font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;\">需先清空样品仓</span>',
         tableName: 'inventory_data',
         processor: processInventoryData,
         rules: [
@@ -287,13 +287,13 @@ function generateUploadBlock(key, config) {
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary);">📖 上传说明</h4>
                 <div class="upload-info-content" style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--border-radius-sm);">
                     <div style="margin-bottom: 0.75rem;">
-                        <strong style="color: var(--text-secondary);">📋 处理规则</strong>
+                        <strong style="color: var(--text-secondary);"><i data-lucide="clipboard-list"></i> 处理规则</strong>
                         <ul style="margin: 0.5rem 0 0 1rem; padding: 0; font-size: 0.85rem; color: var(--text-muted);">
                             ${config.rules.map(r => `<li>${r}</li>`).join('')}
                         </ul>
                     </div>
                     <div>
-                        <strong style="color: var(--text-secondary);">🔗 字段映射</strong>
+                        <strong style="color: var(--text-secondary);"><i data-lucide="link"></i> 字段映射</strong>
                         <table class="mapping-table" style="margin-top: 0.5rem; font-size: 0.8rem;">
                             <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
                             <tbody>${mappingRows}</tbody>
@@ -369,7 +369,7 @@ function initUploadBlock(key, config) {
 
     function handleFileSelect(file) {
         selectedFile = file;
-        uploadZone.innerHTML = `<div class="upload-zone-icon">✅</div><p><strong>${file.name}</strong></p>`;
+        uploadZone.innerHTML = `<div class="upload-zone-icon"><i data-lucide="check-circle"></i></div><p><strong>${file.name}</strong></p>`;
         uploadBtn.disabled = false;
     }
 
@@ -384,7 +384,7 @@ function initUploadBlock(key, config) {
 
         const modeValue = document.querySelector(`input[name="mode-${key}"]`).value;
         const isFullMode = modeValue === 'full';
-        console.log(`📋 上传模式: ${modeValue}, isFullMode: ${isFullMode}`);
+        console.log(`<i data-lucide="clipboard-list"></i> 上传模式: ${modeValue}, isFullMode: ${isFullMode}`);
         try {
             statusDiv.style.display = 'block';
             uploadBtn.disabled = true;
@@ -422,7 +422,7 @@ function initUploadBlock(key, config) {
                 updateStatus('清空旧数据...', 60);
                 for (const item of tableToRecords) {
                     await clearTable(item.tableName);
-                    console.log(`✅ 表 ${item.tableName} 已清空`);
+                    console.log(`<i data-lucide="check-circle"></i> 表 ${item.tableName} 已清空`);
                 }
             }
             updateStatus('上传中...', 70);
@@ -437,9 +437,9 @@ function initUploadBlock(key, config) {
             if (key === 'inventory') {
                 const normalLen = tableToRecords[0].records.length;
                 const welfareLen = tableToRecords[1].records.length;
-                statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条 (普通库存：${normalLen}，福利库存：${welfareLen})</span>`;
+                statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 成功 ${records.length} 条 (普通库存：${normalLen}，福利库存：${welfareLen})</span>`;
             } else {
-                statusDetail.innerHTML = `<span class="success">✅ 成功 ${records.length} 条</span>`;
+                statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 成功 ${records.length} 条</span>`;
             }
             // 保存最后上传时间
             const now = new Date();
@@ -455,7 +455,7 @@ function initUploadBlock(key, config) {
         } catch (error) {
             console.error('上传失败:', error);
             statusText.textContent = '上传失败';
-            statusDetail.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+            statusDetail.innerHTML = `<span class="error"><i data-lucide="x-circle"></i> ${error.message}</span>`;
             window.AppUtils?.showToast?.('上传失败: ' + error.message, 'error');
         } finally {
             uploadBtn.disabled = false;
@@ -497,7 +497,7 @@ async function clearTable(tableName) {
         console.error('清空表失败:', error);
         throw new Error('清空失败: ' + error.message);
     }
-    console.log(`✅ 已清空表 ${tableName}`);
+    console.log(`<i data-lucide="check-circle"></i> 已清空表 ${tableName}`);
 }
 
 async function uploadData(tableName, records) {

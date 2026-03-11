@@ -19,16 +19,16 @@ async function loadMappingConfig() {
         .single();
 
     if (error) {
-        console.warn('⚠️ [对照配置] 加载失败, 使用默认配置:', error.message);
+        console.warn('<i data-lucide="alert-triangle"></i> [对照配置] 加载失败, 使用默认配置:', error.message);
         return { rules: [] };
     }
 
-    console.log(`✅ [对照配置] 加载成功, 规则数: ${data?.config_value?.rules?.length || 0}`);
+    console.log(`<i data-lucide="check-circle"></i> [对照配置] 加载成功, 规则数: ${data?.config_value?.rules?.length || 0}`);
     return data?.config_value || { rules: [] };
 }
 
 async function saveMappingConfig(config) {
-    console.log('💾 [对照配置] 正在保存仓位映射规则...');
+    console.log('<i data-lucide="save"></i> [对照配置] 正在保存仓位映射规则...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -41,10 +41,10 @@ async function saveMappingConfig(config) {
         }, { onConflict: 'config_key' });
 
     if (error) {
-        console.error('❌ [对照配置] 保存失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [对照配置] 保存失败:', error.message);
         throw new Error('保存配置失败: ' + error.message);
     }
-    console.log('✅ [对照配置] 保存成功');
+    console.log('<i data-lucide="check-circle"></i> [对照配置] 保存成功');
 }
 
 // ========================================
@@ -107,7 +107,7 @@ async function loadMappingData(includeNew = true) {
         newProductCount: newProductData.length,
         includeNew: includeNew
     };
-    console.log(`✅ [对照数据] 合并完成, 共 ${mergedData.length} 个商品`);
+    console.log(`<i data-lucide="check-circle"></i> [对照数据] 合并完成, 共 ${mergedData.length} 个商品`);
     return mergedData;
 }
 
@@ -203,7 +203,7 @@ function mergeAndDeduplicate(rankingData, newProductData) {
 // 历史记录
 // ========================================
 async function saveToHistory(data) {
-    console.log(`💾 [历史记录] 开始保存到 mapping_history, 共 ${data.length} 条`);
+    console.log(`<i data-lucide="save"></i> [历史记录] 开始保存到 mapping_history, 共 ${data.length} 条`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -221,12 +221,12 @@ async function saveToHistory(data) {
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
-        console.log(`📤 [历史记录] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
+        console.log(`<i data-lucide="upload"></i> [历史记录] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
         const { error } = await client.from('mapping_history').insert(batch);
         if (error) throw new Error('保存历史记录失败: ' + error.message);
     }
 
-    console.log(`✅ [历史记录] 保存完成, 共 ${records.length} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [历史记录] 保存完成, 共 ${records.length} 条`);
     return records.length;
 }
 
@@ -241,11 +241,11 @@ async function loadHistoryData() {
         .order('ranking_result', { ascending: true });
 
     if (error) {
-        console.warn('⚠️ [历史记录] 加载失败:', error.message);
+        console.warn('<i data-lucide="alert-triangle"></i> [历史记录] 加载失败:', error.message);
         return [];
     }
 
-    console.log(`✅ [历史记录] 加载完成, 共 ${data?.length || 0} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [历史记录] 加载完成, 共 ${data?.length || 0} 条`);
     return data || [];
 }
 
@@ -257,12 +257,12 @@ function generateMappingPage() {
         <div class="mapping-page">
             <div class="page-intro" style="display: flex; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 200px;">
-                    <h2>🔗 排品结果推送 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal; vertical-align: middle;">插件读取</span></h2>
+                    <h2><i data-lucide="link"></i> 排品结果推送 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal; vertical-align: middle;">插件读取</span></h2>
                     <p>合并显示排品结果和新品数据，自动计算样品仓位</p>
                 </div>
                 <div id="dataSourceCards" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                     <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-left: 4px solid #3b82f6; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #3b82f6; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📤 推送保存至</div>
+                        <div style="color: #3b82f6; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;"><i data-lucide="upload"></i> 推送保存至</div>
                         <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">mapping_history</div>
                     </div>
                     <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-left: 4px solid #10b981; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
@@ -270,11 +270,11 @@ function generateMappingPage() {
                         <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">ranking_results <span id="rankingCountBadge" style="color: #10b981; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
                     <div id="newProductSourceCard" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-left: 4px solid #f59e0b; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #f59e0b; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📦 新品数据源</div>
+                        <div style="color: #f59e0b; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;"><i data-lucide="package"></i> 新品数据源</div>
                         <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">new_product_data <span id="newProductCountBadge" style="color: #f59e0b; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
                     <div id="welfareSourceCard" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.2); border-left: 4px solid #ec4899; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #ec4899; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">🎁 福利品数据源</div>
+                        <div style="color: #ec4899; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;"><i data-lucide="gift"></i> 福利品数据源</div>
                         <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">welfare_data <span id="welfareCountBadge" style="color: #ec4899; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
                 </div>
@@ -291,14 +291,14 @@ function generateMappingPage() {
                     </button>
                 </div>
                 <input type="hidden" id="mappingIncludeNew" value="true">
-                <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); height: 36px;">🔄 刷新数据</button>
-                <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color); height: 36px;">📦 更新仓位</button>
+                <button class="btn btn-outline" id="btnRefreshMapping" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); height: 36px;"><i data-lucide="refresh-cw"></i> 刷新数据</button>
+                <button class="btn btn-secondary" id="btnUpdateWarehouse" style="border: 1px solid var(--border-color); height: 36px;"><i data-lucide="package"></i> 更新仓位</button>
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
             <div class="mapping-content" style="padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
                 <div class="welfare-section">
-                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">🎁 福利排品商品<span style="font-size: 0.75rem; background: rgba(236,72,153,0.2); color: #ec4899; padding: 2px 6px; border-radius: 4px;">独立表格显示，合并推送</span></h3>
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="gift"></i> 福利排品商品<span style="font-size: 0.75rem; background: rgba(236,72,153,0.2); color: #ec4899; padding: 2px 6px; border-radius: 4px;">独立表格显示，合并推送</span></h3>
                     <div id="welfareTableContainer" class="data-table-container" style="border: 1px solid rgba(236,72,153,0.3); border-radius: var(--border-radius);">
                         <div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;">
                             <p>正在加载福利数据...</p>
@@ -306,7 +306,7 @@ function generateMappingPage() {
                     </div>
                 </div>
                 <div class="ranking-section">
-                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">📋 常规排品商品</h3>
+                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="clipboard-list"></i> 常规排品商品</h3>
                     <div id="mappingTableContainer" class="data-table-container">
                         <div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;">
                             <p>正在加载数据...</p>
@@ -319,7 +319,7 @@ function generateMappingPage() {
             <div id="warehouseUpdateDialog" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
                 <div class="modal-content" style="background: var(--bg-card); border-radius: var(--border-radius); padding: 2rem; max-width: 600px; width: 90%;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="margin: 0;">📦 更新仓位 <span style="color: #ff4444; font-size: 0.75rem; font-weight: normal;">需下载最新库存视图新品表格，注意商品名称准确</span></h3>
+                        <h3 style="margin: 0;"><i data-lucide="package"></i> 更新仓位 <span style="color: #ff4444; font-size: 0.75rem; font-weight: normal;">需下载最新库存视图新品表格，注意商品名称准确</span></h3>
                         <button id="closeWarehouseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
                     </div>
                     
@@ -481,7 +481,7 @@ async function initMappingPage() {
                         config_value: { name: schemeName },
                         updated_at: new Date().toISOString()
                     }, { onConflict: 'config_key' });
-                    console.log(`✅ [推送] 方案名称已同步: ${schemeName}`);
+                    console.log(`<i data-lucide="check-circle"></i> [推送] 方案名称已同步: ${schemeName}`);
                 }
             } catch (e) {
                 console.warn('推送方案名称失败:', e);
@@ -633,7 +633,7 @@ function generateMappingSettingsPage() {
             <div class="settings-content" style="padding: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <!-- 左侧：仓位映射规则 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
-                    <h3 style="margin: 0 0 1rem;">📦 样品仓仓位映射规则</h3>
+                    <h3 style="margin: 0 0 1rem;"><i data-lucide="package"></i> 样品仓仓位映射规则</h3>
                     <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
                         仓位格式为 X-Y-Z，第二位 Y 在区间内时替换为对应样品仓位
                     </p>
@@ -662,13 +662,13 @@ function generateMappingSettingsPage() {
                     </div>
                     
                     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <button class="btn btn-primary" id="btnSaveConfig">💾 保存规则</button>
+                        <button class="btn btn-primary" id="btnSaveConfig"><i data-lucide="save"></i> 保存规则</button>
                     </div>
                 </div>
                 
                 <!-- 右侧：样品仓位选项设置 -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
-                    <h3 style="margin: 0 0 1rem;">📋 样品仓位选项</h3>
+                    <h3 style="margin: 0 0 1rem;"><i data-lucide="clipboard-list"></i> 样品仓位选项</h3>
                     <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
                         每行一个选项，保存后可在左侧下拉栏选择
                     </p>
@@ -681,7 +681,7 @@ function generateMappingSettingsPage() {
 1-10-5"></textarea>
                     
                     <div style="margin-top: 1rem;">
-                        <button class="btn btn-primary" id="btnSaveOptions">💾 保存选项</button>
+                        <button class="btn btn-primary" id="btnSaveOptions"><i data-lucide="save"></i> 保存选项</button>
                     </div>
                 </div>
             </div>
@@ -843,7 +843,7 @@ function initWarehouseUpdateDialog() {
 
     // 处理文件
     async function handleWarehouseFile(file) {
-        console.log('📦 [仓位更新] 开始处理文件:', file.name);
+        console.log('<i data-lucide="package"></i> [仓位更新] 开始处理文件:', file.name);
 
         try {
             statusDiv.style.display = 'block';
@@ -941,7 +941,7 @@ function initWarehouseUpdateDialog() {
             }
 
             updateProgress('完成!', 100);
-            statusDetail.innerHTML = `<span style="color: var(--success-color);">✅ 成功匹配 ${matchCount} 个商品, 更新 ${updateCount} 条记录</span>`;
+            statusDetail.innerHTML = `<span style="color: var(--success-color);"><i data-lucide="check-circle"></i> 成功匹配 ${matchCount} 个商品, 更新 ${updateCount} 条记录</span>`;
 
             window.AppUtils?.showToast?.(`成功更新 ${updateCount} 条仓位记录`, 'success');
 
@@ -954,9 +954,9 @@ function initWarehouseUpdateDialog() {
             }, 3000);
 
         } catch (error) {
-            console.error('❌ [仓位更新] 处理失败:', error);
+            console.error('<i data-lucide="x-circle"></i> [仓位更新] 处理失败:', error);
             statusText.textContent = '处理失败';
-            statusDetail.innerHTML = `<span style="color: var(--error-color);">❌ ${error.message}</span>`;
+            statusDetail.innerHTML = `<span style="color: var(--error-color);"><i data-lucide="x-circle"></i> ${error.message}</span>`;
             window.AppUtils?.showToast?.('更新失败: ' + error.message, 'error');
         }
     }

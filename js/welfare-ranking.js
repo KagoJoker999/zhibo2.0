@@ -17,14 +17,14 @@ function generateWelfareRankingPage() {
         <div class="page-content" style="padding: 2rem;">
             <div class="header-split" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 1.5rem;">
                 <div>
-                    <h2 style="margin:0 0 0.5rem 0;">🎁 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h2>
+                    <h2 style="margin:0 0 0.5rem 0;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h2>
                     <p class="text-muted" style="margin:0;">从此列表勾选要参与福利排品的商品。点击保存后将替换原有的安排数据。</p>
                 </div>
                 <div>
                     <button class="btn btn-danger" id="btnClearWelfareData" style="margin-right: 0.5rem;" title="清空已保存的排品名单">🗑️ 清空</button>
-                    <button class="btn btn-secondary" id="btnRefreshWelfareRanking" style="margin-right: 0.5rem;" title="刷新表格数据">🔄 刷新</button>
+                    <button class="btn btn-secondary" id="btnRefreshWelfareRanking" style="margin-right: 0.5rem;" title="刷新表格数据"><i data-lucide="refresh-cw"></i> 刷新</button>
                     <button class="btn btn-secondary" id="btnSelectAllNewWelfare" style="margin-right: 0.5rem;" title="快速勾选所有新品福利品">✨ 全选所有新品福利</button>
-                    <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled>💾 保存选中的商品</button>
+                    <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled><i data-lucide="save"></i> 保存选中的商品</button>
                 </div>
             </div>
 
@@ -254,7 +254,7 @@ async function initWelfareRanking() {
                 if (insError) throw insError;
             }
 
-            AppUtils.showCenterAlert(`成功保存了 ${selectedRecords.length} 款福利商品。`, '✅');
+            AppUtils.showCenterAlert(`成功保存了 ${selectedRecords.length} 款福利商品。`, '<i data-lucide="check-circle"></i>');
 
             // 取消当前所有勾选
             document.querySelectorAll('.welfare-checkbox').forEach(cb => cb.checked = false);

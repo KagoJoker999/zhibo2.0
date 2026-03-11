@@ -30,48 +30,63 @@ const DOM = {
 // 页面配置
 // ========================================
 const PageConfig = {
-    'welcome': { title: '欢迎使用', icon: '🚀' },
-    'upload': { title: '上传功能', icon: '📤' },
-    'upload-ranking': { title: '排名数据上传', icon: '📤' },
-    'upload-product-id': { title: '商品 ID 上传', icon: '📤' },
-    'upload-inventory': { title: '库存数据上传', icon: '📤' },
-    'arrangement': { title: '排品功能', icon: '📋' },
-    'arrangement-upload': { title: '基础数据上传', icon: '📋' },
-    'arrangement-main': { title: '排品功能', icon: '📋' },
-    'arrangement-settings': { title: '排品设置', icon: '📋' },
+    'welcome': { title: '欢迎使用', icon: '<i data-lucide="rocket"></i>' },
+    'upload': { title: '上传功能', icon: '<i data-lucide="upload"></i>' },
+    'upload-ranking': { title: '排名数据上传', icon: '<i data-lucide="upload"></i>' },
+    'upload-product-id': { title: '商品 ID 上传', icon: '<i data-lucide="upload"></i>' },
+    'upload-inventory': { title: '库存数据上传', icon: '<i data-lucide="upload"></i>' },
+    'arrangement': { title: '排品功能', icon: '<i data-lucide="clipboard-list"></i>' },
+    'arrangement-upload': { title: '基础数据上传', icon: '<i data-lucide="clipboard-list"></i>' },
+    'arrangement-main': { title: '排品功能', icon: '<i data-lucide="clipboard-list"></i>' },
+    'arrangement-settings': { title: '排品设置', icon: '<i data-lucide="clipboard-list"></i>' },
     'arrangement-assignment': { title: '排品序号分配', icon: '🔢' },
     'arrangement-exclusion': { title: '排除商品设置', icon: '🚫' },
     'arrangement-check': { title: '排品检查', icon: '🔍' },
     'arrangement-scoring': { title: '评分设置', icon: '⚙️' },
-    'arrangement-mapping': { title: '对照表生成', icon: '📋' },
-    'new-product': { title: '新品处理', icon: '🆕' },
-    'new-product-upload': { title: '新品数据上传', icon: '🆕' },
-    'new-product-process': { title: '新品数据处理', icon: '🆕' },
-    'new-product-download': { title: '新品数据下载', icon: '🆕' },
-    'new-product-settings': { title: '新品处理设置', icon: '🆕' },
+    'arrangement-mapping': { title: '对照表生成', icon: '<i data-lucide="clipboard-list"></i>' },
+    'new-product': { title: '新品处理', icon: '<i data-lucide="sparkles"></i>' },
+    'new-product-upload': { title: '新品数据上传', icon: '<i data-lucide="sparkles"></i>' },
+    'new-product-process': { title: '新品数据处理', icon: '<i data-lucide="sparkles"></i>' },
+    'new-product-download': { title: '新品数据下载', icon: '<i data-lucide="sparkles"></i>' },
+    'new-product-settings': { title: '新品处理设置', icon: '<i data-lucide="sparkles"></i>' },
     'new-product-rules': { title: '新品序号分配', icon: '🔢' },
-    'welfare-ranking': { title: '福利排品', icon: '🎁' },
-    'coupon': { title: '发券品处理', icon: '🎟️' },
-    'coupon-upload': { title: '发券品数据上传', icon: '🎟️' },
-    'coupon-process': { title: '发券品数据处理', icon: '🎟️' },
-    'coupon-download': { title: '发券品数据下载', icon: '🎟️' },
-    'coupon-settings': { title: '发券品处理设置', icon: '🎟️' },
-    'mapping': { title: '排品结果推送', icon: '🔗' },
+    'welfare-ranking': { title: '福利排品', icon: '<i data-lucide="gift"></i>' },
+    'coupon': { title: '发券品处理', icon: '<i data-lucide="ticket"></i>' },
+    'coupon-upload': { title: '发券品数据上传', icon: '<i data-lucide="ticket"></i>' },
+    'coupon-process': { title: '发券品数据处理', icon: '<i data-lucide="ticket"></i>' },
+    'coupon-download': { title: '发券品数据下载', icon: '<i data-lucide="ticket"></i>' },
+    'coupon-settings': { title: '发券品处理设置', icon: '<i data-lucide="ticket"></i>' },
+    'mapping': { title: '排品结果推送', icon: '<i data-lucide="link"></i>' },
     'mapping-history': { title: '历史记录', icon: '📜' },
     'mapping-settings': { title: '对照设置', icon: '⚙️' },
-    'sub-ranking': { title: '小号排品', icon: '📦' },
+    'sub-ranking': { title: '小号排品', icon: '<i data-lucide="package"></i>' },
     'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
-    'other-tools': { title: '其他功能', icon: '🧰' },
+    'other-tools': { title: '其他功能', icon: '<i data-lucide="briefcase"></i>' },
     'livestream-additional-investment': { title: '追投计算', icon: '💰' },
-    'presale': { title: '关闭预售', icon: '📋' },
+    'presale': { title: '关闭预售', icon: '<i data-lucide="clipboard-list"></i>' },
     'shadowbot': { title: '影刀转换', icon: '🤖' },
-    'id-converter': { title: 'ID 转换', icon: '🔄' }
+    'id-converter': { title: 'ID 转换', icon: '<i data-lucide="refresh-cw"></i>' }
 };
 
 // ========================================
 // 初始化
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
+
+    // 自动渲染 Lucide 图标
+    if (window.lucide) {
+        let lucideTimeout;
+        const renderIcons = () => {
+            clearTimeout(lucideTimeout);
+            lucideTimeout = setTimeout(() => {
+                window.lucide.createIcons();
+            }, 50);
+        };
+        renderIcons();
+        const observer = new MutationObserver(renderIcons);
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
     // 初始化 Supabase 客户端
     initSupabaseClient();
 
@@ -130,7 +145,7 @@ async function updateDbUsage() {
             console.log('📊 数据库大小（RPC）:', usedMB, 'MB');
         } else {
             // RPC 失败，回退到估算方式
-            console.warn('⚠️ RPC 获取数据库大小失败，使用估算方式:', error?.message);
+            console.warn('<i data-lucide="alert-triangle"></i> RPC 获取数据库大小失败，使用估算方式:', error?.message);
             const tables = ['inventory_data', 'product_id', 'new_product_data', 'ranking_config'];
             let totalRecords = 0;
 
@@ -160,7 +175,7 @@ async function updateDbUsage() {
 
         dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
     } catch (e) {
-        console.error('❌ 获取数据库大小失败:', e);
+        console.error('<i data-lucide="x-circle"></i> 获取数据库大小失败:', e);
         dbUsageText.textContent = '-- / 500MB';
     }
 }
@@ -175,9 +190,9 @@ function initSupabaseClient() {
             'https://ugadhdhwixrejzfcwugj.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54'
         );
-        console.log('✅ Supabase 客户端已初始化');
+        console.log('<i data-lucide="check-circle"></i> Supabase 客户端已初始化');
     } else {
-        console.warn('⚠️ Supabase SDK 尚未加载');
+        console.warn('<i data-lucide="alert-triangle"></i> Supabase SDK 尚未加载');
     }
 }
 
@@ -478,9 +493,9 @@ function showToast(message, type = 'info', duration = 3000) {
 /**
  * 显示页面中央红色警告提示
  * @param {string} message - 提示消息
- * @param {string} icon - 图标（可选，默认⚠️）
+ * @param {string} icon - 图标（可选，默认<i data-lucide="alert-triangle"></i>）
  */
-function showCenterAlert(message, icon = '⚠️') {
+function showCenterAlert(message, icon = '<i data-lucide="alert-triangle"></i>') {
     // 移除已有的提示
     const existing = document.querySelector('.center-alert-overlay');
     if (existing) existing.remove();
@@ -589,8 +604,8 @@ function showReplaceModal(removedItem, addedItem, action = 'replace') {
                         justify-content: center;
                     ">
                         ${removedImage
-            ? `<img src="${removedImage.split(',')[0].trim()}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'font-size:2rem;\\'>📦</span>'">`
-            : '<span style="font-size: 2rem;">📦</span>'
+            ? `<img src="${removedImage.split(',')[0].trim()}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'font-size:2rem;\\'><i data-lucide="package"></i></span>'">`
+            : '<span style="font-size: 2rem;"><i data-lucide="package"></i></span>'
         }
                     </div>
                     <div style="font-size: 0.85rem; opacity: 0.9; max-width: 120px; margin: 0 auto; word-break: break-all;">${removedName}</div>
@@ -613,8 +628,8 @@ function showReplaceModal(removedItem, addedItem, action = 'replace') {
                         justify-content: center;
                     ">
                         ${addedImage
-            ? `<img src="${addedImage.split(',')[0].trim()}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'font-size:2rem;\\'>📦</span>'">`
-            : '<span style="font-size: 2rem;">📦</span>'
+            ? `<img src="${addedImage.split(',')[0].trim()}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'font-size:2rem;\\'><i data-lucide="package"></i></span>'">`
+            : '<span style="font-size: 2rem;"><i data-lucide="package"></i></span>'
         }
                     </div>
                     <div style="font-size: 0.85rem; opacity: 0.9; max-width: 120px; margin: 0 auto; word-break: break-all;">${addedName}</div>

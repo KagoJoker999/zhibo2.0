@@ -21,7 +21,7 @@ function generatePresalePage() {
         <div class="presale-page">
             <div class="upload-block" style="margin-bottom: 1.5rem;">
                 <div class="upload-block-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">📋 关闭预售 <span class="db-table-tag">presale_product_ids</span></h3>
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="clipboard-list"></i> 关闭预售 <span class="db-table-tag">presale_product_ids</span></h3>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span class="presale-stats" id="presaleStats" style="color: var(--text-muted); font-size: 0.875rem;">加载中...</span>
                         <button class="btn btn-secondary" id="clearAllBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 一键清除</button>
@@ -61,7 +61,7 @@ function generatePresalePage() {
 // 初始化
 // ========================================
 function initPresalePage() {
-    console.log('📋 [关预售表] 初始化页面');
+    console.log('<i data-lucide="clipboard-list"></i> [关预售表] 初始化页面');
 
     // 绑定添加按钮
     const addBtn = document.getElementById('addProductIdBtn');
@@ -127,10 +127,10 @@ async function loadPresaleData() {
         // 渲染分页
         renderPresalePagination(totalPages);
 
-        console.log(`✅ [关预售表] 加载完成, 当前页 ${presaleProductIds.length} 条`);
+        console.log(`<i data-lucide="check-circle"></i> [关预售表] 加载完成, 当前页 ${presaleProductIds.length} 条`);
 
     } catch (error) {
-        console.error('❌ [关预售表] 加载失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [关预售表] 加载失败:', error.message);
         statsEl.textContent = '加载失败';
         tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error-color); padding: 2rem;">加载失败: ${error.message}</td></tr>`;
     }
@@ -254,7 +254,7 @@ async function handleAddProductIds() {
 
         if (error) throw error;
 
-        console.log(`✅ [关预售表] 添加成功`);
+        console.log(`<i data-lucide="check-circle"></i> [关预售表] 添加成功`);
         window.AppUtils?.showToast?.(`成功添加 ${ids.length} 个商品ID`, 'success');
 
         // 清空输入框
@@ -265,7 +265,7 @@ async function handleAddProductIds() {
         loadPresaleData();
 
     } catch (error) {
-        console.error('❌ [关预售表] 添加失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [关预售表] 添加失败:', error.message);
         window.AppUtils?.showToast?.('添加失败: ' + error.message, 'error');
     }
 }
@@ -284,14 +284,14 @@ async function handleDeleteItem(id) {
 
         if (error) throw error;
 
-        console.log(`✅ [关预售表] 删除成功`);
+        console.log(`<i data-lucide="check-circle"></i> [关预售表] 删除成功`);
         window.AppUtils?.showToast?.('已删除', 'success');
 
         // 刷新列表
         loadPresaleData();
 
     } catch (error) {
-        console.error('❌ [关预售表] 删除失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [关预售表] 删除失败:', error.message);
         window.AppUtils?.showToast?.('删除失败: ' + error.message, 'error');
     }
 }
@@ -319,7 +319,7 @@ async function handleClearAll() {
 
         if (error) throw error;
 
-        console.log(`✅ [关预售表] 清除成功`);
+        console.log(`<i data-lucide="check-circle"></i> [关预售表] 清除成功`);
         window.AppUtils?.showToast?.(`已清除 ${presaleTotal} 条数据`, 'success');
 
         // 刷新列表
@@ -327,7 +327,7 @@ async function handleClearAll() {
         loadPresaleData();
 
     } catch (error) {
-        console.error('❌ [关预售表] 清除失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [关预售表] 清除失败:', error.message);
         window.AppUtils?.showToast?.('清除失败: ' + error.message, 'error');
     }
 }

@@ -29,7 +29,7 @@ function getInvestmentPageHTML() {
                     <h2>💰 追投计算</h2>
                     <p>实时计算投放消耗速度，辅助追投决策</p>
                 </div>
-                <button type="button" class="btn btn-secondary" id="resetBtn">🔄 重置</button>
+                <button type="button" class="btn btn-secondary" id="resetBtn"><i data-lucide="refresh-cw"></i> 重置</button>
             </div>
 
             <!-- 主体：双栏布局 -->
@@ -86,7 +86,7 @@ function getInvestmentPageHTML() {
 
                     <!-- 追投配置 -->
                     <div class="inv-section">
-                        <div class="inv-section-title">🚀 追投配置</div>
+                        <div class="inv-section-title"><i data-lucide="rocket"></i> 追投配置</div>
                         <div class="inv-form-row">
                             <div class="inv-field">
                                 <label>追投金额</label>

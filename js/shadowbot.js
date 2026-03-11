@@ -39,7 +39,7 @@ function generateShadowbotPage() {
                     
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button id="shadowbot-generateBtn" class="btn btn-primary" style="flex: 1;">生成 URL</button>
-                        <button id="shadowbot-copyBtn" class="btn btn-secondary" style="flex: 1;">📋 复制链接</button>
+                        <button id="shadowbot-copyBtn" class="btn btn-secondary" style="flex: 1;"><i data-lucide="clipboard-list"></i> 复制链接</button>
                     </div>
                 </div>
             </div>

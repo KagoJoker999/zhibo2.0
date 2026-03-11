@@ -43,16 +43,16 @@ async function loadSubRankingConfig() {
         .single();
 
     if (error) {
-        console.warn('⚠️ [小号配置] 加载失败, 使用默认配置:', error.message);
+        console.warn('<i data-lucide="alert-triangle"></i> [小号配置] 加载失败, 使用默认配置:', error.message);
         return getDefaultSubConfig();
     }
 
-    console.log('✅ [小号配置] 加载成功');
+    console.log('<i data-lucide="check-circle"></i> [小号配置] 加载成功');
     return data?.config_value || getDefaultSubConfig();
 }
 
 async function saveSubRankingConfig(config) {
-    console.log('💾 [小号配置] 正在保存筛选配置...');
+    console.log('<i data-lucide="save"></i> [小号配置] 正在保存筛选配置...');
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -65,10 +65,10 @@ async function saveSubRankingConfig(config) {
         }, { onConflict: 'config_key' });
 
     if (error) {
-        console.error('❌ [小号配置] 保存失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [小号配置] 保存失败:', error.message);
         throw new Error('保存配置失败: ' + error.message);
     }
-    console.log('✅ [小号配置] 保存成功');
+    console.log('<i data-lucide="check-circle"></i> [小号配置] 保存成功');
 }
 
 // ========================================
@@ -231,7 +231,7 @@ async function loadSubRankingData() {
     if (inventoryRes.error) throw new Error('读取库存数据失败: ' + inventoryRes.error.message);
     if (productIdRes.error) throw new Error('读取ID数据失败: ' + productIdRes.error.message);
 
-    console.log(`📦 [小号数据] 库存数据: ${inventoryRes.data?.length || 0} 条, ID数据: ${productIdRes.data?.length || 0} 条`);
+    console.log(`<i data-lucide="package"></i> [小号数据] 库存数据: ${inventoryRes.data?.length || 0} 条, ID数据: ${productIdRes.data?.length || 0} 条`);
 
     // 构建商品ID映射表
     const productIdMap = new Map();
@@ -278,7 +278,7 @@ async function loadSubRankingData() {
 
     const products = Array.from(productMap.values());
     const matchedCount = products.filter(p => p.id_matched).length;
-    console.log(`✅ [小号数据] 加载完成: 商品数 ${products.length}, ID匹配成功 ${matchedCount}`);
+    console.log(`<i data-lucide="check-circle"></i> [小号数据] 加载完成: 商品数 ${products.length}, ID匹配成功 ${matchedCount}`);
     return products;
 }
 
@@ -363,7 +363,7 @@ function calculateSubRanking(products, config, numberConfig = null) {
         item.sample_number = `${prefix}${String(seqInPrefix).padStart(2, '0')}`;
     });
 
-    console.log(`✅ [小号计算] 完成, 共筛选出 ${results.length} 个商品`);
+    console.log(`<i data-lucide="check-circle"></i> [小号计算] 完成, 共筛选出 ${results.length} 个商品`);
     return results;
 }
 
@@ -391,7 +391,7 @@ function checkConditions(product, conditions) {
 // 保存结果
 // ========================================
 async function saveSubRankingResults(results) {
-    console.log(`💾 [小号保存] 开始保存结果到 sub_ranking_results, 共 ${results.length} 条`);
+    console.log(`<i data-lucide="save"></i> [小号保存] 开始保存结果到 sub_ranking_results, 共 ${results.length} 条`);
     const client = window.supabaseClient;
     if (!client) throw new Error('Supabase 未初始化');
 
@@ -400,7 +400,7 @@ async function saveSubRankingResults(results) {
     await client.from('sub_ranking_results').delete().gte('id', 0);
 
     if (results.length === 0) {
-        console.log('✅ [小号保存] 完成, 无数据需要保存');
+        console.log('<i data-lucide="check-circle"></i> [小号保存] 完成, 无数据需要保存');
         return 0;
     }
 
@@ -421,12 +421,12 @@ async function saveSubRankingResults(results) {
     const batchSize = 100;
     for (let i = 0; i < records.length; i += batchSize) {
         const batch = records.slice(i, i + batchSize);
-        console.log(`📤 [小号保存] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
+        console.log(`<i data-lucide="upload"></i> [小号保存] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(records.length / batchSize)}`);
         const { error } = await client.from('sub_ranking_results').insert(batch);
         if (error) throw new Error('保存结果失败: ' + error.message);
     }
 
-    console.log(`✅ [小号保存] 完成, 共保存 ${records.length} 条记录`);
+    console.log(`<i data-lucide="check-circle"></i> [小号保存] 完成, 共保存 ${records.length} 条记录`);
     return records.length;
 }
 
@@ -437,14 +437,14 @@ function generateSubRankingPage() {
     return `
         <div class="sub-ranking-page">
             <div class="page-intro">
-                <h2>📦 小号排品 <span style="color: #ff4d4f; font-weight: bold; font-size: inherit; margin-left: 8px;">需先更新库存</span></h2>
+                <h2><i data-lucide="package"></i> 小号排品 <span style="color: #ff4d4f; font-weight: bold; font-size: inherit; margin-left: 8px;">需先更新库存</span></h2>
                 <p>← sub_ranking_results | 根据库存数据筛选，使用独立配置。小号的样品仓位映射设置在排品设置中进行。</p>
             </div>
             
             <!-- 分页标签 -->
             <div class="tab-container" style="padding: 1rem 0 0; border-bottom: 1px solid var(--border-color);">
                 <button class="tab-btn active" id="tabCalculate" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid var(--primary-color); color: var(--text-primary); cursor: pointer; font-weight: 500;">
-                    🔄 加载计算
+                    <i data-lucide="refresh-cw"></i> 加载计算
                 </button>
                 <button class="tab-btn" id="tabHistory" style="padding: 0.5rem 1rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer;">
                     📜 历史记录 <span class="db-table-tag" style="font-size: 0.65rem; background: var(--bg-secondary); padding: 0.1rem 0.3rem; border-radius: 3px;">sub_ranking_results</span>
@@ -454,9 +454,9 @@ function generateSubRankingPage() {
             <!-- 加载计算面板 -->
             <div id="panelCalculate" class="tab-panel" style="display: block;">
                 <div class="ranking-actions" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" id="btnSubCalculate">🔄 加载并计算</button>
-                    <button class="btn btn-primary" id="btnSubSave" style="background-color: var(--error-color); border-color: var(--error-color);">💾 保存结果</button>
-                    <button class="btn btn-secondary" id="btnCopyUnmatched">📋 批量复制未匹配商品名</button>
+                    <button class="btn btn-primary" id="btnSubCalculate"><i data-lucide="refresh-cw"></i> 加载并计算</button>
+                    <button class="btn btn-primary" id="btnSubSave" style="background-color: var(--error-color); border-color: var(--error-color);"><i data-lucide="save"></i> 保存结果</button>
+                    <button class="btn btn-secondary" id="btnCopyUnmatched"><i data-lucide="clipboard-list"></i> 批量复制未匹配商品名</button>
                     <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
                     <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
                 </div>
@@ -474,7 +474,7 @@ function generateSubRankingPage() {
             <div id="panelHistory" class="tab-panel" style="display: none;">
                 <div class="history-actions" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center;">
                     <div id="subRankingCopyButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
-                    <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;">🔄 刷新</button>
+                    <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;"><i data-lucide="refresh-cw"></i> 刷新</button>
                 </div>
                 <div class="history-content" style="padding: 0 0 1.5rem;">
                     <div id="mappingHistoryContainer" class="data-table-container">
@@ -898,8 +898,8 @@ function renderSubRankingCopyButtons(totalCount) {
         const end = Math.min((i + 1) * pageSize, totalCount);
         const btn = document.createElement('button');
         btn.className = 'btn btn-secondary';
-        // 显示为 "📋 1-20" 等
-        btn.textContent = `📋 ${start + 1}-${end}`;
+        // 显示为 "<i data-lucide="clipboard-list"></i> 1-20" 等
+        btn.innerHTML = `<i data-lucide="clipboard-list"></i> ${start + 1}-${end}`;
         btn.style.fontSize = '0.75rem';
         btn.style.padding = '0.25rem 0.5rem';
 
@@ -1008,7 +1008,7 @@ function generateSubRankingSettingsPage() {
                 <!-- 左侧：筛选配置（可视化） -->
                 <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="margin: 0;">📋 筛选分类配置</h3>
+                        <h3 style="margin: 0;"><i data-lucide="clipboard-list"></i> 筛选分类配置</h3>
                         <button class="btn btn-secondary" id="btnAddCategory" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">➕ 添加分类</button>
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
@@ -1018,8 +1018,8 @@ function generateSubRankingSettingsPage() {
                     <div id="subCategoryCards" style="display: flex; flex-direction: column; gap: 1rem;"></div>
                     
                     <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-                        <button class="btn btn-primary" id="btnSaveSubConfig">💾 保存配置</button>
-                        <button class="btn btn-secondary" id="btnResetSubConfig">🔄 重置为默认</button>
+                        <button class="btn btn-primary" id="btnSaveSubConfig"><i data-lucide="save"></i> 保存配置</button>
+                        <button class="btn btn-secondary" id="btnResetSubConfig"><i data-lucide="refresh-cw"></i> 重置为默认</button>
                     </div>
                 </div>
                 
@@ -1075,8 +1075,8 @@ function generateSubRankingSettingsPage() {
                     </div>
                     
                     <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                        <button class="btn btn-primary" id="btnSaveNumberConfig">💾 保存配置</button>
-                        <button class="btn btn-secondary" id="btnResetNumberConfig">🔄 重置为默认</button>
+                        <button class="btn btn-primary" id="btnSaveNumberConfig"><i data-lucide="save"></i> 保存配置</button>
+                        <button class="btn btn-secondary" id="btnResetNumberConfig"><i data-lucide="refresh-cw"></i> 重置为默认</button>
                     </div>
                 </div>
             </div>

@@ -340,9 +340,9 @@
     <!-- 列表页面 -->
     <div class="list-page active" id="listPage">
         <header class="header">
-            <h1 id="pageTitle">📋 排品</h1>
+            <h1 id="pageTitle"><i data-lucide="clipboard-list"></i> 排品</h1>
             <div class="header-actions">
-                <button class="action-btn primary" id="refreshBtn">🔄 刷新</button>
+                <button class="action-btn primary" id="refreshBtn"><i data-lucide="refresh-cw"></i> 刷新</button>
             </div>
         </header>
         <div class="content">
@@ -360,9 +360,25 @@
 
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.263.0"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
+
+    // 自动渲染 Lucide 图标
+    if (window.lucide) {
+        let lucideTimeout;
+        const renderIcons = () => {
+            clearTimeout(lucideTimeout);
+            lucideTimeout = setTimeout(() => {
+                window.lucide.createIcons();
+            }, 50);
+        };
+        renderIcons();
+        const observer = new MutationObserver(renderIcons);
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
             // Supabase 配置（与主站一致）
             const SUPABASE_URL = 'https://ugadhdhwixrejzfcwugj.supabase.co';
             const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnYWRoZGh3aXhyZWp6ZmN3dWdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMzU3NTgsImV4cCI6MjA4MTgxMTc1OH0.XQp5pvoM-nSGfLZB9ZGfxJCkU3GbeiWrBohA_XchS54';
@@ -382,9 +398,9 @@
                 try {
                     await navigator.clipboard.writeText(text);
                     const shortText = text.length > 15 ? text.substring(0, 15) + '...' : text;
-                    showToast(`✅ 已复制${label || ''}: ${shortText}`);
+                    showToast(`<i data-lucide="check-circle"></i> 已复制${label || ''}: ${shortText}`);
                 } catch {
-                    showToast('❌ 复制失败');
+                    showToast('<i data-lucide="x-circle"></i> 复制失败');
                 }
             };
 
@@ -460,7 +476,7 @@
                     if (error) throw error;
 
                     if (!data || data.length === 0) {
-                        container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>';
+                        container.innerHTML = '<div class="empty-state"><div class="icon"><i data-lucide="inbox"></i></div><p>暂无数据</p></div>';
                         return;
                     }
 
@@ -480,7 +496,7 @@
                     bindCardEvents(container);
                 } catch (err) {
                     console.error('加载失败:', err);
-                    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>网络错误，请点击重试</p><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;font-size:14px;background:#4a90d9;color:#fff;border:none;border-radius:8px;cursor:pointer;">🔄 重试</button></div>';
+                    container.innerHTML = '<div class="empty-state"><div class="icon"><i data-lucide="alert-triangle"></i></div><p>网络错误，请点击重试</p><button onclick="location.reload()" style="margin-top:16px;padding:10px 24px;font-size:14px;background:#4a90d9;color:#fff;border:none;border-radius:8px;cursor:pointer;"><i data-lucide="refresh-cw"></i> 重试</button></div>';
                 }
             }
 
@@ -546,7 +562,7 @@
             // 初始化：加载方案名称并加载数据
             async function init() {
                 const schemeName = await loadCurrentSchemeName();
-                document.getElementById('pageTitle').textContent = `📋 排品 · ${schemeName}`;
+                document.getElementById('pageTitle').textContent = `<i data-lucide="clipboard-list"></i> 排品 · ${schemeName}`;
                 showToast('图片加载缓慢，请不要关闭页面，等待加载。。。');
                 loadData();
             }

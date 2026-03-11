@@ -16,7 +16,7 @@ let couponProductList = [];  // 当前待上传的商品列表
 // 列映射: A=图片, B=商品名称, C=商品编码
 // ========================================
 function processCouponProductData(rows) {
-    console.log(`🎟️ [发券品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
+    console.log(`<i data-lucide="ticket"></i> [发券品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
     const records = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -40,7 +40,7 @@ function processCouponProductData(rows) {
             matched: false   // 匹配状态
         });
     }
-    console.log(`✅ [发券品处理] 解析完成, 有效记录: ${records.length} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [发券品处理] 解析完成, 有效记录: ${records.length} 条`);
     return records;
 }
 
@@ -63,7 +63,7 @@ async function matchProductIds(records) {
             .in('product_name', productNames);
 
         if (error) {
-            console.error('❌ [发券品ID匹配] 查询失败:', error.message);
+            console.error('<i data-lucide="x-circle"></i> [发券品ID匹配] 查询失败:', error.message);
             return records;
         }
 
@@ -87,10 +87,10 @@ async function matchProductIds(records) {
         });
 
         const matchedCount = records.filter(r => r.matched).length;
-        console.log(`✅ [发券品ID匹配] 完成: ${matchedCount}/${records.length} 匹配成功`);
+        console.log(`<i data-lucide="check-circle"></i> [发券品ID匹配] 完成: ${matchedCount}/${records.length} 匹配成功`);
         return records;
     } catch (err) {
-        console.error('❌ [发券品ID匹配] 异常:', err.message);
+        console.error('<i data-lucide="x-circle"></i> [发券品ID匹配] 异常:', err.message);
         return records;
     }
 }
@@ -105,7 +105,7 @@ function generateCouponPage() {
                 <!-- 左侧：上传功能 -->
                 <div class="upload-block" id="block-coupon">
                     <div class="upload-block-header">
-                        <h3>🎟️ 发券品数据上传 <span class="db-table-tag">→ coupon_product_data</span></h3>
+                        <h3><i data-lucide="ticket"></i> 发券品数据上传 <span class="db-table-tag">→ coupon_product_data</span></h3>
                     </div>
                     
                     <div class="upload-zone" id="uploadZone-coupon">
@@ -140,7 +140,7 @@ function generateCouponPage() {
                     </div>
                     <div class="coupon-info-content">
                         <div class="info-section">
-                            <strong>📋 处理规则</strong>
+                            <strong><i data-lucide="clipboard-list"></i> 处理规则</strong>
                             <ul>
                                 <li>从 product_id_data 表自动匹配商品ID</li>
                                 <li>未匹配商品以红色高亮显示</li>
@@ -149,7 +149,7 @@ function generateCouponPage() {
                             </ul>
                         </div>
                         <div class="info-section">
-                            <strong>🔗 字段映射</strong>
+                            <strong><i data-lucide="link"></i> 字段映射</strong>
                             <table class="mapping-table">
                                 <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
                                 <tbody>
@@ -167,10 +167,10 @@ function generateCouponPage() {
             <!-- 待上传商品列表区域 -->
             <div class="coupon-product-list-section" id="couponProductListSection" style="display:none">
                 <div class="section-header">
-                    <h3>📦 待上传商品列表</h3>
+                    <h3><i data-lucide="package"></i> 待上传商品列表</h3>
                     <div class="section-actions">
                         <span class="match-stats" id="matchStats"></span>
-                        <button class="btn btn-secondary" id="copyUnmatchedNamesBtn" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #3b82f6;">📋 批量复制无ID商品名称</button>
+                        <button class="btn btn-secondary" id="copyUnmatchedNamesBtn" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #3b82f6;"><i data-lucide="clipboard-list"></i> 批量复制无ID商品名称</button>
                         <button class="btn btn-secondary" id="clearUnmatchedBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 清空无ID商品</button>
                         <button class="btn btn-primary" id="uploadBtn-coupon" disabled>上传到数据库</button>
                     </div>
@@ -195,7 +195,7 @@ function generateCouponPage() {
             <!-- 已上传数据列表区域 -->
             <div class="coupon-product-list-section" id="uploadedDataSection">
                 <div class="section-header">
-                    <h3>📋 已上传数据 <span class="db-table-tag">coupon_product_data</span></h3>
+                    <h3><i data-lucide="clipboard-list"></i> 已上传数据 <span class="db-table-tag">coupon_product_data</span></h3>
                     <div class="section-actions">
                         <span class="uploaded-stats" id="uploadedStats">加载中...</span>
                         <button class="btn btn-secondary" id="downloadDataBtn">📥 下载数据</button>
@@ -299,7 +299,7 @@ function initCouponUpload() {
 
     // 处理文件选择
     async function handleFileSelect(file) {
-        uploadZone.innerHTML = `<div class="upload-zone-icon">✅</div><p><strong>${file.name}</strong></p>`;
+        uploadZone.innerHTML = `<div class="upload-zone-icon"><i data-lucide="check-circle"></i></div><p><strong>${file.name}</strong></p>`;
 
         try {
             statusDiv.style.display = 'block';
@@ -325,12 +325,12 @@ function initCouponUpload() {
             renderProductList();
             listSection.style.display = 'block';
 
-            statusDetail.innerHTML = `<span class="success">✅ 已加载 ${records.length} 条商品</span>`;
+            statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 已加载 ${records.length} 条商品</span>`;
 
         } catch (error) {
             console.error('处理文件失败:', error);
             statusText.textContent = '处理失败';
-            statusDetail.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+            statusDetail.innerHTML = `<span class="error"><i data-lucide="x-circle"></i> ${error.message}</span>`;
             window.AppUtils?.showToast?.('处理失败: ' + error.message, 'error');
         }
     }
@@ -389,10 +389,10 @@ async function loadUploadedData() {
 
         // 渲染分页
         renderUploadedDataPagination(totalPages);
-        console.log(`✅ [发券品数据] 加载完成, 当前页 ${uploadedDataCache.length} 条`);
+        console.log(`<i data-lucide="check-circle"></i> [发券品数据] 加载完成, 当前页 ${uploadedDataCache.length} 条`);
 
     } catch (error) {
-        console.error('❌ [发券品数据] 加载失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [发券品数据] 加载失败:', error.message);
         statsEl.textContent = '加载失败';
         tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--error-color); padding: 2rem;">加载失败: ${error.message}</td></tr>`;
     }
@@ -544,8 +544,8 @@ function renderProductList() {
 
     // 更新统计
     statsEl.innerHTML = `
-        <span style="color: var(--success-color);">✅ 已匹配: ${matchedCount}</span>
-        ${unmatchedCount > 0 ? `<span style="color: var(--error-color); margin-left: 1rem;">❌ 未匹配: ${unmatchedCount}</span>` : ''}
+        <span style="color: var(--success-color);"><i data-lucide="check-circle"></i> 已匹配: ${matchedCount}</span>
+        ${unmatchedCount > 0 ? `<span style="color: var(--error-color); margin-left: 1rem;"><i data-lucide="x-circle"></i> 未匹配: ${unmatchedCount}</span>` : ''}
     `;
 
     // 更新上传按钮状态
@@ -648,8 +648,8 @@ function updateUploadButtonState() {
 
     // 更新统计
     statsEl.innerHTML = `
-        <span style="color: var(--success-color);">✅ 已匹配: ${matchedCount}</span>
-        ${unmatchedCount > 0 ? `<span style="color: var(--error-color); margin-left: 1rem;">❌ 未匹配: ${unmatchedCount}</span>` : ''}
+        <span style="color: var(--success-color);"><i data-lucide="check-circle"></i> 已匹配: ${matchedCount}</span>
+        ${unmatchedCount > 0 ? `<span style="color: var(--error-color); margin-left: 1rem;"><i data-lucide="x-circle"></i> 未匹配: ${unmatchedCount}</span>` : ''}
     `;
 
     // 更新按钮状态
@@ -660,7 +660,7 @@ function updateUploadButtonState() {
 // 处理上传
 // ========================================
 async function handleUpload() {
-    console.log('📤 [发券品上传] 开始上传到 coupon_product_data...');
+    console.log('<i data-lucide="upload"></i> [发券品上传] 开始上传到 coupon_product_data...');
     const uploadBtn = document.getElementById('uploadBtn-coupon');
     const statusDiv = document.getElementById('status-coupon');
     const statusText = document.getElementById('statusText-coupon');
@@ -721,7 +721,7 @@ async function handleUpload() {
         const batchSize = 100;
         for (let i = 0; i < uploadData.length; i += batchSize) {
             const batch = uploadData.slice(i, i + batchSize);
-            console.log(`📤 [发券品上传] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(uploadData.length / batchSize)}`);
+            console.log(`<i data-lucide="upload"></i> [发券品上传] 插入批次 ${Math.floor(i / batchSize) + 1}/${Math.ceil(uploadData.length / batchSize)}`);
             const { error } = await window.supabaseClient
                 .from('coupon_product_data')
                 .insert(batch);
@@ -736,9 +736,9 @@ async function handleUpload() {
 
         statusText.textContent = '上传完成！';
         progressBar.style.width = '100%';
-        statusDetail.innerHTML = `<span class="success">✅ 成功上传 ${uploadData.length} 条商品</span>`;
+        statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 成功上传 ${uploadData.length} 条商品</span>`;
 
-        console.log(`✅ [发券品上传] 完成, 共 ${uploadData.length} 条`);
+        console.log(`<i data-lucide="check-circle"></i> [发券品上传] 完成, 共 ${uploadData.length} 条`);
         window.AppUtils?.showToast?.(`成功上传 ${uploadData.length} 条发券品数据`, 'success');
 
         // 清空列表
@@ -750,9 +750,9 @@ async function handleUpload() {
         loadUploadedData();
 
     } catch (error) {
-        console.error('❌ [发券品上传] 失败:', error.message);
+        console.error('<i data-lucide="x-circle"></i> [发券品上传] 失败:', error.message);
         statusText.textContent = '上传失败';
-        statusDetail.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+        statusDetail.innerHTML = `<span class="error"><i data-lucide="x-circle"></i> ${error.message}</span>`;
         window.AppUtils?.showToast?.('上传失败: ' + error.message, 'error');
     } finally {
         uploadBtn.disabled = false;

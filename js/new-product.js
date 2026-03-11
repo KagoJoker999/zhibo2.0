@@ -9,7 +9,7 @@
 // 列映射: A=图片, B=名称, C=编码, D=虚拟分类, E=分类, F=标签, G=售价, H=仓位, O=规格
 // ========================================
 function processNewProductData(rows) {
-    console.log(`📦 [新品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
+    console.log(`<i data-lucide="package"></i> [新品处理] 开始解析数据, 原始行数: ${rows?.length || 0}`);
     const records = [];
 
     // 从表头自动查找"颜色及规格"字段的列索引
@@ -48,7 +48,7 @@ function processNewProductData(rows) {
             color_spec: colorSpecIndex >= 0 ? String(row[colorSpecIndex] ?? '').trim() || null : null
         });
     }
-    console.log(`✅ [新品处理] 解析完成, 有效记录: ${records.length} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [新品处理] 解析完成, 有效记录: ${records.length} 条`);
     return records;
 }
 
@@ -102,7 +102,7 @@ async function generateProductNames(records) {
             product_name: nameParts.join('')
         };
     });
-    console.log(`✅ [名称生成] 完成`);
+    console.log(`<i data-lucide="check-circle"></i> [名称生成] 完成`);
     return result;
 }
 
@@ -120,7 +120,7 @@ async function generateListingCategories(records) {
             listing_category: listingCategory
         };
     });
-    console.log(`✅ [上架分类] 完成`);
+    console.log(`<i data-lucide="check-circle"></i> [上架分类] 完成`);
     return result;
 }
 
@@ -278,7 +278,7 @@ function generateNewProductPage() {
                 <!-- 上传区块 -->
                 <div class="upload-block" id="block-new-product">
                     <div class="upload-block-header">
-                        <h3>📦 新品数据上传 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
+                        <h3><i data-lucide="package"></i> 新品数据上传 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
                     </div>
                     
                     <div class="upload-zone" id="uploadZone-new-product">
@@ -300,7 +300,7 @@ function generateNewProductPage() {
                     </div>
                     
                     <details class="mapping-details">
-                        <summary>🔗 字段映射</summary>
+                        <summary><i data-lucide="link"></i> 字段映射</summary>
                         <table class="mapping-table">
                             <thead><tr><th>源字段</th><th></th><th>目标字段</th></tr></thead>
                             <tbody>
@@ -340,7 +340,7 @@ function generateNewProductPage() {
                     <!-- 处理流程说明 -->
                     <div class="process-info">
                         <div class="process-section">
-                            <h4>📋 处理流程</h4>
+                            <h4><i data-lucide="clipboard-list"></i> 处理流程</h4>
                             <ol class="process-steps">
                                 <li><span class="step-num">1</span> 读取上传的 Excel 文件</li>
                                 <li><span class="step-num">2</span> 解析商品数据（名称、编码、分类等）</li>
@@ -382,12 +382,12 @@ function generateNewProductPage() {
             <!-- 数据库数据表格 -->
             <div class="data-table-section">
                 <div class="data-table-header">
-                    <h3>📋 数据库新品列表 <span class="db-table-tag">← new_product_data</span> <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
+                    <h3><i data-lucide="clipboard-list"></i> 数据库新品列表 <span class="db-table-tag">← new_product_data</span> <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
                     <div class="header-buttons">
                         <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 下载重命名表</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
-                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">💾 同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
-                        <button class="btn btn-primary btn-sm" id="refreshDataBtn">🔄</button>
+                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none"><i data-lucide="save"></i> 同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
+                        <button class="btn btn-primary btn-sm" id="refreshDataBtn"><i data-lucide="refresh-cw"></i></button>
                     </div>
                 </div>
                 <div id="dataTableContainer" class="data-table-container">
@@ -416,7 +416,7 @@ function generateNumberingRulesUI() {
                     <p class="text-muted" style="margin:0.5rem 0 0;">按商品编码从小到大排序后依次分配序号（同名商品共享序号）</p>
                     <p class="text-muted" style="margin:0.25rem 0 0; font-size:0.8rem;">数据库表: ranking_config (config_key='new_product_number_rules')</p>
                 </div>
-                <button class="btn btn-primary" id="btnSaveRules">💾 保存配置</button>
+                <button class="btn btn-primary" id="btnSaveRules"><i data-lucide="save"></i> 保存配置</button>
             </div>
 
             <div id="rulesListContainer" style="display:flex; flex-direction:column; gap:1rem;">
@@ -427,14 +427,14 @@ function generateNumberingRulesUI() {
 
             <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:rgba(234, 179, 8, 0.1); border:1px solid rgba(234, 179, 8, 0.3); border-radius:var(--border-radius-sm);">
                 <div style="display:flex; align-items:flex-start; gap:0.75rem;">
-                    <span style="font-size:1.25rem; flex-shrink:0; margin-top:2px;">🎁</span>
+                    <span style="font-size:1.25rem; flex-shrink:0; margin-top:2px;"><i data-lucide="gift"></i></span>
                     <div style="flex:1; min-width:0;">
                         <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">福利商品序号设置</div>
                         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">商品标签（product_tag）包含"福利"二字的商品可单独指定序号。留空则不分配序号，也不占用序号位。</div>
                         <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.75rem;">
                             <label style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">福利商品序号：</label>
                             <input type="text" id="welfareNumberInput" placeholder="留空 = 跳过不分配（可输入中文）" class="input input-sm" style="flex:1; max-width:260px;">
-                            <button class="btn btn-sm btn-secondary" id="btnSaveWelfareNumber">💾 保存</button>
+                            <button class="btn btn-sm btn-secondary" id="btnSaveWelfareNumber"><i data-lucide="save"></i> 保存</button>
                         </div>
                         <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.35rem;">数据库表: ranking_config (config_key='new_product_welfare_number')</div>
                     </div>
@@ -507,7 +507,7 @@ function generateNewProductSettingsPage() {
                             <span class="formula-label">分类词汇</span>
                         </li>
                     </ul>
-                    <button class="btn btn-primary btn-sm" id="saveFormulaOrder" style="width:100%;margin-top:0.5rem">💾 保存公式顺序</button>
+                    <button class="btn btn-primary btn-sm" id="saveFormulaOrder" style="width:100%;margin-top:0.5rem"><i data-lucide="save"></i> 保存公式顺序</button>
                 </div>
                 
                 <!-- 词汇设置 -->
@@ -536,7 +536,7 @@ function generateNewProductSettingsPage() {
                 <div class="settings-header">
                     <h3>🏷️ 分类词汇映射</h3>
                     <div class="header-buttons">
-                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveCategoryWordBtn" style="display:none">💾 保存</button>
+                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveCategoryWordBtn" style="display:none"><i data-lucide="save"></i> 保存</button>
                         <button class="btn btn-secondary btn-sm" id="addCategoryWord">+ 添加</button>
                     </div>
                 </div>
@@ -548,9 +548,9 @@ function generateNewProductSettingsPage() {
             <!-- 第3列：上架分类映射 -->
             <div class="settings-section">
                 <div class="settings-header">
-                    <h3>📋 上架分类映射</h3>
+                    <h3><i data-lucide="clipboard-list"></i> 上架分类映射</h3>
                     <div class="header-buttons">
-                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveListingCategoryBtn" style="display:none">💾 保存</button>
+                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveListingCategoryBtn" style="display:none"><i data-lucide="save"></i> 保存</button>
                         <button class="btn btn-secondary btn-sm" id="addListingCategory">+ 添加</button>
                     </div>
                 </div>
@@ -594,7 +594,7 @@ function initNewProductUpload() {
 
     function handleFileSelect(file) {
         selectedFile = file;
-        uploadZone.innerHTML = `<div class="upload-zone-icon">✅</div><p><strong>${file.name}</strong></p>`;
+        uploadZone.innerHTML = `<div class="upload-zone-icon"><i data-lucide="check-circle"></i></div><p><strong>${file.name}</strong></p>`;
         uploadBtn.disabled = false;
     }
 
@@ -646,12 +646,12 @@ function initNewProductUpload() {
             }
 
             updateStatus('完成！', 100);
-            statusDetail.innerHTML = `<span class="success">✅ 成功处理 ${records.length} 条商品</span>`;
+            statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 成功处理 ${records.length} 条商品</span>`;
 
             // 显示结果摘要
             resultContent.innerHTML = `
                 <div class="result-summary">
-                    <p>✅ 处理完成</p>
+                    <p><i data-lucide="check-circle"></i> 处理完成</p>
                     <p>商品总量：${records.length}</p>
                     <p>已应用名称公式</p>
                     <p>已生成上架分类</p>
@@ -672,7 +672,7 @@ function initNewProductUpload() {
         } catch (error) {
             console.error('处理失败:', error);
             statusText.textContent = '处理失败';
-            statusDetail.innerHTML = `<span class="error">❌ ${error.message}</span>`;
+            statusDetail.innerHTML = `<span class="error"><i data-lucide="x-circle"></i> ${error.message}</span>`;
             window.AppUtils?.showToast?.('处理失败: ' + error.message, 'error');
         } finally {
             uploadBtn.disabled = false;
@@ -955,7 +955,7 @@ function initNewProductUpload() {
             window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         } finally {
             saveListingDataBtn.disabled = false;
-            saveListingDataBtn.textContent = '💾 同步上链接表';
+            saveListingDataBtn.innerHTML = '<i data-lucide="save"></i> 同步上链接表';
         }
     }
 
@@ -1466,7 +1466,7 @@ function initNumberingRulesLogic() {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         } finally {
             saveWelfareBtn.disabled = false;
-            saveWelfareBtn.textContent = '💾 保存';
+            saveWelfareBtn.innerHTML = '<i data-lucide="save"></i> 保存';
         }
     });
 
@@ -1537,7 +1537,7 @@ function initNumberingRulesLogic() {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         } finally {
             saveBtn.disabled = false;
-            saveBtn.textContent = '💾 保存配置';
+            saveBtn.innerHTML = '<i data-lucide="save"></i> 保存配置';
         }
     });
 

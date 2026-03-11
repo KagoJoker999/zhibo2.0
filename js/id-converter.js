@@ -9,7 +9,7 @@ function generateIdConverterPage() {
         <div class="id-converter-page" style="max-width: 600px; margin: 0 auto;">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🔄 ID 转换器（从 ID 批量转换成可上架的商品链接）</h3>
+                    <h3 class="card-title"><i data-lucide="refresh-cw"></i> ID 转换器（从 ID 批量转换成可上架的商品链接）</h3>
                 </div>
                 
                 <div class="card-body">
@@ -25,7 +25,7 @@ function generateIdConverterPage() {
                     
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button id="idConverter-convertBtn" class="btn btn-primary" style="flex: 1;">生成链接</button>
-                        <button id="idConverter-copyBtn" class="btn btn-secondary" style="flex: 1;">📋 一键复制</button>
+                        <button id="idConverter-copyBtn" class="btn btn-secondary" style="flex: 1;"><i data-lucide="clipboard-list"></i> 一键复制</button>
                     </div>
                 </div>
             </div>

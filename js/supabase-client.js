@@ -42,10 +42,10 @@ async function queryData(table, options = {}) {
 
     const { data, error } = await query;
     if (error) {
-        console.error(`❌ [DB查询失败] 表: ${table}`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [DB查询失败] 表: ${table}`, error.message);
         throw error;
     }
-    console.log(`✅ [DB查询完成] 表: ${table}, 返回 ${data?.length || 0} 条记录`);
+    console.log(`<i data-lucide="check-circle"></i> [DB查询完成] 表: ${table}, 返回 ${data?.length || 0} 条记录`);
     return data;
 }
 
@@ -58,10 +58,10 @@ async function insertData(table, data) {
     const client = getClient();
     const { data: result, error } = await client.from(table).insert(data).select();
     if (error) {
-        console.error(`❌ [DB插入失败] 表: ${table}`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [DB插入失败] 表: ${table}`, error.message);
         throw error;
     }
-    console.log(`✅ [DB插入完成] 表: ${table}, 成功 ${result?.length || 0} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [DB插入完成] 表: ${table}, 成功 ${result?.length || 0} 条`);
     return result;
 }
 
@@ -77,10 +77,10 @@ async function updateData(table, data, filters) {
     }
     const { data: result, error } = await query.select();
     if (error) {
-        console.error(`❌ [DB更新失败] 表: ${table}`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [DB更新失败] 表: ${table}`, error.message);
         throw error;
     }
-    console.log(`✅ [DB更新完成] 表: ${table}, 影响 ${result?.length || 0} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [DB更新完成] 表: ${table}, 影响 ${result?.length || 0} 条`);
     return result;
 }
 
@@ -96,10 +96,10 @@ async function deleteData(table, filters) {
     }
     const { error } = await query;
     if (error) {
-        console.error(`❌ [DB删除失败] 表: ${table}`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [DB删除失败] 表: ${table}`, error.message);
         throw error;
     }
-    console.log(`✅ [DB删除完成] 表: ${table}`);
+    console.log(`<i data-lucide="check-circle"></i> [DB删除完成] 表: ${table}`);
     return true;
 }
 
@@ -111,10 +111,10 @@ async function truncateTable(table) {
     const client = getClient();
     const { error } = await client.from(table).delete().neq('id', 0);
     if (error) {
-        console.error(`❌ [DB清空失败] 表: ${table}`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [DB清空失败] 表: ${table}`, error.message);
         throw error;
     }
-    console.log(`✅ [DB清空完成] 表: ${table}`);
+    console.log(`<i data-lucide="check-circle"></i> [DB清空完成] 表: ${table}`);
     return true;
 }
 
@@ -122,15 +122,15 @@ async function truncateTable(table) {
  * 批量插入
  */
 async function batchInsert(table, dataArray, fullReplace = false) {
-    console.log(`📦 [DB批量插入] 表: ${table}, 数据量: ${dataArray?.length || 0} 条, 全量替换: ${fullReplace}`);
+    console.log(`<i data-lucide="package"></i> [DB批量插入] 表: ${table}, 数据量: ${dataArray?.length || 0} 条, 全量替换: ${fullReplace}`);
     if (fullReplace) await truncateTable(table);
     const client = getClient();
     const { data, error } = await client.from(table).insert(dataArray).select();
     if (error) {
-        console.error(`❌ [DB批量插入失败] 表: ${table}`, error.message);
+        console.error(`<i data-lucide="x-circle"></i> [DB批量插入失败] 表: ${table}`, error.message);
         throw error;
     }
-    console.log(`✅ [DB批量插入完成] 表: ${table}, 成功 ${data?.length || 0} 条`);
+    console.log(`<i data-lucide="check-circle"></i> [DB批量插入完成] 表: ${table}, 成功 ${data?.length || 0} 条`);
     return data;
 }
 
