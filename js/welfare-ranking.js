@@ -21,6 +21,7 @@ function generateWelfareRankingPage() {
                     <p class="text-muted" style="margin:0;">从此列表勾选要参与福利排品的商品。点击保存后将替换原有的安排数据。</p>
                 </div>
                 <div>
+                    <button class="btn btn-danger" id="btnClearWelfareData" style="margin-right: 0.5rem;" title="清空已保存的排品名单">🗑️ 清空</button>
                     <button class="btn btn-secondary" id="btnRefreshWelfareRanking" style="margin-right: 0.5rem;" title="刷新表格数据">🔄 刷新</button>
                     <button class="btn btn-secondary" id="btnSelectAllNewWelfare" style="margin-right: 0.5rem;" title="快速勾选所有新品福利品">✨ 全选所有新品福利</button>
                     <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled>💾 保存选中的商品</button>
@@ -56,6 +57,7 @@ async function initWelfareRanking() {
     const selectAllCheckbox = document.getElementById('welfareSelectAll');
     const selectAllNewBtn = document.getElementById('btnSelectAllNewWelfare');
     const refreshBtn = document.getElementById('btnRefreshWelfareRanking');
+    const clearBtn = document.getElementById('btnClearWelfareData');
 
     let currentData = [];
 
@@ -165,6 +167,31 @@ async function initWelfareRanking() {
     // 刷新数据
     refreshBtn.addEventListener('click', () => {
         loadData();
+    });
+
+    // 清空福利排品数据表
+    clearBtn.addEventListener('click', async () => {
+        if (!confirm('确定要清空已经保存到 welfare_arranged_data 里的所有福利排品数据吗？此操作无法恢复。')) {
+            return;
+        }
+
+        try {
+            AppUtils.showLoading('正在清空数据...');
+            const { error } = await window.supabaseClient
+                .from('welfare_arranged_data')
+                .delete()
+                .gte('id', 0);
+
+            if (error) throw error;
+
+            AppUtils.showToast('福利排品数据已清空', 'success');
+            // 可以选择清空后自动刷新或者只提示
+        } catch (error) {
+            console.error('清空失败:', error);
+            AppUtils.showToast('清空失败: ' + error.message, 'error');
+        } finally {
+            AppUtils.hideLoading();
+        }
     });
 
     // 一键勾选所有新品福利品
