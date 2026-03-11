@@ -300,7 +300,7 @@ function generateMappingPage() {
                 <div class="welfare-section">
                     <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">🎁 福利排品商品<span style="font-size: 0.75rem; background: rgba(236,72,153,0.2); color: #ec4899; padding: 2px 6px; border-radius: 4px;">独立表格显示，合并推送</span></h3>
                     <div id="welfareTableContainer" class="data-table-container" style="border: 1px solid rgba(236,72,153,0.3); border-radius: var(--border-radius);">
-                        <div class="placeholder-content">
+                        <div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;">
                             <p>正在加载福利数据...</p>
                         </div>
                     </div>
@@ -308,7 +308,7 @@ function generateMappingPage() {
                 <div class="ranking-section">
                     <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">📋 常规排品商品</h3>
                     <div id="mappingTableContainer" class="data-table-container">
-                        <div class="placeholder-content">
+                        <div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;">
                             <p>正在加载数据...</p>
                         </div>
                     </div>
@@ -449,8 +449,8 @@ async function initMappingPage() {
             window._currentWelfareData = processedWelfareData;
         } catch (error) {
             console.error(error);
-            container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
-            if (welfareContainer) welfareContainer.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败</p></div>`;
+            container.innerHTML = `<div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;"><p style="color: var(--error-color);">加载失败: ${error.message}</p></div>`;
+            if (welfareContainer) welfareContainer.innerHTML = `<div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;"><p style="color: var(--error-color);">加载失败</p></div>`;
             updateStatus('加载失败');
         }
     };
@@ -506,7 +506,7 @@ async function initMappingPage() {
 
 function renderMappingTable(container, data) {
     if (!data || data.length === 0) {
-        container.innerHTML = '<div class="placeholder-content"><p>暂无数据</p></div>';
+        container.innerHTML = '<div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;"><p>暂无数据</p></div>';
         return;
     }
 
