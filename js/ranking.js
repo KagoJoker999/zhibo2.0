@@ -1929,12 +1929,6 @@ function setNewProductMode(include) {
         btnInclude.style.background = 'var(--bg-secondary)';
         btnInclude.style.color = 'var(--text-secondary)';
     }
-
-    // 自动触发数据刷新
-    const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
-    if (btnLoadAndCalculate && !btnLoadAndCalculate.disabled) {
-        btnLoadAndCalculate.click();
-    }
 }
 
 async function initRankingPage() {

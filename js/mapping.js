@@ -400,6 +400,7 @@ async function initMappingPage() {
             btnIncludeNew.style.color = 'var(--text-secondary)';
         }
         updateDataSourceBlock(include, null);
+        refreshData();
     }
 
     btnIncludeNew?.addEventListener('click', () => setNewProductToggle(true));
