@@ -1929,6 +1929,136 @@ function setNewProductMode(include) {
         btnInclude.style.background = 'var(--bg-secondary)';
         btnInclude.style.color = 'var(--text-secondary)';
     }
+
+    // 如果已经加载过数据，自动刷新
+    if (cachedResults && cachedResults.length > 0) {
+        loadAndCalculateData();
+    }
+}
+
+// 提取为独立函数，便于复用
+async function loadAndCalculateData() {
+    const btnLoadAndCalculate = document.getElementById('btnLoadAndCalculate');
+    const rankingSchemeSelect = document.getElementById('rankingSchemeSelect');
+    const btnSaveResults = document.getElementById('btnSaveResults');
+
+    // 防止重复触发
+    if (btnLoadAndCalculate && btnLoadAndCalculate.disabled) {
+        return;
+    }
+
+    try {
+        if (btnLoadAndCalculate) {
+            btnLoadAndCalculate.disabled = true;
+            btnLoadAndCalculate.textContent = '加载中...';
+        }
+        deletedItems = []; // 重置删除记录
+
+        // 获取是否包含新品的设置（从hidden input读取value）
+        const includeNewProducts = document.getElementById('includeNewProducts')?.value === 'true';
+
+        // 获取各表统计
+        const client = window.supabaseClient;
+        const [r1, r2, r3] = await Promise.all([
+            client.from('ranking_data').select('*', { count: 'exact', head: true }),
+            client.from('inventory_data').select('*', { count: 'exact', head: true }),
+            client.from('new_product_data').select('*', { count: 'exact', head: true })
+        ]);
+
+        document.getElementById('statRanking').textContent = r1.count || 0;
+        document.getElementById('statInventory').textContent = r2.count || 0;
+        document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
+
+        // 加载排除商品列表和商品ID映射
+        const [excluded, productIdMapping] = await Promise.all([
+            loadExcludedProducts(),
+            loadProductIdMapping()
+        ]);
+        cachedExcluded = excluded;
+        cachedProductIds = productIdMapping;
+        document.getElementById('statExcluded').textContent = cachedExcluded.length;
+
+        // 汇总商品数据（库存 + 评分）
+        let allProducts = await loadCombinedProductData();
+        let baseInventoryCount = allProducts.length;
+        let addedNewCount = 0;
+        let removedNewFromInventory = 0;
+
+        // 加载新品数据（无论是否勾选都需要加载，用于排除判断）
+        cachedNewProducts = await loadNewProductData();
+        const newProductStats = cachedNewProducts._deduplicateStats || { before: r3.count, after: cachedNewProducts.length };
+
+        if (includeNewProducts) {
+            // 勾选：正常加载库存数据，并将新品添加到排品列表
+            document.getElementById('statNewProduct').textContent = `${newProductStats.after}/${newProductStats.before}`;
+
+            // 将新品添加到商品列表（赋予默认评分排名）
+            cachedNewProducts.forEach(np => {
+                if (!allProducts.find(p => p.product_name === np.product_name)) {
+                    allProducts.push({
+                        ...np,
+                        rating_rank: 999999,  // 新品默认排名最后
+                        total_score: 0,
+                        is_new_product: true
+                    });
+                    addedNewCount++;
+                }
+            });
+        } else {
+            // 不勾选：从库存数据中排除与新品名称相同的产品
+            const newProductNames = new Set(cachedNewProducts.map(np => np.product_name));
+            const originalCount = allProducts.length;
+            allProducts = allProducts.filter(p => !newProductNames.has(p.product_name));
+            removedNewFromInventory = originalCount - allProducts.length;
+            baseInventoryCount = allProducts.length;
+
+            document.getElementById('statNewProduct').innerHTML = `${newProductStats.after}/${newProductStats.before}<span title="排除的为多SKU部分商品（重复商品名称的新品）" style="cursor: help; border-bottom: 1px dashed currentColor;">（已排除${removedNewFromInventory}个）</span>`;
+            cachedNewProducts = [];  // 不参与排品
+        }
+
+        // 过滤排除商品
+        const countBeforeExclude = allProducts.length;
+        cachedProducts = filterExcludedProducts(allProducts, cachedExcluded);
+        const countAfterExclude = cachedProducts.length;
+        const excludedCount = countBeforeExclude - countAfterExclude;
+
+        // 参与排品的商品总数及计算逻辑显示
+        const totalCount = cachedProducts.length;
+        document.getElementById('statCombined').textContent = totalCount;
+
+        // === 自动执行计算 ===
+        if (btnLoadAndCalculate) {
+            btnLoadAndCalculate.textContent = '计算中...';
+        }
+
+        // 加载当前选中方案的配置
+        const schemes = await loadRankingSchemes();
+        const selectedScheme = rankingSchemeSelect?.value || schemes.当前方案;
+        const config = getSchemeConfig(schemes, selectedScheme);
+        cachedConfig = config;  // 缓存配置用于删除后重新计算
+        categoryExcluded = {};  // 重置分类排除列表
+        deletedItems = [];      // 重置删除记录
+
+        // 执行排品计算
+        const rankingResults = calculateRanking(cachedProducts, config, categoryExcluded);
+
+        // 分配样品序号
+        cachedResults = assignSampleNumbers(rankingResults, config);
+
+        // 显示结果
+        renderRankingResults(cachedResults);
+
+        if (btnSaveResults) btnSaveResults.disabled = false;
+        window.AppUtils?.showToast?.(`排品完成，共 ${cachedResults.length} 个商品`, 'success');
+    } catch (error) {
+        console.error('加载/计算失败:', error);
+        window.AppUtils?.showToast?.('加载/计算失败: ' + error.message, 'error');
+    } finally {
+        if (btnLoadAndCalculate) {
+            btnLoadAndCalculate.disabled = false;
+            btnLoadAndCalculate.textContent = '加载数据并计算';
+        }
+    }
 }
 
 async function initRankingPage() {
@@ -1948,113 +2078,7 @@ async function initRankingPage() {
     // 不再自动加载缓存结果，等待用户手动点击按钮
 
     if (btnLoadAndCalculate) {
-        btnLoadAndCalculate.addEventListener('click', async () => {
-            try {
-                btnLoadAndCalculate.disabled = true;
-                btnLoadAndCalculate.textContent = '加载中...';
-                deletedItems = []; // 重置删除记录
-
-                // 获取是否包含新品的设置（从hidden input读取value）
-                const includeNewProducts = document.getElementById('includeNewProducts')?.value === 'true';
-
-                // 获取各表统计
-                const client = window.supabaseClient;
-                const [r1, r2, r3] = await Promise.all([
-                    client.from('ranking_data').select('*', { count: 'exact', head: true }),
-                    client.from('inventory_data').select('*', { count: 'exact', head: true }),
-                    client.from('new_product_data').select('*', { count: 'exact', head: true })
-                ]);
-
-                document.getElementById('statRanking').textContent = r1.count || 0;
-                document.getElementById('statInventory').textContent = r2.count || 0;
-                document.getElementById('statNewProduct').textContent = includeNewProducts ? (r3.count || 0) : `${r3.count || 0}（未参与）`;
-
-                // 加载排除商品列表和商品ID映射
-                const [excluded, productIdMapping] = await Promise.all([
-                    loadExcludedProducts(),
-                    loadProductIdMapping()
-                ]);
-                cachedExcluded = excluded;
-                cachedProductIds = productIdMapping;
-                document.getElementById('statExcluded').textContent = cachedExcluded.length;
-
-                // 汇总商品数据（库存 + 评分）
-                let allProducts = await loadCombinedProductData();
-                let baseInventoryCount = allProducts.length;
-                let addedNewCount = 0;
-                let removedNewFromInventory = 0;
-
-                // 加载新品数据（无论是否勾选都需要加载，用于排除判断）
-                cachedNewProducts = await loadNewProductData();
-                const newProductStats = cachedNewProducts._deduplicateStats || { before: r3.count, after: cachedNewProducts.length };
-
-                if (includeNewProducts) {
-                    // 勾选：正常加载库存数据，并将新品添加到排品列表
-                    document.getElementById('statNewProduct').textContent = `${newProductStats.after}/${newProductStats.before}`;
-
-                    // 将新品添加到商品列表（赋予默认评分排名）
-                    cachedNewProducts.forEach(np => {
-                        if (!allProducts.find(p => p.product_name === np.product_name)) {
-                            allProducts.push({
-                                ...np,
-                                rating_rank: 999999,  // 新品默认排名最后
-                                total_score: 0,
-                                is_new_product: true
-                            });
-                            addedNewCount++;
-                        }
-                    });
-                } else {
-                    // 不勾选：从库存数据中排除与新品名称相同的产品
-                    const newProductNames = new Set(cachedNewProducts.map(np => np.product_name));
-                    const originalCount = allProducts.length;
-                    allProducts = allProducts.filter(p => !newProductNames.has(p.product_name));
-                    removedNewFromInventory = originalCount - allProducts.length;
-                    baseInventoryCount = allProducts.length;
-
-                    document.getElementById('statNewProduct').innerHTML = `${newProductStats.after}/${newProductStats.before}<span title="排除的为多SKU部分商品（重复商品名称的新品）" style="cursor: help; border-bottom: 1px dashed currentColor;">（已排除${removedNewFromInventory}个）</span>`;
-                    cachedNewProducts = [];  // 不参与排品
-                }
-
-                // 过滤排除商品
-                const countBeforeExclude = allProducts.length;
-                cachedProducts = filterExcludedProducts(allProducts, cachedExcluded);
-                const countAfterExclude = cachedProducts.length;
-                const excludedCount = countBeforeExclude - countAfterExclude;
-
-                // 参与排品的商品总数及计算逻辑显示
-                const totalCount = cachedProducts.length;
-                document.getElementById('statCombined').textContent = totalCount;
-
-                // === 自动执行计算 ===
-                btnLoadAndCalculate.textContent = '计算中...';
-
-                // 加载当前选中方案的配置
-                const selectedScheme = rankingSchemeSelect?.value || schemes.当前方案;
-                const config = getSchemeConfig(schemes, selectedScheme);
-                cachedConfig = config;  // 缓存配置用于删除后重新计算
-                categoryExcluded = {};  // 重置分类排除列表
-                deletedItems = [];      // 重置删除记录
-
-                // 执行排品计算
-                const rankingResults = calculateRanking(cachedProducts, config, categoryExcluded);
-
-                // 分配样品序号
-                cachedResults = assignSampleNumbers(rankingResults, config);
-
-                // 显示结果
-                renderRankingResults(cachedResults);
-
-                btnSaveResults.disabled = false;
-                window.AppUtils?.showToast?.(`排品完成，共 ${cachedResults.length} 个商品`, 'success');
-            } catch (error) {
-                console.error('加载/计算失败:', error);
-                window.AppUtils?.showToast?.('加载/计算失败: ' + error.message, 'error');
-            } finally {
-                btnLoadAndCalculate.disabled = false;
-                btnLoadAndCalculate.textContent = '加载数据并计算';
-            }
-        });
+        btnLoadAndCalculate.addEventListener('click', loadAndCalculateData);
     }
 
     if (btnSaveResults) {
