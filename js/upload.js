@@ -247,6 +247,103 @@ const UploadConfigs = {
 };
 
 // ========================================
+// 上传历史记录功能
+// ========================================
+async function saveUploadHistory(uploadType, fileName, recordCount, uploadMode) {
+    try {
+        const { error } = await window.supabaseClient
+            .from('upload_history')
+            .insert({
+                upload_type: uploadType,
+                file_name: fileName,
+                record_count: recordCount,
+                upload_mode: uploadMode
+            });
+        if (error) console.error('保存上传历史失败:', error);
+    } catch (e) {
+        console.error('保存上传历史异常:', e);
+    }
+}
+
+async function showUploadHistoryModal(uploadType, title) {
+    const existingModal = document.getElementById('uploadHistoryModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'uploadHistoryModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content upload-history-modal">
+            <div class="modal-header">
+                <h3><i data-lucide="history"></i> ${title} - 最近上传记录</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <div class="modal-body" id="uploadHistoryContent">
+                <p class="text-muted">加载中...</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+
+    const content = document.getElementById('uploadHistoryContent');
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('upload_history')
+            .select('*')
+            .eq('upload_type', uploadType)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            content.innerHTML = '<p class="text-muted">暂无上传记录</p>';
+            return;
+        }
+
+        content.innerHTML = `
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>上传时间</th>
+                        <th>商品数量</th>
+                        <th>上传模式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(row => `
+                        <tr>
+                            <td class="file-name">${row.file_name}</td>
+                            <td>${formatHistoryTime(row.created_at)}</td>
+                            <td><span class="record-count">${row.record_count}</span></td>
+                            <td>${row.upload_mode === 'full' ? '更新全部' : '补充上传'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        content.innerHTML = `<p class="text-error">加载失败: ${e.message}</p>`;
+    }
+}
+
+function formatHistoryTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ========================================
 // 生成单个上传区块
 // ========================================
 function generateUploadBlock(key, config) {
@@ -279,7 +376,10 @@ function generateUploadBlock(key, config) {
                 <div class="status-detail" id="statusDetail-${key}"></div>
             </div>
             
-            <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
+            <div class="upload-actions-row">
+                <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
+                <button class="btn btn-secondary btn-history" id="historyBtn-${key}"><i data-lucide="history"></i> 查看历史</button>
+            </div>
             
             <div class="last-upload-time" id="lastUploadTime-${key}"></div>
             
@@ -323,6 +423,7 @@ function initUploadBlock(key, config) {
     const uploadZone = document.getElementById(`uploadZone-${key}`);
     const fileInput = document.getElementById(`fileInput-${key}`);
     const uploadBtn = document.getElementById(`uploadBtn-${key}`);
+    const historyBtn = document.getElementById(`historyBtn-${key}`);
     const statusDiv = document.getElementById(`status-${key}`);
     const statusText = document.getElementById(`statusText-${key}`);
     const progressBar = document.getElementById(`progress-${key}`);
@@ -333,26 +434,28 @@ function initUploadBlock(key, config) {
     let selectedFile = null;
     const lastUploadTimeDiv = document.getElementById(`lastUploadTime-${key}`);
 
-    // 更新最后上传时间显示
     function updateLastUploadTime(timeStr) {
         if (lastUploadTimeDiv) {
             lastUploadTimeDiv.textContent = timeStr ? `最后上传：${timeStr}` : '';
         }
     }
 
-    // 加载保存的上传时间
     const savedTime = localStorage.getItem(`lastUpload_${key}`);
     if (savedTime) {
         updateLastUploadTime(savedTime);
     }
 
-    // Toggle group 点击事件
     toggleGroup.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             toggleGroup.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             modeInput.value = btn.dataset.value;
         });
+    });
+
+    historyBtn?.addEventListener('click', () => {
+        const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
+        showUploadHistoryModal(key, plainTitle);
     });
 
     uploadZone.addEventListener('click', () => fileInput.click());
@@ -449,7 +552,7 @@ function initUploadBlock(key, config) {
             });
             localStorage.setItem(`lastUpload_${key}`, timeStr);
             updateLastUploadTime(timeStr);
-            // 提取纯文本标题（去除 HTML 标签）
+            await saveUploadHistory(key, selectedFile.name, records.length, modeValue);
             const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
             window.AppUtils?.showToast?.(`${plainTitle} 成功处理并上传 ${records.length} 条`, 'success');
         } catch (error) {

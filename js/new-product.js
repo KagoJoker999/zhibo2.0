@@ -268,6 +268,104 @@ async function saveListingCategoryMapping(items) {
         if (error) throw new Error('保存失败: ' + error.message);
     }
 }
+
+// ========================================
+// 上传历史记录功能
+// ========================================
+async function saveNewProductUploadHistory(fileName, recordCount, uploadMode) {
+    try {
+        const { error } = await window.supabaseClient
+            .from('upload_history')
+            .insert({
+                upload_type: 'new-product',
+                file_name: fileName,
+                record_count: recordCount,
+                upload_mode: uploadMode
+            });
+        if (error) console.error('保存上传历史失败:', error);
+    } catch (e) {
+        console.error('保存上传历史异常:', e);
+    }
+}
+
+async function showNewProductUploadHistoryModal() {
+    const existingModal = document.getElementById('uploadHistoryModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'uploadHistoryModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content upload-history-modal">
+            <div class="modal-header">
+                <h3><i data-lucide="history"></i> 新品数据上传 - 最近上传记录</h3>
+                <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            </div>
+            <div class="modal-body" id="uploadHistoryContent">
+                <p class="text-muted">加载中...</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+
+    const content = document.getElementById('uploadHistoryContent');
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('upload_history')
+            .select('*')
+            .eq('upload_type', 'new-product')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            content.innerHTML = '<p class="text-muted">暂无上传记录</p>';
+            return;
+        }
+
+        content.innerHTML = `
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>上传时间</th>
+                        <th>商品数量</th>
+                        <th>上传模式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(row => `
+                        <tr>
+                            <td class="file-name">${row.file_name}</td>
+                            <td>${formatNewProductHistoryTime(row.created_at)}</td>
+                            <td><span class="record-count">${row.record_count}</span></td>
+                            <td>${row.upload_mode === 'full' ? '更新全部' : '补充上传'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+    } catch (e) {
+        content.innerHTML = `<p class="text-error">加载失败: ${e.message}</p>`;
+    }
+}
+
+function formatNewProductHistoryTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 // ========================================
 // 页面生成
 // ========================================
@@ -327,6 +425,7 @@ function generateNewProductPage() {
                         <button class="btn btn-primary btn-upload" id="uploadBtn-new-product" disabled>
                             上传并处理
                         </button>
+                        <button class="btn btn-secondary btn-history" id="historyBtn-new-product"><i data-lucide="history"></i> 查看历史</button>
                     </div>
                 </div>
                 
@@ -569,6 +668,7 @@ function initNewProductUpload() {
     const uploadZone = document.getElementById('uploadZone-new-product');
     const fileInput = document.getElementById('fileInput-new-product');
     const uploadBtn = document.getElementById('uploadBtn-new-product');
+    const historyBtn = document.getElementById('historyBtn-new-product');
     const statusDiv = document.getElementById('status-new-product');
     const statusText = document.getElementById('statusText-new-product');
     const progressBar = document.getElementById('progress-new-product');
@@ -577,8 +677,9 @@ function initNewProductUpload() {
 
     let selectedFile = null;
 
-    // Init Rules Logic (This is kept as it's part of the upload process, not UI tab logic)
     initNumberingRulesLogic();
+
+    historyBtn?.addEventListener('click', showNewProductUploadHistoryModal);
 
     uploadZone.addEventListener('click', () => fileInput.click());
     uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -661,8 +762,10 @@ function initNewProductUpload() {
             // 显示下载按钮
             // 显示下载按钮
             document.getElementById('downloadRenameBtn').style.display = 'inline-block';
-            // document.getElementById('downloadListingBtn').style.display = 'inline-block'; // 隐藏上链接表格下载按钮
             document.getElementById('saveListingDataBtn').style.display = 'inline-block';
+
+            const uploadMode = isFullMode ? 'full' : 'incremental';
+            await saveNewProductUploadHistory(selectedFile.name, records.length, uploadMode);
 
             window.AppUtils?.showToast?.(`成功处理 ${records.length} 条商品`, 'success');
 
