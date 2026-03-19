@@ -198,17 +198,19 @@ async function startCheck(file) {
             // 检查每个子编码
             for (const code of subCodes) {
                 if (isPresale) {
-                    // 预售商品：原编码或加"=="的编码都应存在
+                    // 预售商品：原编码和加"=="的编码都必须存在
                     const codeWithEq = code.includes('==') ? code : code + '==';
                     const codeWithoutEq = code.replace(/==$/g, '');
                     const hasOriginal = uploadCodes.has(codeWithoutEq);
                     const hasWithEq = uploadCodes.has(codeWithEq);
-                    if (!hasOriginal && !hasWithEq) {
+                    
+                    if (!hasOriginal || !hasWithEq) {
+                        const missingType = !hasOriginal && !hasWithEq ? '两者均缺失' : (!hasOriginal ? '缺失原编码' : '缺失带 == 编码');
                         issues.push({
                             type: 'sku',
                             label: 'SKU缺失',
                             name: productName,
-                            detail: `子编码 "${code}" 在上传表格中不存在`
+                            detail: `子编码 "${codeWithoutEq}" ${missingType}`
                         });
                     }
                 } else {
