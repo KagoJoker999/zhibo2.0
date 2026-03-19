@@ -461,8 +461,7 @@ function generateNewProductPage() {
                             <h4>💡 设置提示</h4>
                             <ul class="tips-list">
                                 <li>在 <strong>⚙️ 设置</strong> 页可配置产地词、热卖词</li>
-                                <li>可设置分类词汇映射（分类→词汇）</li>
-                                <li>可设置上架分类映射（原分类→上架分类）</li>
+                                <li>可设置分类映射（分类→词汇 & 上架分类）</li>
                             </ul>
                         </div>
                     </div>
@@ -556,7 +555,7 @@ function generateNumberingRulesUI() {
 // ========================================
 function generateNewProductSettingsPage() {
     return `
-        <div class="settings-page settings-grid-3">
+        <div class="settings-page">
             <!-- 第1列：名称公式设置 -->
             <div class="settings-section">
                 <div class="settings-header">
@@ -630,30 +629,17 @@ function generateNewProductSettingsPage() {
                 </div>
             </div>
             
-            <!-- 第2列：分类词汇映射 -->
+            <!-- 第2列：分类映射设置（合并词汇映射和上架分类映射） -->
             <div class="settings-section">
                 <div class="settings-header">
-                    <h3>🏷️ 分类词汇映射</h3>
+                    <h3>🏷️ 分类映射设置</h3>
                     <div class="header-buttons">
-                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveCategoryWordBtn" style="display:none"><i data-lucide="save"></i> 保存</button>
-                        <button class="btn btn-secondary btn-sm" id="addCategoryWord">+ 添加</button>
+                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveCombinedMappingBtn" style="display:none"><i data-lucide="save"></i> 保存</button>
+                        <button class="btn btn-secondary btn-sm" id="addCombinedMapping">+ 添加</button>
                     </div>
                 </div>
-                <div id="categoryWordsTable" class="mapping-table-container">
-                    <!-- 表格由 JS 渲染 -->
-                </div>
-            </div>
-            
-            <!-- 第3列：上架分类映射 -->
-            <div class="settings-section">
-                <div class="settings-header">
-                    <h3><i data-lucide="clipboard-list"></i> 上架分类映射</h3>
-                    <div class="header-buttons">
-                        <button class="btn btn-primary btn-sm save-mapping-btn" id="saveListingCategoryBtn" style="display:none"><i data-lucide="save"></i> 保存</button>
-                        <button class="btn btn-secondary btn-sm" id="addListingCategory">+ 添加</button>
-                    </div>
-                </div>
-                <div id="listingCategoryTable" class="mapping-table-container">
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 0.75rem;">基于上传表格的分类，同时设置词汇映射和上架分类映射</p>
+                <div id="combinedMappingTable" class="mapping-table-container">
                     <!-- 表格由 JS 渲染 -->
                 </div>
             </div>
@@ -1075,21 +1061,17 @@ async function initNewProductSettings() {
     const namePrefixInput = document.getElementById('namePrefix');
     const nameSuffixInput = document.getElementById('nameSuffix');
     const formulaOrderList = document.getElementById('formulaOrderList');
-    const categoryTable = document.getElementById('categoryWordsTable');
-    const listingTable = document.getElementById('listingCategoryTable');
-    const addCategoryBtn = document.getElementById('addCategoryWord');
-    const addListingBtn = document.getElementById('addListingCategory');
+    const combinedTable = document.getElementById('combinedMappingTable');
+    const addCombinedBtn = document.getElementById('addCombinedMapping');
+    const saveCombinedBtn = document.getElementById('saveCombinedMappingBtn');
     const saveOriginBtn = document.getElementById('saveOriginWord');
     const saveHotBtn = document.getElementById('saveHotWord');
     const saveNamePrefixBtn = document.getElementById('saveNamePrefix');
     const saveNameSuffixBtn = document.getElementById('saveNameSuffix');
     const saveFormulaOrderBtn = document.getElementById('saveFormulaOrder');
-    const saveCategoryWordBtn = document.getElementById('saveCategoryWordBtn');
-    const saveListingCategoryBtn = document.getElementById('saveListingCategoryBtn');
 
-    // 数据存储
-    let categoryWordsData = [];
-    let listingCategoryData = [];
+    // 合并映射数据：{ category, category_word, listing_category }
+    let combinedMappingData = [];
     let currentFormulaOrder = ['name', 'origin', 'hot', 'category'];
 
     // 加载数据
@@ -1111,19 +1093,26 @@ async function initNewProductSettings() {
         }
         renderFormulaOrderList();
 
-        // 加载分类词汇
+        // 加载并合并两个映射表
         const categoryWords = await loadCategoryWords();
-        categoryWordsData = Object.entries(categoryWords).map(([k, v], idx) => ({
-            id: idx, category: k, category_word: v
-        }));
-        renderCategoryTable();
-
-        // 加载分类对照
         const { data: listingData } = await window.supabaseClient.from('listing_category_mapping').select('*');
-        listingCategoryData = (listingData || []).map((item, idx) => ({
-            id: item.id || idx, source_category: item.source_category, listing_category: item.listing_category
+        const listingMap = {};
+        (listingData || []).forEach(item => {
+            listingMap[item.source_category] = item.listing_category;
+        });
+
+        // 以分类为 key 合并数据
+        const allCategories = new Set([
+            ...Object.keys(categoryWords),
+            ...Object.keys(listingMap)
+        ]);
+        combinedMappingData = Array.from(allCategories).map((cat, idx) => ({
+            id: idx,
+            category: cat,
+            category_word: categoryWords[cat] || '',
+            listing_category: listingMap[cat] || ''
         }));
-        renderListingTable();
+        renderCombinedMappingTable();
     }
 
     // 渲染公式顺序列表
@@ -1243,62 +1232,21 @@ async function initNewProductSettings() {
         }
     }
 
-    // 渲染分类词汇表格
-    function renderCategoryTable() {
-        const saveBtn = document.getElementById('saveCategoryWordBtn');
-        if (categoryWordsData.length === 0) {
-            categoryTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
-            if (saveBtn) saveBtn.style.display = 'none';
+    // 渲染合并映射表格
+    function renderCombinedMappingTable() {
+        if (combinedMappingData.length === 0) {
+            combinedTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
+            if (saveCombinedBtn) saveCombinedBtn.style.display = 'none';
             return;
         }
-        categoryTable.innerHTML = `
+        combinedTable.innerHTML = `
             <table class="editable-table">
-                <thead><tr><th>分类</th><th>词汇</th><th>操作</th></tr></thead>
+                <thead><tr><th>分类</th><th>词汇</th><th>上架分类</th><th>操作</th></tr></thead>
                 <tbody>
-                    ${categoryWordsData.map((item, idx) => `
+                    ${combinedMappingData.map((item, idx) => `
                         <tr data-idx="${idx}">
                             <td><input type="text" class="table-input" value="${item.category || ''}" data-field="category"></td>
                             <td><input type="text" class="table-input" value="${item.category_word || ''}" data-field="category_word"></td>
-                            <td class="actions-cell">
-                                <button class="btn-icon btn-delete" data-idx="${idx}" title="删除">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-        // 绑定删除事件
-        categoryTable.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const idx = parseInt(btn.dataset.idx);
-                categoryWordsData.splice(idx, 1);
-                if (saveBtn) saveBtn.style.display = 'inline-flex';
-                renderCategoryTable();
-            });
-        });
-        // 绑定输入事件，有修改时显示保存按钮
-        categoryTable.querySelectorAll('.table-input').forEach(input => {
-            input.addEventListener('input', () => {
-                if (saveBtn) saveBtn.style.display = 'inline-flex';
-            });
-        });
-    }
-
-    // 渲染分类对照表格
-    function renderListingTable() {
-        const saveBtn = document.getElementById('saveListingCategoryBtn');
-        if (listingCategoryData.length === 0) {
-            listingTable.innerHTML = '<p class="empty-state">暂无映射，点击上方"添加"按钮添加</p>';
-            if (saveBtn) saveBtn.style.display = 'none';
-            return;
-        }
-        listingTable.innerHTML = `
-            <table class="editable-table">
-                <thead><tr><th>原分类</th><th>上架分类</th><th>操作</th></tr></thead>
-                <tbody>
-                    ${listingCategoryData.map((item, idx) => `
-                        <tr data-idx="${idx}">
-                            <td><input type="text" class="table-input" value="${item.source_category || ''}" data-field="source_category"></td>
                             <td><input type="text" class="table-input" value="${item.listing_category || ''}" data-field="listing_category"></td>
                             <td class="actions-cell">
                                 <button class="btn-icon btn-delete" data-idx="${idx}" title="删除">🗑️</button>
@@ -1309,78 +1257,59 @@ async function initNewProductSettings() {
             </table>
         `;
         // 绑定删除事件
-        listingTable.querySelectorAll('.btn-delete').forEach(btn => {
+        combinedTable.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.dataset.idx);
-                listingCategoryData.splice(idx, 1);
-                if (saveBtn) saveBtn.style.display = 'inline-flex';
-                renderListingTable();
+                combinedMappingData.splice(idx, 1);
+                if (saveCombinedBtn) saveCombinedBtn.style.display = 'inline-flex';
+                renderCombinedMappingTable();
             });
         });
         // 绑定输入事件，有修改时显示保存按钮
-        listingTable.querySelectorAll('.table-input').forEach(input => {
+        combinedTable.querySelectorAll('.table-input').forEach(input => {
             input.addEventListener('input', () => {
-                if (saveBtn) saveBtn.style.display = 'inline-flex';
+                if (saveCombinedBtn) saveCombinedBtn.style.display = 'inline-flex';
             });
         });
     }
 
-    // 保存分类词汇表格
-    async function saveCategoryTableData() {
+    // 保存合并映射表格（同时写入两个表）
+    async function saveCombinedMappingData() {
         try {
-            // 从表格中读取最新数据
-            const rows = categoryTable.querySelectorAll('tbody tr');
-            const items = [];
+            const rows = combinedTable.querySelectorAll('tbody tr');
+            const categoryItems = [];
+            const listingItems = [];
             rows.forEach(row => {
                 const category = row.querySelector('[data-field="category"]').value.trim();
                 const word = row.querySelector('[data-field="category_word"]').value.trim();
-                if (category) items.push({ category, category_word: word });
-            });
-            await saveCategoryWords(items);
-            categoryWordsData = items.map((item, idx) => ({ id: idx, ...item }));
-            // 保存成功后隐藏保存按钮
-            const saveBtn = document.getElementById('saveCategoryWordBtn');
-            if (saveBtn) saveBtn.style.display = 'none';
-            window.AppUtils?.showToast?.('分类词汇已保存', 'success');
-        } catch (e) {
-            window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
-        }
-    }
-
-    // 保存分类对照表格
-    async function saveListingTableData() {
-        try {
-            const rows = listingTable.querySelectorAll('tbody tr');
-            const items = [];
-            rows.forEach(row => {
-                const source = row.querySelector('[data-field="source_category"]').value.trim();
                 const listing = row.querySelector('[data-field="listing_category"]').value.trim();
-                if (source) items.push({ source_category: source, listing_category: listing });
+                if (category) {
+                    categoryItems.push({ category, category_word: word });
+                    listingItems.push({ source_category: category, listing_category: listing });
+                }
             });
-            await saveListingCategoryMapping(items);
-            listingCategoryData = items.map((item, idx) => ({ id: idx, ...item }));
-            // 保存成功后隐藏保存按钮
-            const saveBtn = document.getElementById('saveListingCategoryBtn');
-            if (saveBtn) saveBtn.style.display = 'none';
-            window.AppUtils?.showToast?.('分类对照已保存', 'success');
+            await Promise.all([
+                saveCategoryWords(categoryItems),
+                saveListingCategoryMapping(listingItems)
+            ]);
+            combinedMappingData = categoryItems.map((item, idx) => ({
+                id: idx,
+                category: item.category,
+                category_word: item.category_word,
+                listing_category: listingItems[idx].listing_category
+            }));
+            if (saveCombinedBtn) saveCombinedBtn.style.display = 'none';
+            window.AppUtils?.showToast?.('分类映射已保存', 'success');
         } catch (e) {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         }
     }
 
-    // 添加新行事件
-    addCategoryBtn?.addEventListener('click', () => {
-        categoryWordsData.push({ id: Date.now(), category: '', category_word: '' });
-        renderCategoryTable();
-        // 聚焦到新行
-        const lastInput = categoryTable.querySelector('tbody tr:last-child input');
-        lastInput?.focus();
-    });
-
-    addListingBtn?.addEventListener('click', () => {
-        listingCategoryData.push({ id: Date.now(), source_category: '', listing_category: '' });
-        renderListingTable();
-        const lastInput = listingTable.querySelector('tbody tr:last-child input');
+    // 添加新行
+    addCombinedBtn?.addEventListener('click', () => {
+        combinedMappingData.push({ id: Date.now(), category: '', category_word: '', listing_category: '' });
+        renderCombinedMappingTable();
+        const lastInput = combinedTable.querySelector('tbody tr:last-child input');
         lastInput?.focus();
     });
 
@@ -1403,9 +1332,8 @@ async function initNewProductSettings() {
         }
     });
 
-    // 绑定头部保存按钮事件
-    saveCategoryWordBtn?.addEventListener('click', saveCategoryTableData);
-    saveListingCategoryBtn?.addEventListener('click', saveListingTableData);
+    // 绑定保存按钮事件
+    saveCombinedBtn?.addEventListener('click', saveCombinedMappingData);
 }
 
 // ========================================
