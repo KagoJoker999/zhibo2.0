@@ -840,7 +840,12 @@ function initNewProductUpload() {
                 }
                                         </div>
                                     </td>
-                                    <td title="${row.original_name || ''}">${truncate(row.original_name, 20)}</td>
+                                    <td>
+                                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                                            <span title="${row.original_name || ''}">${truncate(row.original_name, 20)}</span>
+                                            ${renderVirtualCategoryTag(row.virtual_category)}
+                                        </div>
+                                    </td>
                                     <td title="${row.product_name || ''}">${truncate(row.product_name, 30)}</td>
                                     <td>${row.category || '-'}</td>
                                     <td>${row.listing_category || '-'}</td>
@@ -865,6 +870,16 @@ function initNewProductUpload() {
     function truncate(str, len) {
         if (!str) return '-';
         return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    function renderVirtualCategoryTag(cat) {
+        if (!cat) return '';
+        if (cat === '可预售') {
+            return `<span style="display: inline-block; margin-top: 4px; padding: 2px 6px; background-color: rgba(34, 197, 94, 0.1); color: rgb(21, 128, 61); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 4px; font-size: 11px; line-height: 1;">可预售</span>`;
+        } else if (cat === '不可以收') {
+            return `<span style="display: inline-block; margin-top: 4px; padding: 2px 6px; background-color: rgba(239, 68, 68, 0.1); color: rgb(185, 28, 28); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 4px; font-size: 11px; line-height: 1;">不可以收</span>`;
+        }
+        return `<span style="display: inline-block; margin-top: 4px; padding: 2px 6px; background-color: var(--bg-hover); color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; line-height: 1;">${cat}</span>`;
     }
 
     // 下载 Excel
