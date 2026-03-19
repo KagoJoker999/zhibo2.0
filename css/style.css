@@ -3050,3 +3050,88 @@ td .hover-zoom-img {
     gap: 0.5rem;
     white-space: nowrap;
 }
+
+/* ========================================
+   商品检查弹窗
+   ======================================== */
+.product-checker-modal {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    max-width: 680px;
+    width: 90%;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+.product-checker-modal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.checker-dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-hover);
+    transition: all var(--transition-fast);
+}
+
+.checker-dropzone:hover,
+.checker-dropzone.dragover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.checker-dropzone-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.checker-status {
+    margin-top: 1rem;
+}
+
+.checker-status-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.checker-results {
+    margin-top: 1.25rem;
+}
+
+.checker-summary {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.checker-success {
+    text-align: center;
+    padding: 2rem;
+}
+
+.checker-success-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+}
+
+.checker-success h4 {
+    color: var(--success-color);
+    margin-bottom: 0.5rem;
+}
+
+.checker-error {
+    color: var(--error-color);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}

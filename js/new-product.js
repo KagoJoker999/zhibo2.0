@@ -485,6 +485,7 @@ function generateNewProductPage() {
                         <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">📥 下载重命名表</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">📥 上链接表格下载</button>
                         <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none"><i data-lucide="save"></i> 同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
+                        <button class="btn btn-secondary btn-sm" id="productCheckerBtn" onclick="openProductCheckerModal()"><i data-lucide="search-check"></i> 商品检查</button>
                         <button class="btn btn-primary btn-sm" id="refreshDataBtn"><i data-lucide="refresh-cw"></i></button>
                     </div>
                 </div>
