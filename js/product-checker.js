@@ -158,15 +158,15 @@ async function startCheck(file) {
             const matches = uploadByName.get(productName);
             if (!matches || matches.length === 0) continue; // 已被检查A覆盖
 
-            for (const m of matches) {
-                if (m.code && !m.code.includes('==')) {
-                    issues.push({
-                        type: 'presale',
-                        label: '预售错误',
-                        name: productName,
-                        detail: `编码 "${m.code}" 不包含 "=="`
-                    });
-                }
+            // 只要其中有一个编码包含 "=="，就不算报错
+            const hasAnyEq = matches.some(m => m.code && m.code.includes('=='));
+            if (!hasAnyEq) {
+                issues.push({
+                    type: 'presale',
+                    label: '预售错误',
+                    name: productName,
+                    detail: `该商品对应的所有编码均不包含 "=="`
+                });
             }
         }
 
