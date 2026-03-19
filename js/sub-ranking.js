@@ -454,8 +454,8 @@ function generateSubRankingPage() {
             <!-- 加载计算面板 -->
             <div id="panelCalculate" class="tab-panel" style="display: block;">
                 <div class="ranking-actions" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" id="btnSubCalculate"><i data-lucide="refresh-cw"></i> 加载并计算</button>
-                    <button class="btn btn-primary" id="btnSubSave" style="background-color: var(--error-color); border-color: var(--error-color);"><i data-lucide="save"></i> 保存结果</button>
+                    <button class="btn btn-primary" id="btnSubCalculate" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> 加载并计算</button>
+                    <button class="btn btn-primary" id="btnSubSave" style="background-color: var(--error-color); border-color: var(--error-color); display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="save" style="width: 14px; height: 14px;"></i> 保存结果</button>
                     <button class="btn btn-secondary" id="btnCopyUnmatched"><i data-lucide="clipboard-list"></i> 批量复制未匹配商品名</button>
                     <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px;">→ sub_ranking_results</span>
                     <span id="subRankingStatus" style="color: var(--text-muted); font-size: 0.875rem;"></span>
@@ -474,7 +474,7 @@ function generateSubRankingPage() {
             <div id="panelHistory" class="tab-panel" style="display: none;">
                 <div class="history-actions" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center;">
                     <div id="subRankingCopyButtons" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
-                    <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem;"><i data-lucide="refresh-cw"></i> 刷新</button>
+                    <button class="btn btn-secondary" id="btnHistoryRefresh" style="margin-left: auto; font-size: 0.75rem; padding: 0.25rem 0.75rem; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> 刷新</button>
                 </div>
                 <div class="history-content" style="padding: 0 0 1.5rem;">
                     <div id="mappingHistoryContainer" class="data-table-container">
@@ -576,8 +576,8 @@ async function initSubRankingPage() {
 
         // 按钮进入加载状态
         btnSubCalculate.disabled = true;
-        const originalBtnText = btnSubCalculate.textContent;
-        btnSubCalculate.textContent = '⏳ 计算中...';
+        const originalBtnHtml = btnSubCalculate.innerHTML;
+        btnSubCalculate.innerHTML = '⏳ 计算中...';
         btnSubCalculate.style.opacity = '0.6';
         btnSubCalculate.style.cursor = 'not-allowed';
 
@@ -617,7 +617,7 @@ async function initSubRankingPage() {
         } finally {
             // 恢复按钮状态
             btnSubCalculate.disabled = false;
-            btnSubCalculate.textContent = originalBtnText;
+            btnSubCalculate.innerHTML = originalBtnHtml;
             btnSubCalculate.style.opacity = '';
             btnSubCalculate.style.cursor = '';
         }
