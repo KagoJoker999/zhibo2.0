@@ -1826,7 +1826,7 @@ function generateRankingCheckPage() {
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 0 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                     <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="package"></i> 已保存排品结果 <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary); font-weight: normal; font-family: monospace;">← ranking_results</span> <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal;">影刀读取</span></h3>
-                    <button class="btn btn-primary btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; padding: 0.25rem 0.75rem; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> 刷新</button>
+                    <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; height: 32px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> 刷新</button>
                 </div>
                 <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 600px; overflow-y: auto;">
                     <div class="placeholder-content">

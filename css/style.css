@@ -636,6 +636,19 @@ select:focus {
     background: var(--primary-active);
 }
 
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #009c25;
+}
+
+.btn-success:active {
+    background: #00841f;
+}
+
 .btn-secondary {
     background: transparent;
     color: var(--text-primary);
