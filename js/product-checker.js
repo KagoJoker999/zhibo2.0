@@ -92,9 +92,9 @@ async function startCheck(file) {
         // 找到表头中的列索引
         const header = rows[0].map(h => String(h ?? '').trim());
         const nameColIdx = header.indexOf('商品名称');
-        const codeColIdx = header.indexOf('商品编码');
+        const codeColIdx = header.indexOf('商家SKU编码');
         if (nameColIdx === -1) throw new Error('上传表格中未找到"商品名称"列');
-        if (codeColIdx === -1) throw new Error('上传表格中未找到"商品编码"列');
+        if (codeColIdx === -1) throw new Error('上传表格中未找到"商家SKU编码"列');
 
         // 构建上传数据的映射
         const uploadNames = new Set();
@@ -104,7 +104,9 @@ async function startCheck(file) {
 
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
-            const name = String(row[nameColIdx] ?? '').trim();
+            let name = String(row[nameColIdx] ?? '').trim();
+            name = cleanProductName(name); // 清洗名称：删除「之前的符号
+
             const code = String(row[codeColIdx] ?? '').trim();
             if (!name) continue;
             uploadNames.add(name);
@@ -128,7 +130,9 @@ async function startCheck(file) {
 
         // ========== 检查 A：标题完整性校验 ==========
         for (const item of sourceData) {
-            const productName = (item.product_name || '').trim();
+            let productName = (item.product_name || '').trim();
+            productName = cleanProductName(productName); // 清洗名称
+
             if (!productName) continue;
             if (!uploadNames.has(productName)) {
                 issues.push({
@@ -146,7 +150,9 @@ async function startCheck(file) {
             const virtualCategory = (item.virtual_category || '').trim();
             if (virtualCategory !== '可预售') continue;
 
-            const productName = (item.product_name || '').trim();
+            let productName = (item.product_name || '').trim();
+            productName = cleanProductName(productName); // 清洗名称
+
             if (!productName) continue;
             
             const matches = uploadByName.get(productName);
@@ -171,7 +177,9 @@ async function startCheck(file) {
             const skuCount = parseInt(item.sku_count) || 0;
             if (skuCount <= 1) continue;
 
-            const productName = (item.product_name || '').trim();
+            let productName = (item.product_name || '').trim();
+            productName = cleanProductName(productName); // 清洗名称
+
             const isPresale = (item.virtual_category || '').trim() === '可预售';
 
             // 提取所有 product_code 开头的列值
@@ -308,6 +316,18 @@ async function readCheckerFile(file) {
         reader.onerror = () => reject(new Error('文件读取失败'));
         reader.readAsArrayBuffer(file);
     });
+}
+
+// ========================================
+// 名称清洗：删除第一个「之前的符号
+// ========================================
+function cleanProductName(name) {
+    if (!name) return '';
+    const idx = name.indexOf('「');
+    if (idx !== -1) {
+        return name.substring(idx);
+    }
+    return name;
 }
 
 // 暴露到全局
