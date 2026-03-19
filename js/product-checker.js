@@ -18,7 +18,7 @@ function openProductCheckerModal() {
     modal.innerHTML = `
         <div class="modal-content product-checker-modal">
             <div class="modal-header">
-                <h3><i data-lucide="search-check"></i> 商品数据校验 <span class="db-table-tag">← listing_data_export</span></h3>
+                <h3><i data-lucide="search-check"></i> 商品数据校验 <span class="db-table-tag">← listing_data_export</span> <span style="color:var(--error-color); font-size:0.85rem; font-weight:normal; margin-left:10px;">（需【同步上链接表】后才可对比）</span></h3>
                 <button class="modal-close" id="checkerModalClose">&times;</button>
             </div>
             <div class="modal-body">
