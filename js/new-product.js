@@ -482,9 +482,9 @@ function generateNewProductPage() {
                 <div class="data-table-header">
                     <h3><i data-lucide="clipboard-list"></i> 数据库新品列表 <span class="db-table-tag">← new_product_data</span> <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
                     <div class="header-buttons">
-                        <button class="btn btn-primary btn-sm" id="downloadRenameBtn" style="display:none">下载重命名表</button>
+                        <button class="btn btn-success btn-sm" id="downloadRenameBtn" style="display:none">下载重命名表</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none">上链接表格下载</button>
-                        <button class="btn btn-success btn-sm" id="saveListingDataBtn" style="display:none">同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
+                        <button class="btn btn-primary btn-sm" id="saveListingDataBtn" style="display:none">同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
                         <button class="btn btn-sm" id="productCheckerBtn" onclick="openProductCheckerModal()" style="background:var(--error-color); color:white; border:none;">商品检查</button>
                         <button class="btn btn-primary btn-sm" id="refreshDataBtn"><i data-lucide="refresh-cw"></i></button>
                     </div>
