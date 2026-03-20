@@ -14,7 +14,7 @@ window.loadWelfareRankingPage = loadWelfareRankingPage;
 
 function generateWelfareRankingPage() {
     return `
-        <div class="page-content" style="padding: 2rem;">
+        <div class="page-content" style="padding: 0 2rem 0 0;">
             <div class="data-table-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
                 <div style="text-align: left;">
                     <h3 style="margin:0;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h3>
