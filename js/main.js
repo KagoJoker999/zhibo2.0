@@ -641,34 +641,45 @@ function showReplaceModal(removedItem, addedItem, action = 'replace') {
                 font-size: 0.9rem;
                 cursor: pointer;
                 transition: background 0.2s;
-            " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">知道了</button>
+            " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">知道了 (10s)</button>
         </div>
     `;
 
     document.body.appendChild(overlay);
 
-    // 绑定关闭事件
+    let timeLeft = 10;
     const closeBtn = overlay.querySelector('.replace-modal-close');
-    closeBtn.addEventListener('click', () => {
+    
+    // 清理函数
+    const cleanup = () => {
+        clearInterval(countdownInterval);
+        clearTimeout(autoCloseTimeout);
         overlay.style.animation = 'fadeIn 0.2s ease reverse';
-        setTimeout(() => overlay.remove(), 200);
-    });
+        setTimeout(() => {
+            if (document.body.contains(overlay)) overlay.remove();
+        }, 200);
+    };
+
+    // 绑定关闭事件
+    closeBtn.addEventListener('click', cleanup);
 
     // 点击遮罩关闭
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.style.animation = 'fadeIn 0.2s ease reverse';
-            setTimeout(() => overlay.remove(), 200);
-        }
+        if (e.target === overlay) cleanup();
     });
 
-    // 3秒后自动关闭
-    setTimeout(() => {
-        if (document.body.contains(overlay)) {
-            overlay.style.animation = 'fadeIn 0.2s ease reverse';
-            setTimeout(() => overlay.remove(), 200);
+    // 倒计时计时器
+    const countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft >= 0) {
+            closeBtn.textContent = `知道了 (${timeLeft}s)`;
+        } else {
+            clearInterval(countdownInterval);
         }
-    }, 3000);
+    }, 1000);
+
+    // 10秒后自动关闭
+    const autoCloseTimeout = setTimeout(cleanup, 10000);
 }
 
 // ========================================
