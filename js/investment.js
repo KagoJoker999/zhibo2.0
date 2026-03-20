@@ -24,10 +24,10 @@ function getInvestmentPageHTML() {
     return `
         <div class="inv">
             <!-- 页面标题 -->
-            <div class="page-header" style="background: var(--bg-primary); padding: 1.25rem 1.5rem;">
-                <div class="page-header-left">
-                    <h2 class="page-header-title"><i data-lucide="coins"></i> 追投计算</h2>
-                    <p class="page-header-desc">实时计算投放消耗速度，辅助追投决策</p>
+            <div class="page-intro" style="display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <h2><i data-lucide="coins"></i> 追投计算</h2>
+                    <p>实时计算投放消耗速度，辅助追投决策</p>
                 </div>
                 <button type="button" class="btn btn-secondary" id="resetBtn"><i data-lucide="refresh-cw"></i> 重置</button>
             </div>

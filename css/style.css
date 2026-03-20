@@ -953,73 +953,15 @@ select:focus {
     flex-wrap: wrap;
 }
 
-/* ========================================
-   页面标题行 (Page Header)
-   ======================================== */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25rem 1.5rem;
-    background: var(--bg-secondary);
-    border-radius: var(--border-radius-lg);
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--border-color);
-    flex-wrap: wrap;
-    gap: 1rem;
-    box-shadow: var(--shadow-sm);
-}
-
-.page-header-left {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
-    min-width: 300px;
-}
-
-.page-header-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    white-space: nowrap;
-    color: var(--text-primary);
-}
-
-.page-header-title i,
-.page-header-title svg {
-    color: var(--primary-color);
-}
-
-.page-header-desc {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    border-left: 1px solid var(--border-color);
-    padding-left: 0.75rem;
-    line-height: 1.5;
-}
-
-/* 数据库表名标签 - 优化版 */
+/* 数据库表名标签 */
 .db-table-tag {
-    font-size: 0.65rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.04);
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--border-radius-sm);
     font-family: 'SF Mono', Monaco, Consolas, monospace;
-    text-transform: lowercase;
-    transition: all var(--transition-fast);
-}
-
-.db-table-tag:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* 可滚动区块 */

@@ -15,10 +15,10 @@ window.loadWelfareRankingPage = loadWelfareRankingPage;
 function generateWelfareRankingPage() {
     return `
         <div class="page-content" style="padding: 0;">
-            <div class="page-header">
-                <div class="page-header-left">
-                    <h3 class="page-header-title"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h3>
-                    <p class="page-header-desc">从此列表勾选要参与排品的福利商品，点击保存后将替换之前的选择。</p>
+            <div class="data-table-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;">
+                    <h3 style="margin:0; white-space: nowrap;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h3>
+                    <p class="text-muted" style="margin: 0; font-size: 0.85rem;">从此列表勾选要参与排品的福利商品，点击保存后将替换之前的选择。</p>
                 </div>
                 <div class="header-buttons" style="display:flex; gap:0.75rem; align-items:center;">
                     <button class="btn btn-danger" id="btnClearWelfareData" title="清空已保存的排品名单">🗑️ 清空</button>
