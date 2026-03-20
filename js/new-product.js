@@ -479,12 +479,18 @@ function generateNewProductPage() {
             
             <!-- 数据库数据表格 -->
             <div class="data-table-section">
-                <div class="data-table-header">
-                    <h3><i data-lucide="clipboard-list"></i> 数据库新品列表 <span class="db-table-tag">← new_product_data</span> <span id="lastRefreshTime" class="refresh-time"></span> <span id="recordCountInfo" class="record-count"></span></h3>
-                    <div class="header-buttons">
+                <div class="page-header">
+                    <div class="page-header-left">
+                        <h3 class="page-header-title"><i data-lucide="clipboard-list"></i> 数据库新品列表 <span class="db-table-tag">← new_product_data</span></h3>
+                        <p class="page-header-desc">
+                            <span id="lastRefreshTime" class="refresh-time"></span>
+                            <span id="recordCountInfo" class="record-count" style="margin-left: 8px; opacity: 0.8;"></span>
+                        </p>
+                    </div>
+                    <div class="header-buttons" style="display:flex; gap:0.5rem; align-items:center;">
                         <button class="btn btn-success btn-sm" id="downloadRenameBtn" style="display:none; height: 32px; padding: 0 12px;">下载重命名表</button>
                         <button class="btn btn-primary btn-sm" id="downloadListingBtn" style="display:none; height: 32px; padding: 0 12px;">上链接表格下载</button>
-                        <button class="btn btn-primary btn-sm" id="saveListingDataBtn" style="display:none; height: 32px; padding: 0 12px;">同步上链接表</button><span class="db-table-tag">→ listing_data_export</span>
+                        <button class="btn btn-primary btn-sm" id="saveListingDataBtn" style="display:none; height: 32px; padding: 0 12px;">同步上链接表</button>
                         <button class="btn btn-sm" id="productCheckerBtn" onclick="openProductCheckerModal()" style="background:var(--error-color); color:white; border:none; height: 32px; padding: 0 12px;">商品检查</button>
                         <button class="btn btn-primary btn-sm" id="refreshDataBtn" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; min-width: auto; flex-shrink: 0;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i></button>
                     </div>
@@ -509,11 +515,12 @@ function initNewProductRules() {
 function generateNumberingRulesUI() {
     return `
         <div class="rules-settings-panel" style="background:var(--bg-secondary); padding:1.5rem 2rem; border-radius:var(--border-radius);">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
-                <div style="text-align: left;">
-                    <h3 style="margin:0;">🔢 序号分配规则 <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-left: 8px;">(按商品编码从小到大排序后依次分配序号，同名商品共享序号)</span> <span class="db-table-tag">→ ranking_config (new_product_number_rules)</span></h3>
+            <div class="page-header" style="margin-bottom: 2rem; padding: 1.25rem 1.5rem; background: var(--bg-primary);">
+                <div class="page-header-left">
+                    <h3 class="page-header-title">🔢 序号分配规则 <span class="db-table-tag">→ ranking_config (rules)</span></h3>
+                    <p class="page-header-desc">按商品编码从小到大排序后依次分配序号，同名商品共享序号</p>
                 </div>
-                <button class="btn btn-primary" id="btnSaveRules" style="margin-top:2px;"><i data-lucide="save"></i> 保存配置</button>
+                <button class="btn btn-primary" id="btnSaveRules"><i data-lucide="save"></i> 保存配置</button>
             </div>
 
             <div id="rulesListContainer" style="display:flex; flex-direction:column; gap:1rem;">
