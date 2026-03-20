@@ -15,14 +15,14 @@ window.loadWelfareRankingPage = loadWelfareRankingPage;
 function generateWelfareRankingPage() {
     return `
         <div class="page-content" style="padding: 2rem;">
-            <div class="header-split" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 1.5rem;">
+            <div class="data-table-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
                 <div>
-                    <h2 style="margin:0 0 0.5rem 0;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h2>
-                    <p class="text-muted" style="margin:0;">从此列表勾选要参与福利排品的商品。点击保存后将替换原有的安排数据。</p>
+                    <h3 style="margin:0;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h3>
+                    <p class="text-muted" style="margin: 4px 0 0 0; font-size: 0.85rem;">从此列表勾选要参与福利排品的商品。点击保存后将替换原有的安排数据。</p>
                 </div>
-                <div>
-                    <button class="btn btn-danger" id="btnClearWelfareData" style="margin-right: 0.5rem;" title="清空已保存的排品名单">🗑️ 清空</button>
-                    <button class="btn btn-secondary" id="btnRefreshWelfareRanking" style="margin-right: 0.5rem;" title="刷新表格数据"><i data-lucide="refresh-cw"></i> 刷新</button>
+                <div class="header-buttons" style="display:flex; gap:0.75rem; align-items:center;">
+                    <button class="btn btn-danger" id="btnClearWelfareData" title="清空已保存的排品名单">🗑️ 清空</button>
+                    <button class="btn btn-secondary" id="btnRefreshWelfareRanking" title="刷新表格数据"><i data-lucide="refresh-cw"></i> 刷新</button>
                     <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled><i data-lucide="save"></i> 保存选中的商品</button>
                 </div>
             </div>
