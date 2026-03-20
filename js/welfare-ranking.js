@@ -23,7 +23,6 @@ function generateWelfareRankingPage() {
                 <div>
                     <button class="btn btn-danger" id="btnClearWelfareData" style="margin-right: 0.5rem;" title="清空已保存的排品名单">🗑️ 清空</button>
                     <button class="btn btn-secondary" id="btnRefreshWelfareRanking" style="margin-right: 0.5rem;" title="刷新表格数据"><i data-lucide="refresh-cw"></i> 刷新</button>
-                    <button class="btn btn-secondary" id="btnSelectAllNewWelfare" style="margin-right: 0.5rem;" title="快速勾选所有新品福利品">✨ 全选所有新品福利</button>
                     <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled><i data-lucide="save"></i> 保存选中的商品</button>
                 </div>
             </div>
@@ -55,7 +54,6 @@ async function initWelfareRanking() {
     const tbody = document.getElementById('welfareRankingTbody');
     const saveBtn = document.getElementById('btnSaveWelfareRanking');
     const selectAllCheckbox = document.getElementById('welfareSelectAll');
-    const selectAllNewBtn = document.getElementById('btnSelectAllNewWelfare');
     const refreshBtn = document.getElementById('btnRefreshWelfareRanking');
     const clearBtn = document.getElementById('btnClearWelfareData');
 
@@ -74,22 +72,13 @@ async function initWelfareRanking() {
 
             if (err1) throw err1;
 
-            // 2. 获取新品福利品 (不排序)
-            const { data: newProductData, error: err2 } = await window.supabaseClient
-                .from('welfare_new_product_data')
-                .select('*');
-
-            if (err2) throw err2;
-
             // 标记来源
             const formattedInventory = (inventoryData || [])
                 .filter(r => r.available_qty === null || r.available_qty > 0)
                 .map(r => ({ ...r, __source: '福利品' }));
-            const formattedNew = (newProductData || [])
-                .map(r => ({ ...r, __source: '新品福利品' }));
 
-            // 按照需求组合，新品在上，库存(倒序)在下
-            currentData = [...formattedNew, ...formattedInventory];
+            // 按照需求组合
+            currentData = formattedInventory;
 
             renderTable();
             checkSaveButtonState();
@@ -194,28 +183,7 @@ async function initWelfareRanking() {
         }
     });
 
-    // 一键勾选所有新品福利品
-    selectAllNewBtn.addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll('.welfare-checkbox');
-        let selectedCount = 0;
 
-        checkboxes.forEach((cb, index) => {
-            const rowData = currentData[index];
-            if (rowData && rowData.__source === '新品福利品') {
-                cb.checked = true;
-                selectedCount++;
-            }
-        });
-
-        syncSelectAllState();
-        checkSaveButtonState();
-
-        if (selectedCount > 0) {
-            AppUtils.showToast(`已为您勾选 ${selectedCount} 款新品福利品`, 'success');
-        } else {
-            AppUtils.showToast(`当前列表没有新品福利品`, 'info');
-        }
-    });
 
     // 保存选中项
     saveBtn.addEventListener('click', async () => {
