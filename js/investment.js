@@ -26,7 +26,7 @@ function getInvestmentPageHTML() {
             <!-- 页面标题 -->
             <div class="page-intro" style="display:flex; align-items:center; justify-content:space-between;">
                 <div>
-                    <h2>💰 追投计算</h2>
+                    <h2><i data-lucide="coins"></i> 追投计算</h2>
                     <p>实时计算投放消耗速度，辅助追投决策</p>
                 </div>
                 <button type="button" class="btn btn-secondary" id="resetBtn"><i data-lucide="refresh-cw"></i> 重置</button>
@@ -38,7 +38,7 @@ function getInvestmentPageHTML() {
                 <div class="inv-col">
                     <!-- 开播前投放 -->
                     <div class="inv-section">
-                        <div class="inv-section-title">📊 开播前投放</div>
+                        <div class="inv-section-title"><i data-lucide="bar-chart-3"></i> 开播前投放</div>
                         <div class="inv-form-row">
                             <div class="inv-field">
                                 <label>投放金额</label>
@@ -59,7 +59,7 @@ function getInvestmentPageHTML() {
 
                     <!-- 已跑时长 -->
                     <div class="inv-section">
-                        <div class="inv-section-title">⏱️ 已跑时长</div>
+                        <div class="inv-section-title"><i data-lucide="clock"></i> 已跑时长</div>
                         <div class="inv-form-row">
                             <div class="inv-field">
                                 <label>分钟</label>
@@ -117,7 +117,7 @@ function getInvestmentPageHTML() {
                 <div class="inv-col">
                     <!-- 开播前指标 -->
                     <div class="inv-section">
-                        <div class="inv-section-title">📈 开播前消耗指标</div>
+                        <div class="inv-section-title"><i data-lucide="trending-up"></i> 开播前消耗指标</div>
                         <div class="inv-metrics">
                             <div class="inv-metric-card">
                                 <span class="inv-metric-label">剩余金额</span>
@@ -145,7 +145,7 @@ function getInvestmentPageHTML() {
 
                     <!-- 追投后指标 -->
                     <div class="inv-section inv-section-highlight">
-                        <div class="inv-section-title">⚡ 追投后消耗指标</div>
+                        <div class="inv-section-title"><i data-lucide="zap"></i> 追投后消耗指标</div>
                         <div class="inv-metrics">
                             <div class="inv-metric-card inv-metric-accent">
                                 <span class="inv-metric-label">剩余金额</span>

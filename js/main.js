@@ -39,10 +39,10 @@ const PageConfig = {
     'arrangement-upload': { title: '基础数据上传', icon: '<i data-lucide="clipboard-list"></i>' },
     'arrangement-main': { title: '排品功能', icon: '<i data-lucide="clipboard-list"></i>' },
     'arrangement-settings': { title: '排品设置', icon: '<i data-lucide="clipboard-list"></i>' },
-    'arrangement-assignment': { title: '排品序号分配', icon: '🔢' },
-    'arrangement-exclusion': { title: '排除商品设置', icon: '🚫' },
-    'arrangement-check': { title: '排品检查', icon: '🔍' },
-    'arrangement-scoring': { title: '评分设置', icon: '⚙️' },
+    'arrangement-assignment': { title: '排品序号分配', icon: '<i data-lucide="binary"></i>' },
+    'arrangement-exclusion': { title: '排除商品设置', icon: '<i data-lucide="ban"></i>' },
+    'arrangement-check': { title: '排品检查', icon: '<i data-lucide="search-check"></i>' },
+    'arrangement-scoring': { title: '评分设置', icon: '<i data-lucide="settings-2"></i>' },
     'arrangement-mapping': { title: '对照表生成', icon: '<i data-lucide="clipboard-list"></i>' },
     'new-product': { title: '新品处理', icon: '<i data-lucide="sparkles"></i>' },
     'new-product-upload': { title: '新品数据上传', icon: '<i data-lucide="sparkles"></i>' },
@@ -57,12 +57,12 @@ const PageConfig = {
     'coupon-download': { title: '发券品数据下载', icon: '<i data-lucide="ticket"></i>' },
     'coupon-settings': { title: '发券品处理设置', icon: '<i data-lucide="ticket"></i>' },
     'mapping': { title: '排品结果推送', icon: '<i data-lucide="link"></i>' },
-    'mapping-history': { title: '历史记录', icon: '📜' },
-    'mapping-settings': { title: '对照设置', icon: '⚙️' },
+    'mapping-history': { title: '历史记录', icon: '<i data-lucide="history"></i>' },
+    'mapping-settings': { title: '对照设置', icon: '<i data-lucide="settings"></i>' },
     'other-tools': { title: '其他功能', icon: '<i data-lucide="briefcase"></i>' },
-    'livestream-additional-investment': { title: '追投计算', icon: '💰' },
+    'livestream-additional-investment': { title: '追投计算', icon: '<i data-lucide="coins"></i>' },
     'presale': { title: '关闭预售', icon: '<i data-lucide="clipboard-list"></i>' },
-    'shadowbot': { title: '影刀转换', icon: '🤖' },
+    'shadowbot': { title: '影刀转换', icon: '<i data-lucide="bot"></i>' },
     'id-converter': { title: 'ID 转换', icon: '<i data-lucide="refresh-cw"></i>' }
 };
 
@@ -300,6 +300,13 @@ function loadPage(page) {
     } else {
         DOM.welcomeSection.style.display = 'none';
         DOM.pageContainer.style.display = 'block';
+        
+        // 更新内容区域的图标
+        const welcomeIcon = document.querySelector('.placeholder-icon');
+        if (welcomeIcon) {
+            welcomeIcon.innerHTML = config.icon;
+            if (window.lucide) window.lucide.createIcons();
+        }
 
         // 检查是否有上传页面加载器
         if (window.loadUploadPage && (page === 'upload' || page.startsWith('upload-'))) {

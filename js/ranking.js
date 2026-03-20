@@ -236,7 +236,7 @@ function showPasswordDialog(title = '请输入评分密码', isSetup = false) {
         overlay.innerHTML = `
             <div style="background:var(--bg-secondary, #1e1e2e); border:1px solid var(--border-color, #333); border-radius:12px; padding:2rem; width:340px; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
                 <div style="text-align:center; margin-bottom:1.5rem;">
-                    <div style="font-size:2rem; margin-bottom:0.5rem;">🔐</div>
+                    <div style="font-size:2rem; margin-bottom:0.5rem;"><i data-lucide="lock" style="width: 48px; height: 48px;"></i></div>
                     <h3 style="color:var(--text-primary, #fff); margin:0; font-size:1.1rem;">${title}</h3>
                 </div>
                 <input type="password" id="scoringPwdInput" placeholder="输入密码" autocomplete="off"
@@ -332,7 +332,7 @@ function generateScoringSettingsPage() {
     return `
         <div class="ranking-page">
             <div class="page-intro">
-                <h2><span style="color: white;">⚙️ 评分设置</span> <span style="color: #999;">（评分公式加密存储在 ranking_config 表中）</span></h2>
+                <h2><span style="color: white;"><i data-lucide="settings-2"></i> 评分设置</span> <span style="color: #999;">（评分公式加密存储在 ranking_config 表中）</span></h2>
                 <p>
                     <span style="color: #ff9800;">🔒 公式数据已加密保护，需要密码才能查看和编辑。</span>
                 </p>
@@ -340,7 +340,7 @@ function generateScoringSettingsPage() {
 
             <div id="scoringAuthGate" style="display:flex; align-items:center; justify-content:center; padding:4rem 0;">
                 <div style="text-align:center;">
-                    <div style="font-size:3rem; margin-bottom:1rem;">🔐</div>
+                    <div style="font-size:3rem; margin-bottom:1rem;"><i data-lucide="lock" style="width: 64px; height: 64px;"></i></div>
                     <p style="color:var(--text-secondary); margin-bottom:1.5rem;">请输入密码以访问评分设置</p>
                     <button class="btn btn-primary" id="btnScoringUnlock">输入密码</button>
                 </div>

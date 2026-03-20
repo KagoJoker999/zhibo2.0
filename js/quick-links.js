@@ -59,7 +59,7 @@ async function openQuickLinksManager() {
             <div class="ql-modal-header">
                 <h3>导航链接管理</h3>
                 <span class="ql-modal-subtitle">数据库表：quick_links</span>
-                <button class="ql-modal-close" title="关闭">✕</button>
+                <button class="ql-modal-close" title="关闭"><i data-lucide="x"></i></button>
             </div>
             <div class="ql-modal-body">
                 <!-- 添加区域 -->
@@ -120,9 +120,9 @@ async function refreshLinkList(overlay) {
                 <span class="ql-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
                 <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="ql-item-url" title="${escapeHtml(item.url)}">${escapeHtml(item.url)}</a>
                 <div class="ql-item-actions">
-                    <button class="ql-btn-sort" title="上移" onclick="moveLink(${item.id}, 'up', this)">▲</button>
-                    <button class="ql-btn-sort" title="下移" onclick="moveLink(${item.id}, 'down', this)">▼</button>
-                    <button class="ql-btn-del" title="删除" onclick="deleteLink(${item.id}, this)">🗑️</button>
+                    <button class="ql-btn-sort" title="上移" onclick="moveLink(${item.id}, 'up', this)"><i data-lucide="chevron-up"></i></button>
+                    <button class="ql-btn-sort" title="下移" onclick="moveLink(${item.id}, 'down', this)"><i data-lucide="chevron-down"></i></button>
+                    <button class="ql-btn-del" title="删除" onclick="deleteLink(${item.id}, this)"><i data-lucide="trash-2"></i></button>
                 </div>
             </div>
         `).join('');
