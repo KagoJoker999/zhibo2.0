@@ -59,8 +59,6 @@ const PageConfig = {
     'mapping': { title: '排品结果推送', icon: '<i data-lucide="link"></i>' },
     'mapping-history': { title: '历史记录', icon: '📜' },
     'mapping-settings': { title: '对照设置', icon: '⚙️' },
-    'sub-ranking': { title: '小号排品', icon: '<i data-lucide="package"></i>' },
-    'sub-ranking-settings': { title: '小号排品设置', icon: '⚙️' },
     'other-tools': { title: '其他功能', icon: '<i data-lucide="briefcase"></i>' },
     'livestream-additional-investment': { title: '追投计算', icon: '💰' },
     'presale': { title: '关闭预售', icon: '<i data-lucide="clipboard-list"></i>' },
@@ -372,16 +370,6 @@ function loadPage(page) {
             }
         }
 
-        // 检查是否有小号排品页面加载器
-        if (window.loadSubRankingPage && (page === 'sub-ranking' || page.startsWith('sub-ranking-'))) {
-            const subRankingPage = window.loadSubRankingPage(page);
-            if (subRankingPage) {
-                DOM.pageContainer.innerHTML = subRankingPage.html;
-                setTimeout(() => subRankingPage.init(), 50);
-                AppState.currentPage = page;
-                return;
-            }
-        }
 
         // 检查是否有发券品处理页面加载器
         if (window.loadCouponPage && (page === 'coupon' || page.startsWith('coupon-'))) {
