@@ -508,14 +508,14 @@ function initNewProductRules() {
 
 function generateNumberingRulesUI() {
     return `
-        <div class="rules-settings-panel" style="background:var(--bg-secondary); padding:2rem; border-radius:var(--border-radius);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                <div>
+        <div class="rules-settings-panel" style="background:var(--bg-secondary); padding:1.5rem 2rem; border-radius:var(--border-radius);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
+                <div style="text-align: left;">
                     <h3 style="margin:0;">🔢 序号分配规则</h3>
-                    <p class="text-muted" style="margin:0.5rem 0 0;">按商品编码从小到大排序后依次分配序号（同名商品共享序号）</p>
-                    <p class="text-muted" style="margin:0.25rem 0 0; font-size:0.8rem;">数据库表: ranking_config (config_key='new_product_number_rules')</p>
+                    <p class="text-muted" style="margin:4px 0 0 0; font-size:0.9rem;">按商品编码从小到大排序后依次分配序号（同名商品共享序号）</p>
+                    <p class="text-muted" style="margin:0; font-size:0.8rem;">数据库表: ranking_config (config_key='new_product_number_rules')</p>
                 </div>
-                <button class="btn btn-primary" id="btnSaveRules"><i data-lucide="save"></i> 保存配置</button>
+                <button class="btn btn-primary" id="btnSaveRules" style="margin-top:2px;"><i data-lucide="save"></i> 保存配置</button>
             </div>
 
             <div id="rulesListContainer" style="display:flex; flex-direction:column; gap:1rem;">
