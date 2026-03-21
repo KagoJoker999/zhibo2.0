@@ -280,13 +280,13 @@ function renderCheckerResults(issues, totalCount) {
         if (items.length === 0) return '';
         const c = typeColors[type];
         return `
-            <div class="checker-group" style="background:${c.bg}; border:1px solid ${c.border}; border-radius:8px; padding:1rem; margin-bottom:0.75rem;">
-                <h4 style="margin:0 0 0.75rem; color:${c.color}; font-size:0.95rem;">${c.icon} ${title}（${items.length}）</h4>
+            <div class="checker-group checker-group-${type}" style="border-radius:8px; padding:1rem; margin-bottom:0.75rem;">
+                <h4 class="checker-group-title">${c.icon} ${title}（${items.length}）</h4>
                 <div class="checker-items">
                     ${items.map(item => `
-                        <div class="checker-item" style="padding:0.4rem 0.6rem; margin-bottom:0.35rem; background:rgba(0,0,0,0.15); border-radius:4px; font-size:0.85rem;">
+                        <div class="checker-item">
                             <span style="color:var(--text-primary)">${item.name}</span>
-                            ${item.detail ? `<span style="color:var(--text-muted); font-size:0.8rem; margin-left:0.5rem;">${item.detail}</span>` : ''}
+                            ${item.detail ? `<span class="checker-item-detail">${item.detail}</span>` : ''}
                         </div>
                     `).join('')}
                 </div>

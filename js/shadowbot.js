@@ -5,7 +5,7 @@
 
 function generateShadowbotPage() {
     return `
-        <div class="shadowbot-page" style="max-width: 600px; margin: 0 auto;">
+        <div class="shadowbot-page page-centered">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">🤖 影刀链接转换器</h3>

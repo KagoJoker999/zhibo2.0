@@ -255,38 +255,38 @@ async function loadHistoryData() {
 function generateMappingPage() {
     return `
         <div class="mapping-page">
-            <div class="page-intro" style="display: flex; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 200px;">
-                    <h2><i data-lucide="link"></i> 排品结果推送 <span style="font-size: 0.75rem; background: rgba(220, 38, 38, 0.8); padding: 2px 8px; border-radius: 4px; color: #fff; font-weight: normal; vertical-align: middle;">插件读取</span></h2>
+            <div class="page-intro flex-between flex-wrap-gap" style="align-items: flex-start;">
+                <div class="flex-1" style="min-width: 200px;">
+                    <h2><i data-lucide="link"></i> 排品结果推送 <span class="tag-red">插件读取</span></h2>
                     <p>合并显示排品结果和新品数据，自动计算样品仓位</p>
                 </div>
-                <div id="dataSourceCards" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-left: 4px solid #3b82f6; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #3b82f6; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;"><i data-lucide="upload"></i> 推送保存至</div>
-                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">mapping_history</div>
+                <div id="dataSourceCards" class="flex-wrap-gap">
+                    <div class="source-card source-card-blue">
+                        <div class="source-card-label"><i data-lucide="upload"></i> 推送保存至</div>
+                        <div class="source-card-value">mapping_history</div>
                     </div>
-                    <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-left: 4px solid #10b981; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #10b981; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;">📥 排品数据源</div>
-                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">ranking_results <span id="rankingCountBadge" style="color: #10b981; margin-left: 4px; font-weight: bold;"></span></div>
+                    <div class="source-card source-card-green">
+                        <div class="source-card-label">📥 排品数据源</div>
+                        <div class="source-card-value">ranking_results <span id="rankingCountBadge" style="color: #10b981; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
-                    <div id="newProductSourceCard" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-left: 4px solid #f59e0b; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #f59e0b; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;"><i data-lucide="package"></i> 新品数据源</div>
-                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">new_product_data <span id="newProductCountBadge" style="color: #f59e0b; margin-left: 4px; font-weight: bold;"></span></div>
+                    <div id="newProductSourceCard" class="source-card source-card-amber">
+                        <div class="source-card-label"><i data-lucide="package"></i> 新品数据源</div>
+                        <div class="source-card-value">new_product_data <span id="newProductCountBadge" style="color: #f59e0b; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
-                    <div id="welfareSourceCard" style="background: rgba(236,72,153,0.1); border: 1px solid rgba(236,72,153,0.2); border-left: 4px solid #ec4899; border-radius: 6px; padding: 8px 12px; min-width: 140px;">
-                        <div style="color: #ec4899; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px;"><i data-lucide="gift"></i> 福利品数据源</div>
-                        <div style="color: #e5e7eb; font-size: 0.75rem; font-family: monospace;">welfare_data <span id="welfareCountBadge" style="color: #ec4899; margin-left: 4px; font-weight: bold;"></span></div>
+                    <div id="welfareSourceCard" class="source-card source-card-pink">
+                        <div class="source-card-label"><i data-lucide="gift"></i> 福利品数据源</div>
+                        <div class="source-card-value">welfare_data <span id="welfareCountBadge" style="color: #ec4899; margin-left: 4px; font-weight: bold;"></span></div>
                     </div>
                 </div>
             </div>
             
-            <div class="mapping-actions" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div class="mapping-actions mapping-actions-bar">
                 <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机/插件</button>
-                <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); height: 36px; align-items: stretch;">
-                    <button type="button" class="toggle-btn active" id="btnIncludeNewProduct" style="padding: 0 1rem; font-size: 0.875rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+                <div class="toggle-btn-group">
+                    <button type="button" class="toggle-btn active" id="btnIncludeNewProduct">
                         包含新品
                     </button>
-                    <button type="button" class="toggle-btn" id="btnExcludeNewProduct" style="padding: 0 1rem; font-size: 0.875rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+                    <button type="button" class="toggle-btn" id="btnExcludeNewProduct">
                         不含新品
                     </button>
                 </div>
@@ -296,17 +296,17 @@ function generateMappingPage() {
                 <span id="mappingStatus" style="color: var(--text-muted); font-size: 0.875rem; margin-left: auto;"></span>
             </div>
             
-            <div class="mapping-content" style="padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="mapping-content">
                 <div class="welfare-section">
-                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="gift"></i> 福利排品商品<span style="font-size: 0.75rem; background: rgba(236,72,153,0.2); color: #ec4899; padding: 2px 6px; border-radius: 4px;">独立表格显示，合并推送</span></h3>
-                    <div id="welfareTableContainer" class="data-table-container" style="border: 1px solid rgba(236,72,153,0.3); border-radius: var(--border-radius);">
+                    <h3 class="section-title-sm"><i data-lucide="gift"></i> 福利排品商品<span class="tag-pink">独立表格显示，合并推送</span></h3>
+                    <div id="welfareTableContainer" class="data-table-container welfare-table-border">
                         <div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;">
                             <p>正在加载福利数据...</p>
                         </div>
                     </div>
                 </div>
                 <div class="ranking-section">
-                    <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="clipboard-list"></i> 常规排品商品</h3>
+                    <h3 class="section-title-sm"><i data-lucide="clipboard-list"></i> 常规排品商品</h3>
                     <div id="mappingTableContainer" class="data-table-container">
                         <div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;">
                             <p>正在加载数据...</p>
@@ -316,14 +316,14 @@ function generateMappingPage() {
             </div>
             
             <!-- 更新仓位对话框 -->
-            <div id="warehouseUpdateDialog" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                <div class="modal-content" style="background: var(--bg-card); border-radius: var(--border-radius); padding: 2rem; max-width: 600px; width: 90%;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div id="warehouseUpdateDialog" class="modal-overlay" style="display: none;">
+                <div class="modal-content warehouse-dialog-content">
+                    <div class="flex-between mb-md">
                         <h3 style="margin: 0;"><i data-lucide="package"></i> 更新仓位 <span style="color: #ff4444; font-size: 0.75rem; font-weight: normal;">需下载最新库存视图新品表格，注意商品名称准确</span></h3>
-                        <button id="closeWarehouseDialog" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                        <button id="closeWarehouseDialog" class="modal-close">&times;</button>
                     </div>
                     
-                    <div id="warehouseUploadZone" style="border: 2px dashed var(--border-color); border-radius: var(--border-radius); padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.3s; margin-bottom: 1rem;">
+                    <div id="warehouseUploadZone" class="warehouse-dropzone">
                         <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
                         <p style="margin: 0.5rem 0; color: var(--text-primary);">拖拽文件到此处,或点击选择</p>
                         <p style="margin: 0; color: var(--text-muted); font-size: 0.875rem;">.xlsx, .xls, .csv</p>
@@ -331,14 +331,12 @@ function generateMappingPage() {
                     </div>
                     
                     <div id="warehouseUpdateStatus" style="display: none; padding: 1rem; background: var(--bg-secondary); border-radius: var(--border-radius-sm); margin-bottom: 1rem;">
-                        <div id="warehouseStatusText" style="margin-bottom: 0.5rem;">准备中...</div>
-                        <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div id="warehouseProgressBar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
-                        </div>
-                        <div id="warehouseStatusDetail" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);"></div>
+                        <div id="warehouseStatusText" class="mb-sm">准备中...</div>
+                        <div class="progress-bar"><div id="warehouseProgressBar" class="progress-fill" style="width: 0%;"></div></div>
+                        <div id="warehouseStatusDetail" class="mt-sm" style="font-size: 0.875rem; color: var(--text-secondary);"></div>
                     </div>
                     
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <div class="mt-md" style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
                         <p style="color: var(--text-muted); font-size: 0.875rem; margin: 0;">说明:读取表格的商品名称(B列)和主仓位(H列),更新 mapping_history 表中匹配商品的仓位信息</p>
                     </div>
                 </div>
@@ -569,15 +567,15 @@ function generateMappingHistoryPage() {
     return `
         <div class="mapping-history-page">
             <div class="page-intro">
-                <h2>📜 历史记录 <span class="db-table-tag" style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; vertical-align: middle;">mapping_history</span></h2>
+                <h2>📜 历史记录 <span class="db-table-tag">mapping_history</span></h2>
                 <p>显示上一次保存的对照结果</p>
             </div>
             
-            <div class="history-info" style="padding: 1rem 1.5rem;">
-                <span id="historyGeneratedTime" style="color: var(--text-muted); font-size: 0.875rem;"></span>
+            <div class="history-info p-section">
+                <span id="historyGeneratedTime" class="uploaded-stats"></span>
             </div>
             
-            <div class="history-content" style="padding: 0 1.5rem 1.5rem;">
+            <div class="history-content p-content">
                 <div id="historyTableContainer" class="data-table-container">
                     <div class="placeholder-content">
                         <p>正在加载历史记录...</p>
@@ -631,57 +629,57 @@ function generateMappingSettingsPage() {
                 <p>配置仓位到样品仓位的映射规则</p>
             </div>
             
-            <div class="settings-content" style="padding: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="settings-content settings-grid-2">
                 <!-- 左侧：仓位映射规则 -->
-                <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
+                <div class="settings-card">
                     <h3 style="margin: 0 0 1rem;"><i data-lucide="package"></i> 样品仓仓位映射规则</h3>
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                    <p class="uploaded-stats mb-md">
                         仓位格式为 X-Y-Z，第二位 Y 在区间内时替换为对应样品仓位
                     </p>
                     
-                    <div class="rule-editor" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
+                    <div class="rule-editor rule-editor-grid">
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">区间起始</label>
-                            <input type="number" id="ruleRangeStart" value="1" min="1" style="width: 100%;">
+                            <label class="form-label-row">区间起始</label>
+                            <input type="number" id="ruleRangeStart" class="form-input" value="1" min="1">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">区间结束</label>
-                            <input type="number" id="ruleRangeEnd" value="10" min="1" style="width: 100%;">
+                            <label class="form-label-row">区间结束</label>
+                            <input type="number" id="ruleRangeEnd" class="form-input" value="10" min="1">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">样品仓位</label>
-                            <select id="ruleSampleValue" style="width: 100%; height: 38px;">
+                            <label class="form-label-row">样品仓位</label>
+                            <select id="ruleSampleValue" class="form-input" style="height: 38px;">
                                 <option value="">请选择</option>
                             </select>
                         </div>
                         <button class="btn btn-primary" id="btnAddRule" style="height: 38px;">➕ 添加</button>
                     </div>
                     
-                    <div id="rulesListContainer" style="margin-top: 1rem;">
-                        <h4 style="margin: 0 0 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">已添加规则：</h4>
+                    <div id="rulesListContainer" class="mt-md">
+                        <h4 class="mb-sm" style="margin-top: 0; color: var(--text-secondary); font-size: 0.875rem;">已添加规则：</h4>
                         <div id="rulesList"></div>
                     </div>
                     
-                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <div class="mt-lg" style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
                         <button class="btn btn-primary" id="btnSaveConfig"><i data-lucide="save"></i> 保存规则</button>
                     </div>
                 </div>
                 
                 <!-- 右侧：样品仓位选项设置 -->
-                <div class="settings-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem;">
+                <div class="settings-card">
                     <h3 style="margin: 0 0 1rem;"><i data-lucide="clipboard-list"></i> 样品仓位选项</h3>
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+                    <p class="uploaded-stats mb-md">
                         每行一个选项，保存后可在左侧下拉栏选择
                     </p>
                     
-                    <textarea id="sampleOptions" rows="10" style="width: 100%; font-family: monospace; resize: vertical;" placeholder="例如：
+                    <textarea id="sampleOptions" class="form-input" rows="10" style="font-family: monospace; resize: vertical;" placeholder="例如：
 1-10-1
 1-10-2
 1-10-3
 1-10-4
 1-10-5"></textarea>
                     
-                    <div style="margin-top: 1rem;">
+                    <div class="mt-md">
                         <button class="btn btn-primary" id="btnSaveOptions"><i data-lucide="save"></i> 保存选项</button>
                     </div>
                 </div>

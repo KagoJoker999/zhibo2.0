@@ -6,7 +6,7 @@
 
 function generateIdConverterPage() {
     return `
-        <div class="id-converter-page" style="max-width: 600px; margin: 0 auto;">
+        <div class="id-converter-page page-centered">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i data-lucide="refresh-cw"></i> ID 转换器（从 ID 批量转换成可上架的商品链接）</h3>

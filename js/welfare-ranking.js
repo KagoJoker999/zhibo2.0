@@ -15,12 +15,12 @@ window.loadWelfareRankingPage = loadWelfareRankingPage;
 function generateWelfareRankingPage() {
     return `
         <div class="page-content" style="padding: 0;">
-            <div class="data-table-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;">
-                    <h3 style="margin:0; white-space: nowrap;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h3>
+            <div class="data-table-header flex-between flex-wrap-gap mb-md">
+                <div class="flex-center flex-wrap-gap" style="align-items: baseline;">
+                    <h3 class="text-nowrap" style="margin:0;"><i data-lucide="gift"></i> 福利排品 <span class="db-table-tag">→ welfare_arranged_data</span></h3>
                     <p class="text-muted" style="margin: 0; font-size: 0.85rem;">从此列表勾选要参与排品的福利商品，点击保存后将替换之前的选择。</p>
                 </div>
-                <div class="header-buttons" style="display:flex; gap:0.75rem; align-items:center;">
+                <div class="header-buttons flex-center" style="gap:0.75rem;">
                     <button class="btn btn-danger" id="btnClearWelfareData" title="清空已保存的排品名单">🗑️ 清空</button>
                     <button class="btn btn-secondary" id="btnRefreshWelfareRanking" title="刷新表格数据"><i data-lucide="refresh-cw"></i> 刷新</button>
                     <button class="btn btn-primary" id="btnSaveWelfareRanking" disabled><i data-lucide="save"></i> 保存选中的商品</button>
@@ -99,7 +99,7 @@ async function initWelfareRanking() {
 
         tbody.innerHTML = currentData.map((row, index) => {
             const qtyStr = typeof row.available_qty === 'number' ? row.available_qty : '-';
-            const sourceStyle = row.__source === '福利品' ? 'background: rgba(34, 197, 94, 0.1); color: var(--success-color);' : 'background: rgba(239, 68, 68, 0.1); color: #ef4444;';
+            const sourceClass = row.__source === '福利品' ? 'source-tag-welfare' : 'source-tag-other';
             return `
                 <tr class="welfare-row">
                     <td style="text-align: center;">
@@ -115,7 +115,7 @@ async function initWelfareRanking() {
                     </td>
                     <td title="${row.product_name || row.original_name}">${row.product_name || row.original_name || '-'}</td>
                     <td>${row.product_code || '-'}</td>
-                    <td><span style="font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; ${sourceStyle}">${row.__source}</span></td>
+                    <td><span class="source-tag ${sourceClass}">${row.__source}</span></td>
                     <td style="text-align: right; font-weight: bold;">${qtyStr}</td>
                 </tr>
             `;

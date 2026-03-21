@@ -170,8 +170,8 @@ function generateCouponPage() {
                     <h3><i data-lucide="package"></i> 待上传商品列表</h3>
                     <div class="section-actions">
                         <span class="match-stats" id="matchStats"></span>
-                        <button class="btn btn-secondary" id="copyUnmatchedNamesBtn" style="background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #3b82f6;"><i data-lucide="clipboard-list"></i> 批量复制无ID商品名称</button>
-                        <button class="btn btn-secondary" id="clearUnmatchedBtn" style="background: rgba(245, 63, 63, 0.1); border-color: var(--error-color); color: var(--error-color);">🗑️ 清空无ID商品</button>
+                        <button class="btn btn-secondary btn-outline-blue" id="copyUnmatchedNamesBtn"><i data-lucide="clipboard-list"></i> 批量复制无ID商品名称</button>
+                        <button class="btn btn-secondary btn-outline-red" id="clearUnmatchedBtn">🗑️ 清空无ID商品</button>
                         <button class="btn btn-primary" id="uploadBtn-coupon" disabled>上传到数据库</button>
                     </div>
                 </div>
