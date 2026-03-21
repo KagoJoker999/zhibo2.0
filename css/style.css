@@ -3432,6 +3432,12 @@ td .hover-zoom-img {
 }
 .checker-group-presale .checker-group-title { color: #f59e0b; }
 
+.checker-group-presaleSpec {
+    background: rgba(251, 146, 60, 0.1);
+    border: 1px solid rgba(251, 146, 60, 0.3);
+}
+.checker-group-presaleSpec .checker-group-title { color: #fb923c; }
+
 .checker-group-sku {
     background: rgba(139, 92, 246, 0.1);
     border: 1px solid rgba(139, 92, 246, 0.3);
@@ -3450,6 +3456,17 @@ td .hover-zoom-img {
     color: var(--text-muted);
     font-size: 0.8rem;
     margin-left: 0.5rem;
+}
+
+.checker-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s, opacity 0.2s;
+}
+.checker-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
 }
 
 /* 福利品来源标签 */

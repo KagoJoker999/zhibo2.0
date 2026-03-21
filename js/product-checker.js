@@ -95,8 +95,8 @@ async function startCheck(file) {
         const codeColIdx = header.indexOf('商家SKU编码');
         const specColIdx = header.indexOf('商品规格');
         const presaleStockColIdx = header.indexOf('预售库存');
-        // 查找 SKUID 列（表头可能是"规格ID"或含"SKUID"）
-        const skuIdColIdx = header.findIndex(h => h.includes('SKUID') || h.includes('规格ID'));
+        // 查找商品 ID 列（A 列）
+        const productIdColIdx = header.findIndex(h => h.includes('商品 ID') || h.includes('商品ID') || h === '商品id');
         if (nameColIdx === -1) throw new Error('上传表格中未找到"商品名称"列');
         if (codeColIdx === -1) throw new Error('上传表格中未找到"商家SKU编码"列');
 
@@ -105,8 +105,8 @@ async function startCheck(file) {
         // 商品名称 -> [{name, code}] 的映射
         const uploadByName = new Map();
         const uploadCodes = new Set();
-        // 商品名称 -> skuId 的映射（用于生成编辑链接）
-        const nameToSkuId = new Map();
+        // 商品名称 -> 商品ID 的映射（用于生成编辑链接）
+        const nameToProductId = new Map();
 
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
@@ -119,10 +119,10 @@ async function startCheck(file) {
             if (code) uploadCodes.add(code);
             if (!uploadByName.has(name)) uploadByName.set(name, []);
             uploadByName.get(name).push({ name, code });
-            // 保存第一个遇到的 skuId
-            if (skuIdColIdx !== -1 && !nameToSkuId.has(name)) {
-                const skuId = String(row[skuIdColIdx] ?? '').trim();
-                if (skuId) nameToSkuId.set(name, skuId);
+            // 保存第一个遇到的商品ID
+            if (productIdColIdx !== -1 && !nameToProductId.has(name)) {
+                const pid = String(row[productIdColIdx] ?? '').trim();
+                if (pid) nameToProductId.set(name, pid);
             }
         }
 
@@ -150,7 +150,7 @@ async function startCheck(file) {
                     type: 'missing',
                     label: '缺失商品',
                     name: productName,
-                    skuId: nameToSkuId.get(productName) || ''
+                    productId: nameToProductId.get(productName) || ''
                 });
             }
         }
@@ -177,7 +177,7 @@ async function startCheck(file) {
                     type: 'presale',
                     label: '预售错误',
                     name: productName,
-                    skuId: nameToSkuId.get(productName) || '',
+                    productId: nameToProductId.get(productName) || '',
                     detail: `该商品对应的所有编码均不包含 "=="`
                 });
             }
@@ -209,7 +209,7 @@ async function startCheck(file) {
                         type: 'presaleSpec',
                         label: '预售出错',
                         name: name,
-                        skuId: nameToSkuId.get(name) || '',
+                        productId: nameToProductId.get(name) || '',
                         detail: errors.join('，')
                     });
                 }
@@ -256,7 +256,7 @@ async function startCheck(file) {
                             type: 'sku',
                             label: 'SKU缺失',
                             name: productName,
-                            skuId: nameToSkuId.get(productName) || '',
+                            productId: nameToProductId.get(productName) || '',
                             detail: `子编码 "${codeWithoutEq}" ${missingType}`
                         });
                     }
@@ -266,7 +266,7 @@ async function startCheck(file) {
                             type: 'sku',
                             label: 'SKU缺失',
                             name: productName,
-                            skuId: nameToSkuId.get(productName) || '',
+                            productId: nameToProductId.get(productName) || '',
                             detail: `子编码 "${code}" 在上传表格中不存在`
                         });
                     }
@@ -334,8 +334,8 @@ function renderCheckerResults(issues, totalCount) {
                 <h4 class="checker-group-title">${c.icon} ${title}（${items.length}）</h4>
                 <div class="checker-items">
                     ${items.map(item => {
-                        const nameHtml = item.skuId
-                            ? `<a href="https://fxg.jinritemai.com/ffa/g/create?product_id=${item.skuId}&cid=33607&entrance=edit" target="_blank" style="color:var(--primary-color); text-decoration:underline; cursor:pointer;">${item.name}</a>`
+                        const nameHtml = item.productId
+                            ? `<a href="https://fxg.jinritemai.com/ffa/g/create?product_id=${item.productId}&cid=33607&entrance=edit" target="_blank" class="checker-link">↗ ${item.name}</a>`
                             : `<span style="color:var(--text-primary)">${item.name}</span>`;
                         return `
                         <div class="checker-item">
