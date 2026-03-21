@@ -93,6 +93,8 @@ async function startCheck(file) {
         const header = rows[0].map(h => String(h ?? '').trim());
         const nameColIdx = header.indexOf('商品名称');
         const codeColIdx = header.indexOf('商家SKU编码');
+        const specColIdx = header.indexOf('商品规格');
+        const presaleStockColIdx = header.indexOf('预售库存');
         if (nameColIdx === -1) throw new Error('上传表格中未找到"商品名称"列');
         if (codeColIdx === -1) throw new Error('上传表格中未找到"商家SKU编码"列');
 
@@ -167,6 +169,38 @@ async function startCheck(file) {
                     name: productName,
                     detail: `该商品对应的所有编码均不包含 "=="`
                 });
+            }
+        }
+
+        updateProgress('检查预售规格...', 72);
+
+        // ========== 检查 D：预售规格校验（基于上传表格） ==========
+        // 当"商品规格"含"15天内发货"时，"预售库存"必须为300，"商家SKU编码"必须含"=="
+        if (specColIdx !== -1 && presaleStockColIdx !== -1) {
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const spec = String(row[specColIdx] ?? '').trim();
+                if (!spec.includes('15天内发货')) continue;
+
+                let name = String(row[nameColIdx] ?? '').trim();
+                name = cleanProductName(name);
+                if (!name) continue;
+
+                const code = String(row[codeColIdx] ?? '').trim();
+                const presaleStock = String(row[presaleStockColIdx] ?? '').trim();
+
+                const errors = [];
+                if (presaleStock !== '300') errors.push(`预售库存="${presaleStock}"(应为300)`);
+                if (!code.includes('==')) errors.push(`SKU编码="${code}"(缺少==)`);
+
+                if (errors.length > 0) {
+                    issues.push({
+                        type: 'presaleSpec',
+                        label: '预售出错',
+                        name: name,
+                        detail: errors.join('，')
+                    });
+                }
             }
         }
 
@@ -262,11 +296,13 @@ function renderCheckerResults(issues, totalCount) {
     // 按类型分组
     const missingItems = issues.filter(i => i.type === 'missing');
     const presaleItems = issues.filter(i => i.type === 'presale');
+    const presaleSpecItems = issues.filter(i => i.type === 'presaleSpec');
     const skuItems = issues.filter(i => i.type === 'sku');
 
     const typeColors = {
         missing: { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', icon: '🚫' },
         presale: { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', icon: '⚠️' },
+        presaleSpec: { bg: 'rgba(251, 146, 60, 0.1)', border: 'rgba(251, 146, 60, 0.3)', color: '#fb923c', icon: '📦' },
         sku: { bg: 'rgba(139, 92, 246, 0.1)', border: 'rgba(139, 92, 246, 0.3)', color: '#8b5cf6', icon: '🔗' }
     };
 
@@ -296,6 +332,7 @@ function renderCheckerResults(issues, totalCount) {
 
     html += renderGroup(missingItems, '缺失商品', 'missing');
     html += renderGroup(presaleItems, '预售错误', 'presale');
+    html += renderGroup(presaleSpecItems, '预售出错', 'presaleSpec');
     html += renderGroup(skuItems, 'SKU缺失', 'sku');
 
     resultsDiv.innerHTML = html;
