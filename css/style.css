@@ -3445,17 +3445,19 @@ td .hover-zoom-img {
 .checker-group-sku .checker-group-title { color: #8b5cf6; }
 
 .checker-item {
-    padding: 0.4rem 0.6rem;
-    margin-bottom: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.4rem;
     background: rgba(0, 0, 0, 0.15);
     border-radius: 4px;
     font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .checker-item-detail {
     color: var(--text-muted);
     font-size: 0.8rem;
-    margin-left: 0.5rem;
 }
 
 .checker-link {
