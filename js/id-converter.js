@@ -15,7 +15,7 @@ function generateIdConverterPage() {
                 <div class="card-body">
                     <div class="form-group">
                         <label class="form-label">输入商品 ID</label>
-                        <textarea id="idConverter-input" class="form-input" rows="4" placeholder="输入商品ID，多个ID用英文逗号(,)分隔&#10;例如：3735779373345800342,3735779373345800343" style="resize: vertical; font-family: monospace;"></textarea>
+                        <textarea id="idConverter-input" class="form-input" rows="4" placeholder="输入商品ID，每行一个，或用英文逗号(,)分隔&#10;例如：&#10;3773267724856328467&#10;3769392377878413340" style="resize: vertical; font-family: monospace;"></textarea>
                     </div>
                     
                     <div class="form-group" style="margin-top: 1.5rem;">
@@ -48,7 +48,7 @@ function initIdConverter() {
             return;
         }
 
-        const ids = raw.split(',').map(id => id.trim()).filter(Boolean);
+        const ids = raw.split(/[\n,]/).map(id => id.trim()).filter(Boolean);
         const links = ids.map(id => `${BASE_URL}?id=${id}&origin_type=604`);
         output.value = links.join('\n');
     }
