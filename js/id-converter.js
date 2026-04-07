@@ -4,6 +4,8 @@
  * 将商品ID转换为抖音好物链接
  */
 
+const BATCH_SIZE = 30;
+
 function generateIdConverterPage() {
     return `
         <div class="id-converter-page page-centered">
@@ -25,8 +27,9 @@ function generateIdConverterPage() {
                     
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button id="idConverter-convertBtn" class="btn btn-primary" style="flex: 1;">生成链接</button>
-                        <button id="idConverter-copyBtn" class="btn btn-secondary" style="flex: 1;"><i data-lucide="clipboard-list"></i> 一键复制</button>
                     </div>
+
+                    <div id="idConverter-copyArea" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem;"></div>
                 </div>
             </div>
         </div>
@@ -37,42 +40,79 @@ function initIdConverter() {
     const input = document.getElementById('idConverter-input');
     const output = document.getElementById('idConverter-output');
     const convertBtn = document.getElementById('idConverter-convertBtn');
-    const copyBtn = document.getElementById('idConverter-copyBtn');
+    const copyArea = document.getElementById('idConverter-copyArea');
 
     const BASE_URL = 'https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html';
+
+    // 当前所有链接
+    let allLinks = [];
 
     function convertIds() {
         const raw = input.value.trim();
         if (!raw) {
             output.value = '';
+            allLinks = [];
+            renderCopyButtons();
             return;
         }
 
         const ids = raw.split(/[\n,]/).map(id => id.trim()).filter(Boolean);
-        const links = ids.map(id => `${BASE_URL}?id=${id}&origin_type=604`);
-        output.value = links.join('\n');
+        allLinks = ids.map(id => `${BASE_URL}?id=${id}&origin_type=604`);
+        output.value = allLinks.join('\n');
+        renderCopyButtons();
     }
 
-    function copyOutput() {
-        if (!output.value) {
-            convertIds();
+    function renderCopyButtons() {
+        copyArea.innerHTML = '';
+
+        if (allLinks.length === 0) return;
+
+        // 按 BATCH_SIZE 分组
+        const batches = [];
+        for (let i = 0; i < allLinks.length; i += BATCH_SIZE) {
+            batches.push(allLinks.slice(i, i + BATCH_SIZE));
         }
-        if (!output.value) {
-            window.AppUtils?.showToast?.('没有可复制的内容', 'warning');
-            return;
-        }
-        navigator.clipboard.writeText(output.value).then(() => {
-            window.AppUtils?.showToast?.('已复制到剪贴板！', 'success');
-        }).catch(() => {
-            // 降级方案
-            output.select();
-            document.execCommand('copy');
-            window.AppUtils?.showToast?.('已复制到剪贴板！', 'success');
+
+        batches.forEach((batch, idx) => {
+            const start = idx * BATCH_SIZE + 1;
+            const end = start + batch.length - 1;
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-secondary';
+            btn.style.cssText = 'display: flex; align-items: center; gap: 0.4rem;';
+
+            // 单批直接叫"一键复制"，多批显示范围
+            const label = batches.length === 1
+                ? `<i data-lucide="clipboard-list"></i> 一键复制（${batch.length} 个）`
+                : `<i data-lucide="clipboard-list"></i> 复制第 ${start}–${end} 条`;
+
+            btn.innerHTML = label;
+
+            btn.addEventListener('click', () => {
+                const text = batch.join('\n');
+                navigator.clipboard.writeText(text).then(() => {
+                    window.AppUtils?.showToast?.(`已复制第 ${start}–${end} 条链接！`, 'success');
+                }).catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    window.AppUtils?.showToast?.(`已复制第 ${start}–${end} 条链接！`, 'success');
+                });
+            });
+
+            copyArea.appendChild(btn);
         });
+
+        // 渲染完按钮后重新初始化 Lucide 图标
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
     }
 
     convertBtn.addEventListener('click', convertIds);
-    copyBtn.addEventListener('click', copyOutput);
 
     // 输入时自动生成
     input.addEventListener('input', convertIds);
