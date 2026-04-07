@@ -284,10 +284,10 @@ function generateMappingPage() {
                 <button class="btn btn-primary" id="btnSaveHistory">📱 推送到手机/插件</button>
                 <div class="toggle-btn-group">
                     <button type="button" class="toggle-btn active" id="btnIncludeNewProduct">
-                        包含新品
+                        （大号）包含新品
                     </button>
                     <button type="button" class="toggle-btn" id="btnExcludeNewProduct">
-                        不含新品
+                        （小号）不含新品
                     </button>
                 </div>
                 <input type="hidden" id="mappingIncludeNew" value="true">

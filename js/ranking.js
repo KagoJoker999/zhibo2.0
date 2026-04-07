@@ -1570,10 +1570,10 @@ function generateRankingPage() {
                 <!-- 切换选项 -->
                 <div class="toggle-btn-group" style="display: flex; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color);">
                     <button type="button" class="toggle-btn active" id="btnExcludeNew" onclick="setNewProductMode(false)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--primary-color); color: white; cursor: pointer; transition: all 0.2s;">
-                        排除新品<span style="font-size: 0.625rem; opacity: 0.8; display: block;">开播前</span>
+                        （小号）不含新品
                     </button>
                     <button type="button" class="toggle-btn" id="btnIncludeNew" onclick="setNewProductMode(true)" style="padding: 0.5rem 0.75rem; font-size: 0.75rem; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;">
-                        包含新品<span style="font-size: 0.625rem; opacity: 0.8; display: block;">下播调拨</span>
+                        （大号）包含新品
                     </button>
                 </div>
                 <input type="hidden" id="includeNewProducts" value="false">
