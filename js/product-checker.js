@@ -2,7 +2,7 @@
  * 商品数据一致性检查模块
  * ========================================
  * 上传 Excel/CSV 表格与 listing_data_export 数据对比校验
- * 三项检查：标题完整性、预售编码规范、多SKU编码存在性
+ * 两项检查：标题完整性、多SKU编码存在性
  */
 
 // ========================================
@@ -93,8 +93,6 @@ async function startCheck(file) {
         const header = rows[0].map(h => String(h ?? '').trim());
         const nameColIdx = header.indexOf('商品名称');
         const codeColIdx = header.indexOf('商家SKU编码');
-        const specColIdx = header.indexOf('商品规格');
-        const presaleStockColIdx = header.indexOf('预售库存');
         // 查找商品 ID 列（A 列）
         const productIdColIdx = header.findIndex(h => h.includes('商品 ID') || h.includes('商品ID') || h === '商品id');
         if (nameColIdx === -1) throw new Error('上传表格中未找到"商品名称"列');
@@ -102,8 +100,6 @@ async function startCheck(file) {
 
         // 构建上传数据的映射
         const uploadNames = new Set();
-        // 商品名称 -> [{name, code}] 的映射
-        const uploadByName = new Map();
         const uploadCodes = new Set();
         // 商品名称 -> 商品ID 的映射（用于生成编辑链接）
         const nameToProductId = new Map();
@@ -117,8 +113,6 @@ async function startCheck(file) {
             if (!name) continue;
             uploadNames.add(name);
             if (code) uploadCodes.add(code);
-            if (!uploadByName.has(name)) uploadByName.set(name, []);
-            uploadByName.get(name).push({ name, code });
             // 保存第一个遇到的商品ID
             if (productIdColIdx !== -1 && !nameToProductId.has(name)) {
                 const pid = String(row[productIdColIdx] ?? '').trim();
@@ -155,68 +149,7 @@ async function startCheck(file) {
             }
         }
 
-        updateProgress('检查预售编码...', 65);
-
-        // ========== 检查 B：预售编码规范校验 ==========
-        for (const item of sourceData) {
-            const virtualCategory = (item.virtual_category || '').trim();
-            if (virtualCategory !== '可预售') continue;
-
-            let productName = (item.product_name || '').trim();
-            productName = cleanProductName(productName); // 清洗名称
-
-            if (!productName) continue;
-            
-            const matches = uploadByName.get(productName);
-            if (!matches || matches.length === 0) continue; // 已被检查A覆盖
-
-            // 只要其中有一个编码包含 "=="，就不算报错
-            const hasAnyEq = matches.some(m => m.code && m.code.includes('=='));
-            if (!hasAnyEq) {
-                issues.push({
-                    type: 'presale',
-                    label: '预售错误',
-                    name: productName,
-                    productId: nameToProductId.get(productName) || '',
-                    detail: `该商品对应的所有编码均不包含 "=="`
-                });
-            }
-        }
-
-        updateProgress('检查预售规格...', 72);
-
-        // ========== 检查 D：预售规格校验（基于上传表格） ==========
-        // 当"商品规格"含"15天内发货"时，"预售库存"必须为300，"商家SKU编码"必须含"=="
-        if (specColIdx !== -1 && presaleStockColIdx !== -1) {
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                const spec = String(row[specColIdx] ?? '').trim();
-                if (!spec.includes('15天内发货')) continue;
-
-                let name = String(row[nameColIdx] ?? '').trim();
-                name = cleanProductName(name);
-                if (!name) continue;
-
-                const code = String(row[codeColIdx] ?? '').trim();
-                const presaleStock = String(row[presaleStockColIdx] ?? '').trim();
-
-                const errors = [];
-                if (presaleStock !== '300') errors.push(`预售库存="${presaleStock}"(应为300)`);
-                if (!code.includes('==')) errors.push(`SKU编码="${code}"(缺少==)`);
-
-                if (errors.length > 0) {
-                    issues.push({
-                        type: 'presaleSpec',
-                        label: '预售出错',
-                        name: name,
-                        productId: nameToProductId.get(name) || '',
-                        detail: errors.join('，')
-                    });
-                }
-            }
-        }
-
-        updateProgress('检查多SKU编码...', 80);
+        updateProgress('检查多SKU编码...', 65);
 
         // ========== 检查 C：多 SKU 编码存在性校验 ==========
         for (const item of sourceData) {
@@ -241,35 +174,18 @@ async function startCheck(file) {
 
             if (subCodes.length === 0) continue;
 
-            // 检查每个子编码
+            // 检查每个子编码（预售/非预售统一检查原编码是否存在）
             for (const code of subCodes) {
-                if (isPresale) {
-                    // 预售商品：原编码和加"=="的编码都必须存在
-                    const codeWithEq = code.includes('==') ? code : code + '==';
-                    const codeWithoutEq = code.replace(/==$/g, '');
-                    const hasOriginal = uploadCodes.has(codeWithoutEq);
-                    const hasWithEq = uploadCodes.has(codeWithEq);
-                    
-                    if (!hasOriginal || !hasWithEq) {
-                        const missingType = !hasOriginal && !hasWithEq ? '两者均缺失' : (!hasOriginal ? '缺失原编码' : '缺失带 == 编码');
-                        issues.push({
-                            type: 'sku',
-                            label: 'SKU缺失',
-                            name: productName,
-                            productId: nameToProductId.get(productName) || '',
-                            detail: `子编码 "${codeWithoutEq}" ${missingType}`
-                        });
-                    }
-                } else {
-                    if (!uploadCodes.has(code)) {
-                        issues.push({
-                            type: 'sku',
-                            label: 'SKU缺失',
-                            name: productName,
-                            productId: nameToProductId.get(productName) || '',
-                            detail: `子编码 "${code}" 在上传表格中不存在`
-                        });
-                    }
+                // 预售商品的编码可能带 ==，统一取原编码进行匹配
+                const baseCode = code.replace(/==$/g, '');
+                if (!uploadCodes.has(baseCode) && !uploadCodes.has(code)) {
+                    issues.push({
+                        type: 'sku',
+                        label: 'SKU缺失',
+                        name: productName,
+                        productId: nameToProductId.get(productName) || '',
+                        detail: `子编码 "${baseCode}" 在上传表格中不存在`
+                    });
                 }
             }
         }
@@ -309,14 +225,10 @@ function renderCheckerResults(issues, totalCount) {
 
     // 按类型分组
     const missingItems = issues.filter(i => i.type === 'missing');
-    const presaleItems = issues.filter(i => i.type === 'presale');
-    const presaleSpecItems = issues.filter(i => i.type === 'presaleSpec');
     const skuItems = issues.filter(i => i.type === 'sku');
 
     const typeColors = {
         missing: { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', icon: '🚫' },
-        presale: { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', icon: '⚠️' },
-        presaleSpec: { bg: 'rgba(251, 146, 60, 0.1)', border: 'rgba(251, 146, 60, 0.3)', color: '#fb923c', icon: '📦' },
         sku: { bg: 'rgba(139, 92, 246, 0.1)', border: 'rgba(139, 92, 246, 0.3)', color: '#8b5cf6', icon: '🔗' }
     };
 
@@ -349,8 +261,6 @@ function renderCheckerResults(issues, totalCount) {
     }
 
     html += renderGroup(missingItems, '缺失商品', 'missing');
-    html += renderGroup(presaleItems, '预售错误', 'presale');
-    html += renderGroup(presaleSpecItems, '预售出错', 'presaleSpec');
     html += renderGroup(skuItems, 'SKU缺失', 'sku');
 
     resultsDiv.innerHTML = html;
