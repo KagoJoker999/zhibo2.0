@@ -2247,8 +2247,8 @@ function renderRankingResults(results) {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <h4 style="margin: 0;">${category} <span class="count">(${items.length})</span></h4>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-sm" onclick="copyToClipboard('${codes}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制编码</button>
-                        <button class="btn btn-sm" onclick="copyToClipboard('${ids}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制ID</button>
+                        <button class="btn btn-sm js-copy-btn" data-copy="${codes.replace(/"/g, '&quot;')}" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制编码</button>
+                        <button class="btn btn-sm js-copy-btn" data-copy="${ids.replace(/"/g, '&quot;')}" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制ID</button>
                     </div>
                 </div>
                 <div class="result-items-table">
@@ -2269,8 +2269,9 @@ function renderRankingResults(results) {
             const hasNoId = !productId;
             // 为无ID商品显示输入框和保存按钮，否则显示ID和复制按钮
             const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+            const safeProductId = (productId || '').replace(/"/g, '&quot;');
             const idDisplay = productId
-                ? `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`
+                ? `${productId} <button class="js-copy-btn" data-copy="${safeProductId}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`
                 : `<div style="display: flex; align-items: center; gap: 0.5rem;">
                        <input type="text" class="manual-product-id-input" data-product-name="${escapedProductName}" 
                               placeholder="输入商品ID" 
@@ -2297,12 +2298,13 @@ function renderRankingResults(results) {
             if (productCode !== '--') {
                 const codes = productCode.split(',').map(c => c.trim()).filter(c => c);
                 const allCodes = codes.join(',');
+                const safeAllCodes = allCodes.replace(/"/g, '&quot;');
                 if (codes.length <= 2) {
-                    codeDisplay = `${allCodes} <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+                    codeDisplay = `${allCodes} <button class="js-copy-btn" data-copy="${safeAllCodes}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
                 } else {
                     const displayCodes = codes.slice(0, 2).join(',');
                     const moreCount = codes.length - 2;
-                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button onclick="copyToClipboard('${allCodes}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码"><i data-lucide="clipboard-list"></i></button>`;
+                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button class="js-copy-btn" data-copy="${safeAllCodes}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码"><i data-lucide="clipboard-list"></i></button>`;
                 }
             }
             // 无ID商品红底
@@ -2314,7 +2316,7 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button onclick="copyToClipboard('${escapedProductName}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称"><i data-lucide="clipboard-list"></i></button></td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button class="js-copy-btn" data-copy="${item.product_name.replace(/"/g, '&quot;')}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称"><i data-lucide="clipboard-list"></i></button></td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
@@ -2332,6 +2334,13 @@ function renderRankingResults(results) {
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
     if (window.lucide) window.lucide.createIcons();
+    // 事件委托：统一处理所有复制按钮点击，彻底规避 onclick 字符串转义问题
+    container.addEventListener('click', function(e) {
+        const btn = e.target.closest('.js-copy-btn');
+        if (!btn) return;
+        const text = btn.dataset.copy || '';
+        copyToClipboard(text);
+    });
 }
 
 // 保存手动填写的商品ID到 product_id_data 表
@@ -2398,7 +2407,8 @@ async function saveManualProductId(productName, buttonElement) {
         const tdElement = buttonElement.closest('td');
         const trElement = buttonElement.closest('tr');
         if (tdElement) {
-            tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+            const safeId = (productId || '').replace(/"/g, '&quot;');
+            tdElement.innerHTML = `${productId} <button class="js-copy-btn" data-copy="${safeId}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
             if (window.lucide) window.lucide.createIcons();
         }
         // 移除红色背景
