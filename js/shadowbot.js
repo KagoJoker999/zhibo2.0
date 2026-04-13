@@ -70,12 +70,23 @@ function initShadowbot() {
     }
 
     function copyUrl() {
-        if (!resultUrl.value) {
+        const url = resultUrl.value || '';
+        if (!url) {
             generateUrl();
         }
-        resultUrl.select();
-        document.execCommand('copy');
-        window.AppUtils?.showToast?.('已成功复制到剪贴板！', 'success');
+        const textToCopy = resultUrl.value || '';
+        if (!textToCopy) {
+            window.AppUtils?.showToast?.('没有可复制的内容', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            window.AppUtils?.showToast?.('已成功复制到剪贴板！', 'success');
+        }).catch(() => {
+            // 降级方案
+            resultUrl.select();
+            document.execCommand('copy');
+            window.AppUtils?.showToast?.('已成功复制到剪贴板！', 'success');
+        });
     }
 
     generateBtn.addEventListener('click', generateUrl);
