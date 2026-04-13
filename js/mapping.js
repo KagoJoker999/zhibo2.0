@@ -538,7 +538,10 @@ function renderMappingTable(container, data) {
                 ${data.map(item => {
         const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
         const imageHtml = imageUrl
-            ? `<img src="${imageUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" referrerpolicy="no-referrer" onerror="this.src=''">`
+            ? `<div class="hover-zoom-container">
+                   <img src="${imageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>无图</span>'">
+                   <img src="${imageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
+               </div>`
             : '<span style="color: var(--text-muted);">无</span>';
         const bgColor = categoryColors[item.ranking_result] || 'transparent';
         return `
