@@ -2331,6 +2331,7 @@ function renderRankingResults(results) {
     }
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // 保存手动填写的商品ID到 product_id_data 表
@@ -2398,6 +2399,7 @@ async function saveManualProductId(productName, buttonElement) {
         const trElement = buttonElement.closest('tr');
         if (tdElement) {
             tdElement.innerHTML = `${productId} <button onclick="copyToClipboard('${productId}')" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+            if (window.lucide) window.lucide.createIcons();
         }
         // 移除红色背景
         if (trElement) {
@@ -2413,6 +2415,7 @@ async function saveManualProductId(productName, buttonElement) {
         window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
         buttonElement.disabled = false;
         buttonElement.innerHTML = '<i data-lucide="save"></i> 保存';
+        if (window.lucide) window.lucide.createIcons();
     }
 }
 
