@@ -104,6 +104,26 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('hashchange', handleHashChange);
 
     console.log('📡 直播辅助工具已启动');
+
+    // 悬浮放大图片动态定位：使用 fixed 定位，避免被父级 overflow 或 sticky header 遮挡
+    document.body.addEventListener('mouseenter', function(e) {
+        const container = e.target.closest('.hover-zoom-container');
+        if (!container) return;
+        const large = container.querySelector('.hover-zoom-large');
+        if (!large) return;
+        const rect = container.getBoundingClientRect();
+        const size = 192;
+        const gap = 8;
+        // 优先显示在右侧，若超出视口则显示在左侧
+        let left = rect.right + gap;
+        if (left + size > window.innerWidth) left = rect.left - size - gap;
+        // 垂直居中于缩略图，确保不超出底部
+        let top = rect.top + (rect.height - size) / 2;
+        if (top + size > window.innerHeight) top = window.innerHeight - size - 8;
+        if (top < 8) top = 8;
+        large.style.left = left + 'px';
+        large.style.top = top + 'px';
+    }, true);
 });
 
 // 查询数据库空间使用情况（每24小时刷新一次）

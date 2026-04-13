@@ -2261,22 +2261,22 @@ select:focus {
 
 .hover-zoom-large {
     display: none;
-    position: absolute;
-    left: 54px;
-    top: -72px; /* 垂直居中: -(192/2 - 48/2) */
+    position: fixed;
     width: 192px;
     height: 192px;
     object-fit: cover;
-    border-radius: 4px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    z-index: 99999;
     border: 1px solid var(--border-color);
     background: var(--bg-primary);
+    pointer-events: none;
 }
 
 .hover-zoom-container:hover .hover-zoom-large {
     display: block;
 }
+
 
 /* ========================================
    发券品处理页面样式
