@@ -2077,6 +2077,17 @@ async function initRankingPage() {
             }
         });
     }
+
+    // 复制按钮事件委托：只在页面初始化时绑定一次，避免重复叠加
+    const resultContainer = document.getElementById('rankingResultContent');
+    if (resultContainer) {
+        resultContainer.addEventListener('click', function(e) {
+            const btn = e.target.closest('.js-copy-btn');
+            if (!btn) return;
+            const text = btn.dataset.copy || '';
+            copyToClipboard(text);
+        });
+    }
 }
 
 // 删除排品项（从当前分类移除，重新计算补充新商品）
@@ -2334,13 +2345,6 @@ function renderRankingResults(results) {
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
     if (window.lucide) window.lucide.createIcons();
-    // 事件委托：统一处理所有复制按钮点击，彻底规避 onclick 字符串转义问题
-    container.addEventListener('click', function(e) {
-        const btn = e.target.closest('.js-copy-btn');
-        if (!btn) return;
-        const text = btn.dataset.copy || '';
-        copyToClipboard(text);
-    });
 }
 
 // 保存手动填写的商品ID到 product_id_data 表
