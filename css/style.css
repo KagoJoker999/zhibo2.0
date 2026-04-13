@@ -1136,6 +1136,25 @@ select:focus {
     line-height: 1.25rem;
 }
 
+/* 发券品上传 - 最后上传时间信息块 */
+.last-upload-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.last-upload-info svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
 /* 上传说明区域固定高度，统一按钮位置 */
 .upload-info-section {
     flex: 1;

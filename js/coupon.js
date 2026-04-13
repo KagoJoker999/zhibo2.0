@@ -125,6 +125,11 @@ function generateCouponPage() {
                             <span>补充上传</span>
                         </label>
                     </div>
+
+                    <div class="last-upload-info" id="lastUploadInfo">
+                        <i data-lucide="clock"></i>
+                        <span id="lastUploadTimeText">暂无上传记录</span>
+                    </div>
                     
                     <div class="upload-status" id="status-coupon" style="display:none">
                         <div class="status-text" id="statusText-coupon">准备中...</div>
@@ -296,6 +301,9 @@ function initCouponUpload() {
 
     // 加载已上传数据
     loadUploadedData();
+
+    // 显示最后上传时间
+    renderLastUploadTime();
 
     // 处理文件选择
     async function handleFileSelect(file) {
@@ -738,6 +746,11 @@ async function handleUpload() {
         progressBar.style.width = '100%';
         statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 成功上传 ${uploadData.length} 条商品</span>`;
 
+        // 记录最后上传时间
+        const nowStr = new Date().toLocaleString('zh-CN', { hour12: false });
+        localStorage.setItem('coupon_last_upload_time', nowStr);
+        renderLastUploadTime();
+
         console.log(`<i data-lucide="check-circle"></i> [发券品上传] 完成, 共 ${uploadData.length} 条`);
         window.AppUtils?.showToast?.(`成功上传 ${uploadData.length} 条发券品数据`, 'success');
 
@@ -756,6 +769,20 @@ async function handleUpload() {
         window.AppUtils?.showToast?.('上传失败: ' + error.message, 'error');
     } finally {
         uploadBtn.disabled = false;
+    }
+}
+
+// ========================================
+// 显示最后上传时间
+// ========================================
+function renderLastUploadTime() {
+    const el = document.getElementById('lastUploadTimeText');
+    if (!el) return;
+    const t = localStorage.getItem('coupon_last_upload_time');
+    if (t) {
+        el.textContent = `最后上传：${t}`;
+    } else {
+        el.textContent = '暂无上传记录';
     }
 }
 
