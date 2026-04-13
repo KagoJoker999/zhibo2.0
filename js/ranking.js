@@ -2444,35 +2444,36 @@ function updateUnmatchedWarning() {
     }
 }
 
-// 复制到剪贴板（带完整降级方案）
+// 复制到剪贴板
+// 策略：优先用同步的 execCommand（在点击事件同步上下文中执行，始终有用户手势）
+// 成功则结束；失败再用 navigator.clipboard 作为兜底
 function copyToClipboard(text) {
     if (!text) {
         window.AppUtils?.showToast?.('没有可复制的内容', 'warning');
         return;
     }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-            window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
-        }).catch(() => {
-            _fallbackCopy(text);
-        });
-    } else {
-        _fallbackCopy(text);
-    }
-}
-
-function _fallbackCopy(text) {
+    // 第一优先：同步 textarea + execCommand（直接在点击事件栈内，永远有用户手势）
     try {
         const ta = document.createElement('textarea');
         ta.value = text;
-        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
         document.body.appendChild(ta);
         ta.focus();
         ta.select();
-        document.execCommand('copy');
+        const ok = document.execCommand('copy');
         document.body.removeChild(ta);
-        window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
-    } catch (e) {
+        if (ok) {
+            window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
+            return;
+        }
+    } catch (_) { /* fall through */ }
+
+    // 第二优先：navigator.clipboard（异步，作为兜底）
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => window.AppUtils?.showToast?.('已复制到剪贴板', 'success'))
+            .catch(() => window.AppUtils?.showToast?.('复制失败，请手动复制', 'error'));
+    } else {
         window.AppUtils?.showToast?.('复制失败，请手动复制', 'error');
     }
 }
