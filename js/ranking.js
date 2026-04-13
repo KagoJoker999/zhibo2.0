@@ -2077,17 +2077,6 @@ async function initRankingPage() {
             }
         });
     }
-
-    // 复制按钮事件委托：只在页面初始化时绑定一次，避免重复叠加
-    const resultContainer = document.getElementById('rankingResultContent');
-    if (resultContainer) {
-        resultContainer.addEventListener('click', function(e) {
-            const btn = e.target.closest('.js-copy-btn');
-            if (!btn) return;
-            const text = btn.dataset.copy || '';
-            copyToClipboard(text);
-        });
-    }
 }
 
 // 删除排品项（从当前分类移除，重新计算补充新商品）
@@ -2258,8 +2247,8 @@ function renderRankingResults(results) {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <h4 style="margin: 0;">${category} <span class="count">(${items.length})</span></h4>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-sm js-copy-btn" data-copy="${codes.replace(/"/g, '&quot;')}" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制编码</button>
-                        <button class="btn btn-sm js-copy-btn" data-copy="${ids.replace(/"/g, '&quot;')}" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制ID</button>
+                        <button class="btn btn-sm js-copy-btn" data-copy="${codes.replace(/"/g, '&quot;')}" onclick="window._copyFromBtn(this)" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制编码</button>
+                        <button class="btn btn-sm js-copy-btn" data-copy="${ids.replace(/"/g, '&quot;')}" onclick="window._copyFromBtn(this)" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;"><i data-lucide="clipboard-list"></i> 复制ID</button>
                     </div>
                 </div>
                 <div class="result-items-table">
@@ -2282,7 +2271,7 @@ function renderRankingResults(results) {
             const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
             const safeProductId = (productId || '').replace(/"/g, '&quot;');
             const idDisplay = productId
-                ? `${productId} <button class="js-copy-btn" data-copy="${safeProductId}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`
+                ? `${productId} <button class="js-copy-btn" data-copy="${safeProductId}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`
                 : `<div style="display: flex; align-items: center; gap: 0.5rem;">
                        <input type="text" class="manual-product-id-input" data-product-name="${escapedProductName}" 
                               placeholder="输入商品ID" 
@@ -2311,11 +2300,11 @@ function renderRankingResults(results) {
                 const allCodes = codes.join(',');
                 const safeAllCodes = allCodes.replace(/"/g, '&quot;');
                 if (codes.length <= 2) {
-                    codeDisplay = `${allCodes} <button class="js-copy-btn" data-copy="${safeAllCodes}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+                    codeDisplay = `${allCodes} <button class="js-copy-btn" data-copy="${safeAllCodes}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
                 } else {
                     const displayCodes = codes.slice(0, 2).join(',');
                     const moreCount = codes.length - 2;
-                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button class="js-copy-btn" data-copy="${safeAllCodes}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码"><i data-lucide="clipboard-list"></i></button>`;
+                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button class="js-copy-btn" data-copy="${safeAllCodes}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码"><i data-lucide="clipboard-list"></i></button>`;
                 }
             }
             // 无ID商品红底
@@ -2327,7 +2316,7 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button class="js-copy-btn" data-copy="${item.product_name.replace(/"/g, '&quot;')}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称"><i data-lucide="clipboard-list"></i></button></td>
+                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button class="js-copy-btn" data-copy="${item.product_name.replace(/"/g, '&quot;')}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称"><i data-lucide="clipboard-list"></i></button></td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
@@ -2412,7 +2401,7 @@ async function saveManualProductId(productName, buttonElement) {
         const trElement = buttonElement.closest('tr');
         if (tdElement) {
             const safeId = (productId || '').replace(/"/g, '&quot;');
-            tdElement.innerHTML = `${productId} <button class="js-copy-btn" data-copy="${safeId}" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+            tdElement.innerHTML = `${productId} <button class="js-copy-btn" data-copy="${safeId}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
             if (window.lucide) window.lucide.createIcons();
         }
         // 移除红色背景
@@ -2455,19 +2444,46 @@ function updateUnmatchedWarning() {
     }
 }
 
-// 复制到剪贴板
+// 复制到剪贴板（带完整降级方案）
 function copyToClipboard(text) {
     if (!text) {
         window.AppUtils?.showToast?.('没有可复制的内容', 'warning');
         return;
     }
-    navigator.clipboard.writeText(text).then(() => {
-        window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
-    }).catch(err => {
-        console.error('复制失败:', err);
-        window.AppUtils?.showToast?.('复制失败', 'error');
-    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
+        }).catch(() => {
+            _fallbackCopy(text);
+        });
+    } else {
+        _fallbackCopy(text);
+    }
 }
+
+function _fallbackCopy(text) {
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        window.AppUtils?.showToast?.('已复制到剪贴板', 'success');
+    } catch (e) {
+        window.AppUtils?.showToast?.('复制失败，请手动复制', 'error');
+    }
+}
+
+// 供按钮 onclick 直接调用，从 data-copy 属性读取要复制的内容
+window._copyFromBtn = function(btn) {
+    // 点击图标时，btn 可能是 SVG 内部的 path，需找到最近的 .js-copy-btn
+    const target = btn.closest ? btn.closest('.js-copy-btn') : btn;
+    const text = target ? target.dataset.copy : '';
+    copyToClipboard(text || '');
+};
 
 // 从数据库读取并渲染已保存的排品结果
 async function loadAndRenderSavedResults() {
