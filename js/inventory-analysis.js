@@ -96,6 +96,7 @@ function getInventoryAnalysisHTML() {
                                     月末库存总金额
                                     <span class="ia-optional">(可月末填写)</span>
                                 </label>
+                                <div class="ia-source-tag">ERP 报表-商品库存结构分析-查询池：库存总金额（成本）&nbsp;&nbsp;数值为「主仓实际库存金额」</div>
                             </div>
                             <div class="ia-input-box">
                                 <input type="number" id="iaClosingStock" placeholder="月末再填写" min="0" step="0.01">
