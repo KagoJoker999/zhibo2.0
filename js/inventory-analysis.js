@@ -64,9 +64,9 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-formula-box">
-                            <div class="ia-formula-title">计算公式</div>
-                            <div class="ia-formula-content">
-                                月度库存周转率 = <span class="ia-fraction"><span class="ia-numerator">当月商品销售总成本</span><span class="ia-denominator">(月初库存总金额 + 月末库存总金额) ÷ 2</span></span>
+                            <div class="ia-formula-title">填写说明</div>
+                            <div class="ia-formula-content ia-note-content">
+                                <!-- 待填写说明内容 -->
                             </div>
                         </div>
 
@@ -128,6 +128,15 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-chart-wrap">
                     <div class="ia-chart-title">
                         <span><i data-lucide="trending-up"></i> 周转率历史趋势</span>
+                        <div class="ia-chart-controls">
+                            <select id="iaTurnoverChartLimit" class="ia-chart-select">
+                                <option value="12" selected>最近 12 条</option>
+                                <option value="30">最近 30 条</option>
+                            </select>
+                            <button type="button" class="ia-chart-refresh-btn" id="iaTurnoverChartRefresh">
+                                <i data-lucide="refresh-cw"></i> 刷新图表
+                            </button>
+                        </div>
                     </div>
                     <div class="ia-chart-container">
                         <canvas id="iaTurnoverChart"></canvas>
@@ -146,11 +155,9 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-formula-box">
-                            <div class="ia-formula-title">计算公式</div>
-                            <div class="ia-formula-content">
-                                动销率 = <span class="ia-fraction"><span class="ia-numerator">当月有销量的 SKU 总数</span><span class="ia-denominator">当月店铺总 SKU 数</span></span> × 100%
-                                <br>
-                                <span style="margin-top:0.5rem;display:block;">滞销率 = 100% − 动销率</span>
+                            <div class="ia-formula-title">填写说明</div>
+                            <div class="ia-formula-content ia-note-content">
+                                <!-- 待填写说明内容 -->
                             </div>
                         </div>
 
@@ -588,6 +595,14 @@ function getInventoryAnalysisHTML() {
                 font-size: 0.82rem;
             }
 
+            /* 填写说明内容区--空白占位 */
+            .ia-note-content {
+                min-height: 1rem;
+                color: var(--text-muted);
+                font-size: 0.85rem;
+                line-height: 1.6;
+            }
+
             /* 历史记录删除按钮 */
             .ia-del-btn {
                 display: inline-flex;
@@ -830,13 +845,15 @@ function initInventoryAnalysisPage() {
                 });
             }
 
-            renderTurnoverChart(data || []);
+            renderTurnoverChart(data || [], turnoverChartLimit);
         } catch (e) {
             console.error('加载周转率历史失败:', e);
             body.innerHTML = '<div class="ia-empty-tip">加载失败</div>';
         }
     }
 
+    // 周转率图表当前显示条数（默认12）
+    let turnoverChartLimit = 12;
     // SKU 图表当前显示条数（默认10）
     let skuChartLimit = 10;
 
@@ -892,14 +909,15 @@ function initInventoryAnalysisPage() {
     }
 
     // ── 图表渲染 ─────────────────────────────────
-    function renderTurnoverChart(data) {
+    function renderTurnoverChart(data, limit) {
         const canvas = document.getElementById('iaTurnoverChart');
         if (!canvas) return;
 
-        // 过滤出有完整数据（有周转率）的记录，升序排列
+        // 过滤出有完整数据（有周转率）的记录，升序后取最近 limit 条
         const valid = data
             .filter(r => r.turnover_rate !== null)
-            .sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''));
+            .sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''))
+            .slice(-(limit || 12));
 
         const labels = valid.map(r => r.record_date || r.record_month || '--');
         const rates = valid.map(r => Number(r.turnover_rate));
@@ -1279,6 +1297,16 @@ function initInventoryAnalysisPage() {
 
     document.getElementById('iaSkuChartRefresh')?.addEventListener('click', () => {
         loadSkuHistory();
+    });
+
+    // ── 周转率图表刷新 & 条数切换 ────────────────
+    document.getElementById('iaTurnoverChartLimit')?.addEventListener('change', (e) => {
+        turnoverChartLimit = parseInt(e.target.value) || 12;
+        loadTurnoverHistory();
+    });
+
+    document.getElementById('iaTurnoverChartRefresh')?.addEventListener('click', () => {
+        loadTurnoverHistory();
     });
 
     // ── 初始化加载 ────────────────────────────────
