@@ -236,13 +236,14 @@ async function updateInventoryReminder() {
             .from('inventory_analysis')
             .select('*')
             .eq('record_type', 'turnover')
+            .is('closing_stock', null)  // 专门查询未填写月末库存的项
             .order('record_date', { ascending: false })
             .limit(1);
 
         if (error) throw error;
 
-        // 如果存在最近一条记录且未填写月末库存
-        if (data && data.length > 0 && data[0].closing_stock === null && data[0].record_date) {
+        // 如果存在最近一条未填写的记录
+        if (data && data.length > 0 && data[0].record_date) {
             const parts = data[0].record_date.split('-');
             if (parts.length === 3) {
                 const year = parseInt(parts[0]);
