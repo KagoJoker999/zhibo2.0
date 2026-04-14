@@ -63,7 +63,8 @@ const PageConfig = {
     'livestream-additional-investment': { title: '追投计算', icon: '<i data-lucide="coins"></i>' },
     'presale': { title: '关闭预售', icon: '<i data-lucide="clipboard-list"></i>' },
     'shadowbot': { title: '影刀转换', icon: '<i data-lucide="bot"></i>' },
-    'id-converter': { title: 'ID 转换', icon: '<i data-lucide="refresh-cw"></i>' }
+    'id-converter': { title: 'ID 转换', icon: '<i data-lucide="refresh-cw"></i>' },
+    'inventory-analysis': { title: '库存判断', icon: '<i data-lucide="package-search"></i>' }
 };
 
 // ========================================
@@ -466,6 +467,17 @@ function loadPage(page) {
             if (idConverterPage) {
                 DOM.pageContainer.innerHTML = idConverterPage.html;
                 setTimeout(() => idConverterPage.init(), 50);
+                AppState.currentPage = page;
+                return;
+            }
+        }
+
+        // 检查是否有库存判断页面加载器
+        if (window.loadInventoryAnalysisPage && page === 'inventory-analysis') {
+            const inventoryPage = window.loadInventoryAnalysisPage(page);
+            if (inventoryPage) {
+                DOM.pageContainer.innerHTML = inventoryPage.html;
+                setTimeout(() => inventoryPage.init(), 50);
                 AppState.currentPage = page;
                 return;
             }
