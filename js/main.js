@@ -152,8 +152,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 查询数据库空间使用情况（每24小时刷新一次）
 async function updateDbUsage() {
+    const dbUsage = document.getElementById('dbUsage');
     const dbUsageText = document.getElementById('dbUsageText');
-    if (!dbUsageText || !window.supabaseClient) return;
+    if (!dbUsage || !dbUsageText) return;
+
+    const setStatus = (isSuccess, text) => {
+        dbUsageText.textContent = text;
+        if (isSuccess) {
+            dbUsage.style.color = '#00b42a';
+            dbUsage.style.borderColor = 'rgba(0,180,42,0.3)';
+        } else {
+            dbUsage.style.color = '#f53f3f';
+            dbUsage.style.borderColor = 'rgba(245,63,63,0.3)';
+        }
+    };
+
+    if (!window.supabaseClient) {
+        setStatus(false, '无法连接数据库');
+        return;
+    }
 
     const CACHE_KEY = 'db_usage_cache';
     const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时（毫秒）
@@ -168,7 +185,7 @@ async function updateDbUsage() {
             if (now - timestamp < CACHE_DURATION) {
                 // 缓存未过期，使用缓存值
                 const remainMB = (totalMB - parseFloat(usedMB)).toFixed(0);
-                dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
+                setStatus(true, `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`);
                 return;
             }
         }
@@ -192,9 +209,10 @@ async function updateDbUsage() {
             let totalRecords = 0;
 
             for (const table of tables) {
-                const { count } = await window.supabaseClient
+                const { count, error: countError } = await window.supabaseClient
                     .from(table)
                     .select('*', { count: 'exact', head: true });
+                if (countError) throw countError; // 关键：如果连估算都报错，说明完全断开
                 totalRecords += count || 0;
             }
 
@@ -215,10 +233,10 @@ async function updateDbUsage() {
             // 缓存写入失败，忽略
         }
 
-        dbUsageText.textContent = `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`;
+        setStatus(true, `${usedMB}MB / ${totalMB}MB（剩余 ${remainMB}MB）`);
     } catch (e) {
         console.error('<i data-lucide="x-circle"></i> 获取数据库大小失败:', e);
-        dbUsageText.textContent = '-- / 500MB';
+        setStatus(false, '无法连接数据库');
     }
 }
 
