@@ -937,7 +937,7 @@ function initInventoryAnalysisPage() {
                     return `<div class="ia-history-item ia-turnover-entry" data-id="${r.id}" style="cursor:pointer; transition:all 0.2s; ${activeClass}" title="点击接续填写该条目数据">
                         <span class="ia-history-date">${r.record_date || r.record_month || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
-                            <span class="ia-history-rate ${colorClass}">${rate} 次${tag}</span>
+                            <span class="ia-history-rate ${colorClass}">${rate}%${tag}</span>
                             <button type="button" class="ia-del-btn" data-id="${r.id}" data-type="turnover" title="删除此记录">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                             </button>
@@ -1071,7 +1071,7 @@ function initInventoryAnalysisPage() {
             data: {
                 labels,
                 datasets: [{
-                    label: '月度库存周转率（次）',
+                    label: '月度库存周转率（%）',
                     data: rates,
                     borderColor: 'rgba(22, 93, 255, 0.9)',
                     backgroundColor: 'rgba(22, 93, 255, 0.1)',
@@ -1083,7 +1083,7 @@ function initInventoryAnalysisPage() {
                     tension: 0.3
                 }]
             },
-            options: getChartOptions('次')
+            options: getChartOptions('%')
         });
     }
 
@@ -1203,7 +1203,7 @@ function initInventoryAnalysisPage() {
         if (closingStock !== null && !isNaN(closingStock)) {
             const avgStock = (openingStock + closingStock) / 2;
             if (avgStock > 0) {
-                turnoverRate = salesCost / avgStock;
+                turnoverRate = (salesCost / avgStock) * 100;
             }
         }
 
@@ -1231,7 +1231,7 @@ function initInventoryAnalysisPage() {
                 </div>
                 <div class="ia-result-row">
                     <span class="ia-result-label">月度库存周转率</span>
-                    <span class="ia-result-value ia-highlight">${turnoverRate !== null ? turnoverRate.toFixed(2) + ' 次' : '--'}</span>
+                    <span class="ia-result-value ia-highlight">${turnoverRate !== null ? turnoverRate.toFixed(2) + '%' : '--'}</span>
                 </div>` : `
                 <div class="ia-result-row">
                     <span class="ia-result-label">月末库存金额</span>
