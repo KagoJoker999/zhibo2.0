@@ -105,24 +105,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('📡 直播辅助工具已启动');
 
-    // 悬浮放大图片动态定位：使用 fixed 定位，避免被父级 overflow 或 sticky header 遮挡
+    // ── 悬浮放大图片 ──────────────────────────────────────────
+    // 全局唯一 overlay img，直接挂在 body（不受任何父级 overflow 影响）
+    const _zoomOverlay = document.createElement('img');
+    _zoomOverlay.id = 'hover-zoom-overlay';
+    _zoomOverlay.referrerPolicy = 'no-referrer';
+    document.body.appendChild(_zoomOverlay);
+
     document.body.addEventListener('mouseenter', function(e) {
         const container = e.target.closest('.hover-zoom-container');
         if (!container) return;
-        const large = container.querySelector('.hover-zoom-large');
-        if (!large) return;
+        const thumb = container.querySelector('.hover-zoom-thumb');
+        if (!thumb || !thumb.src) return;
+
+        // 读取缩略图 src 更新 overlay
+        _zoomOverlay.src = thumb.src;
+        _zoomOverlay.style.display = 'block';
+
+        // 用视口坐标定位（getBoundingClientRect 始终返回视口坐标）
         const rect = container.getBoundingClientRect();
         const size = 192;
-        const gap = 8;
-        // 优先显示在右侧，若超出视口则显示在左侧
+        const gap = 10;
         let left = rect.right + gap;
-        if (left + size > window.innerWidth) left = rect.left - size - gap;
-        // 垂直居中于缩略图，确保不超出底部
-        let top = rect.top + (rect.height - size) / 2;
-        if (top + size > window.innerHeight) top = window.innerHeight - size - 8;
-        if (top < 8) top = 8;
-        large.style.left = left + 'px';
-        large.style.top = top + 'px';
+        if (left + size > window.innerWidth - 8) left = rect.left - size - gap;
+        let top = rect.top + (rect.height / 2) - (size / 2);
+        top = Math.max(8, Math.min(top, window.innerHeight - size - 8));
+        _zoomOverlay.style.left = left + 'px';
+        _zoomOverlay.style.top  = top  + 'px';
+    }, true);
+
+    document.body.addEventListener('mouseleave', function(e) {
+        const container = e.target.closest('.hover-zoom-container');
+        if (!container) return;
+        // 只在鼠标离开容器时隐藏（不是离开内部子元素）
+        const related = e.relatedTarget;
+        if (related && container.contains(related)) return;
+        _zoomOverlay.style.display = 'none';
     }, true);
 });
 

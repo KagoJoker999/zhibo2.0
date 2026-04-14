@@ -2260,6 +2260,15 @@ select:focus {
 }
 
 .hover-zoom-large {
+    display: none; /* 不再直接显示，由全局 overlay 接管 */
+}
+
+.hover-zoom-container:hover .hover-zoom-large {
+    display: none; /* 保持隐藏，防止原位置残影 */
+}
+
+/* 全局悬浮放大覆盖层，直接挂在 body，不受父级 overflow 影响 */
+#hover-zoom-overlay {
     display: none;
     position: fixed;
     width: 192px;
@@ -2268,15 +2277,10 @@ select:focus {
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     z-index: 99999;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     background: var(--bg-primary);
     pointer-events: none;
 }
-
-.hover-zoom-container:hover .hover-zoom-large {
-    display: block;
-}
-
 
 /* ========================================
    发券品处理页面样式
