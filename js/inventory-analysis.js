@@ -980,6 +980,7 @@ function initInventoryAnalysisPage() {
             }
 
             renderTurnoverChart(data || [], turnoverChartLimit);
+            if (window.updateInventoryReminder) window.updateInventoryReminder();
         } catch (e) {
             console.error('加载周转率历史失败:', e);
             body.innerHTML = '<div class="ia-empty-tip">加载失败</div>';
