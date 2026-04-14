@@ -126,7 +126,9 @@ function getInventoryAnalysisHTML() {
 
                 <!-- 周转率曲线图 -->
                 <div class="ia-chart-wrap">
-                    <div class="ia-chart-title"><i data-lucide="trending-up"></i> 周转率历史趋势</div>
+                    <div class="ia-chart-title">
+                        <span><i data-lucide="trending-up"></i> 周转率历史趋势</span>
+                    </div>
                     <div class="ia-chart-container">
                         <canvas id="iaTurnoverChart"></canvas>
                     </div>
@@ -196,7 +198,18 @@ function getInventoryAnalysisHTML() {
 
                 <!-- 滞销率曲线图 -->
                 <div class="ia-chart-wrap">
-                    <div class="ia-chart-title"><i data-lucide="trending-down"></i> 动销率 / 滞销率历史趋势</div>
+                    <div class="ia-chart-title">
+                        <span><i data-lucide="trending-down"></i> 动销率 / 滞销率历史趋势</span>
+                        <div class="ia-chart-controls">
+                            <select id="iaSkuChartLimit" class="ia-chart-select">
+                                <option value="10" selected>最近 10 条</option>
+                                <option value="30">最近 30 条</option>
+                            </select>
+                            <button type="button" class="ia-chart-refresh-btn" id="iaSkuChartRefresh">
+                                <i data-lucide="refresh-cw"></i> 刷新图表
+                            </button>
+                        </div>
+                    </div>
                     <div class="ia-chart-container">
                         <canvas id="iaSkuChart"></canvas>
                     </div>
@@ -575,6 +588,33 @@ function getInventoryAnalysisHTML() {
                 font-size: 0.82rem;
             }
 
+            /* 历史记录删除按钮 */
+            .ia-del-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border: none;
+                background: transparent;
+                color: var(--text-disabled);
+                cursor: pointer;
+                border-radius: 4px;
+                transition: all 0.15s;
+                padding: 0;
+                flex-shrink: 0;
+            }
+
+            .ia-del-btn:hover {
+                background: rgba(245, 63, 63, 0.15);
+                color: var(--error-color);
+            }
+
+            .ia-del-btn svg {
+                width: 13px;
+                height: 13px;
+            }
+
             /* 曲线图 */
             .ia-chart-wrap {
                 margin-top: 1.5rem;
@@ -588,8 +628,62 @@ function getInventoryAnalysisHTML() {
                 color: var(--text-secondary);
                 display: flex;
                 align-items: center;
+                justify-content: space-between;
                 gap: 0.4rem;
                 margin-bottom: 1rem;
+            }
+
+            .ia-chart-title > span {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+
+            .ia-chart-controls {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .ia-chart-select {
+                font-size: 0.78rem;
+                padding: 0.25rem 0.5rem;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                background: var(--bg-primary);
+                color: var(--text-secondary);
+                outline: none;
+                cursor: pointer;
+            }
+
+            .ia-chart-select:focus {
+                border-color: var(--primary-color);
+            }
+
+            .ia-chart-refresh-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                font-size: 0.78rem;
+                font-weight: 500;
+                padding: 0.25rem 0.65rem;
+                border: 1px solid rgba(22, 93, 255, 0.4);
+                border-radius: 6px;
+                background: rgba(22, 93, 255, 0.08);
+                color: var(--primary-color);
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .ia-chart-refresh-btn:hover {
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+
+            .ia-chart-refresh-btn svg {
+                width: 13px;
+                height: 13px;
             }
 
             .ia-chart-container {
@@ -676,6 +770,23 @@ function initInventoryAnalysisPage() {
     let turnoverChart = null;
     let skuChart = null;
 
+    // ── 删除单条记录 ──────────────────────────────
+    async function deleteRecord(id, reloadFn) {
+        if (!window.supabaseClient) return;
+        try {
+            const { error } = await window.supabaseClient
+                .from('inventory_analysis')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+            if (window.showToast) window.showToast('记录已删除', 'success');
+            reloadFn();
+        } catch (e) {
+            console.error('删除记录失败:', e);
+            if (window.showToast) window.showToast('删除失败：' + (e.message || e), 'error');
+        }
+    }
+
     // ── 加载历史数据 ─────────────────────────────
     async function loadTurnoverHistory() {
         const body = document.getElementById('iaTurnoverHistoryBody');
@@ -702,11 +813,21 @@ function initInventoryAnalysisPage() {
                     const hasClosing = r.closing_stock !== null;
                     const colorClass = hasClosing ? 'ia-success' : 'ia-warn';
                     const tag = hasClosing ? '' : '<span style="font-size:0.7rem;color:var(--warning-color);margin-left:4px;">(未完整)</span>';
-                    return `<div class="ia-history-item">
+                    return `<div class="ia-history-item" data-id="${r.id}">
                         <span class="ia-history-date">${r.record_date || r.record_month || '--'}</span>
-                        <span class="ia-history-rate ${colorClass}">${rate} 次${tag}</span>
+                        <span style="display:flex;align-items:center;gap:0.5rem;">
+                            <span class="ia-history-rate ${colorClass}">${rate} 次${tag}</span>
+                            <button type="button" class="ia-del-btn" data-id="${r.id}" data-type="turnover" title="删除此记录">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                            </button>
+                        </span>
                     </div>`;
                 }).join('');
+
+                // 绑定删除按钮事件
+                body.querySelectorAll('.ia-del-btn[data-type="turnover"]').forEach(btn => {
+                    btn.addEventListener('click', () => deleteRecord(btn.dataset.id, loadTurnoverHistory));
+                });
             }
 
             renderTurnoverChart(data || []);
@@ -715,6 +836,9 @@ function initInventoryAnalysisPage() {
             body.innerHTML = '<div class="ia-empty-tip">加载失败</div>';
         }
     }
+
+    // SKU 图表当前显示条数（默认10）
+    let skuChartLimit = 10;
 
     async function loadSkuHistory() {
         const body = document.getElementById('iaSkuHistoryBody');
@@ -729,7 +853,7 @@ function initInventoryAnalysisPage() {
                 .select('*')
                 .eq('record_type', 'sku_rate')
                 .order('record_date', { ascending: false })
-                .limit(20);
+                .limit(30);
 
             if (error) throw error;
 
@@ -739,18 +863,28 @@ function initInventoryAnalysisPage() {
                 body.innerHTML = data.map(r => {
                     const active = r.active_rate !== null ? Number(r.active_rate).toFixed(1) : '--';
                     const inactive = r.inactive_rate !== null ? Number(r.inactive_rate).toFixed(1) : '--';
-                    return `<div class="ia-history-item">
+                    return `<div class="ia-history-item" data-id="${r.id}">
                         <span class="ia-history-date">${r.record_date || '--'}</span>
-                        <span>
-                            <span class="ia-history-rate ia-success">${active}%</span>
-                            <span style="color:var(--text-muted);margin:0 4px;">/</span>
-                            <span class="ia-history-rate ia-error">${inactive}%</span>
+                        <span style="display:flex;align-items:center;gap:0.5rem;">
+                            <span>
+                                <span class="ia-history-rate ia-success">${active}%</span>
+                                <span style="color:var(--text-muted);margin:0 4px;">/</span>
+                                <span class="ia-history-rate ia-error">${inactive}%</span>
+                            </span>
+                            <button type="button" class="ia-del-btn" data-id="${r.id}" data-type="sku" title="删除此记录">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                            </button>
                         </span>
                     </div>`;
                 }).join('');
+
+                // 绑定删除按钮事件
+                body.querySelectorAll('.ia-del-btn[data-type="sku"]').forEach(btn => {
+                    btn.addEventListener('click', () => deleteRecord(btn.dataset.id, loadSkuHistory));
+                });
             }
 
-            renderSkuChart(data || []);
+            renderSkuChart(data || [], skuChartLimit);
         } catch (e) {
             console.error('加载滞销率历史失败:', e);
             body.innerHTML = '<div class="ia-empty-tip">加载失败</div>';
@@ -801,11 +935,15 @@ function initInventoryAnalysisPage() {
         });
     }
 
-    function renderSkuChart(data) {
+    function renderSkuChart(data, limit) {
         const canvas = document.getElementById('iaSkuChart');
         if (!canvas) return;
 
-        const sorted = [...data].sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''));
+        // 按日期升序，取最近 limit 条
+        const sorted = [...data]
+            .sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''))
+            .slice(-(limit || 10));
+
         const labels = sorted.map(r => r.record_date || '--');
         const activeRates = sorted.map(r => r.active_rate !== null ? Number(r.active_rate) : null);
         const inactiveRates = sorted.map(r => r.inactive_rate !== null ? Number(r.inactive_rate) : null);
@@ -1131,6 +1269,16 @@ function initInventoryAnalysisPage() {
             if (window.showToast) window.showToast('清空失败：' + (e.message || e), 'error');
             if (clearModal) clearModal.style.display = 'none';
         }
+    });
+
+    // ── SKU 图表刷新 & 条数切换 ──────────────────
+    document.getElementById('iaSkuChartLimit')?.addEventListener('change', (e) => {
+        skuChartLimit = parseInt(e.target.value) || 10;
+        loadSkuHistory();
+    });
+
+    document.getElementById('iaSkuChartRefresh')?.addEventListener('click', () => {
+        loadSkuHistory();
     });
 
     // ── 初始化加载 ────────────────────────────────
