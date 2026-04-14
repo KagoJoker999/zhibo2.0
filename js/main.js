@@ -1,5 +1,5 @@
 /**
- * 直播辅助工具 - 主脚本
+ * 辅助工具 - 主脚本
  * ========================================
  */
 
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 监听 hash 变化
     window.addEventListener('hashchange', handleHashChange);
 
-    console.log('📡 直播辅助工具已启动');
+    console.log('📡 辅助工具已启动');
 
     // ── 悬浮放大图片 ──────────────────────────────────────────
     // 全局唯一 overlay img，直接挂在 body（不受任何父级 overflow 影响）
@@ -329,7 +329,7 @@ function loadPage(page) {
     const config = PageConfig[page] || PageConfig['welcome'];
 
     // 更新浏览器标签标题
-    document.title = `${config.title} - 直播辅助工具`;
+    document.title = `${config.title} - 辅助工具`;
 
     // 显示对应内容
     if (page === 'welcome') {
