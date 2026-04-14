@@ -255,7 +255,7 @@ async function updateInventoryReminder() {
                 const targetStr = `${Math.floor(targetDate.getFullYear())}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
                 
                 dateSpan.textContent = targetStr;
-                reminderEl.style.display = 'inline-block';
+                reminderEl.style.display = 'inline-flex';
                 return;
             }
         }
