@@ -2301,6 +2301,7 @@ function renderRankingResults(results) {
 
     container.innerHTML = html || '<p class="placeholder">无排品结果</p>';
     if (window.lucide) window.lucide.createIcons();
+    bindRankingCopyButtons(container);
 }
 
 // 保存手动填写的商品ID到 product_id_data 表
@@ -2370,6 +2371,7 @@ async function saveManualProductId(productName, buttonElement) {
             const safeId = (productId || '').replace(/"/g, '&quot;');
             tdElement.innerHTML = `${productId} <button class="js-copy-btn" data-copy="${safeId}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
             if (window.lucide) window.lucide.createIcons();
+            bindRankingCopyButtons(tdElement);
         }
         // 移除红色背景
         if (trElement) {
@@ -2443,6 +2445,20 @@ function copyToClipboard(text) {
     } else {
         window.AppUtils?.showToast?.('复制失败，请手动复制', 'error');
     }
+}
+
+function bindRankingCopyButtons(root = document) {
+    if (!root?.querySelectorAll) return;
+
+    root.querySelectorAll('.js-copy-btn').forEach(btn => {
+        if (btn.dataset.copyBound === 'true') return;
+
+        btn.dataset.copyBound = 'true';
+        btn.removeAttribute('onclick');
+        btn.addEventListener('click', function() {
+            window._copyFromBtn(this);
+        });
+    });
 }
 
 // 供按钮 onclick 直接调用，从 data-copy 属性读取要复制的内容
