@@ -2239,7 +2239,7 @@ function renderRankingResults(results) {
             const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
             const safeProductId = (productId || '').replace(/"/g, '&quot;');
             const idDisplay = productId
-                ? `${productId} <button class="js-copy-btn" data-copy="${safeProductId}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`
+                ? `<span class="js-click-copy" data-copy="${safeProductId}" style="cursor:pointer; user-select:none;" title="点击复制ID">${productId}</span>`
                 : `<div style="display: flex; align-items: center; gap: 0.5rem;">
                        <input type="text" class="manual-product-id-input" data-product-name="${escapedProductName}" 
                               placeholder="输入商品ID" 
@@ -2267,11 +2267,11 @@ function renderRankingResults(results) {
                 const allCodes = codes.join(',');
                 const safeAllCodes = allCodes.replace(/"/g, '&quot;');
                 if (codes.length <= 2) {
-                    codeDisplay = `${allCodes} <button class="js-copy-btn" data-copy="${safeAllCodes}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+                    codeDisplay = `<span class="js-click-copy" data-copy="${safeAllCodes}" style="cursor:pointer; user-select:none;" title="点击复制编码">${allCodes}</span>`;
                 } else {
                     const displayCodes = codes.slice(0, 2).join(',');
                     const moreCount = codes.length - 2;
-                    codeDisplay = `${displayCodes}<span title="${allCodes}" style="cursor: help; color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span> <button class="js-copy-btn" data-copy="${safeAllCodes}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制全部编码"><i data-lucide="clipboard-list"></i></button>`;
+                    codeDisplay = `<span class="js-click-copy" data-copy="${safeAllCodes}" style="cursor:pointer; user-select:none;" title="点击复制全部编码（${allCodes}）">${displayCodes}<span style="color: var(--primary-color); margin-left: 4px;">+${moreCount}个</span></span>`;
                 }
             }
             // 无ID商品红底
@@ -2283,7 +2283,7 @@ function renderRankingResults(results) {
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
-                                        <td style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name} <button class="js-copy-btn" data-copy="${item.product_name.replace(/"/g, '&quot;')}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制商品名称"><i data-lucide="clipboard-list"></i></button></td>
+                                         <td class="js-click-copy" data-copy="${item.product_name.replace(/"/g, '&quot;')}" style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; user-select: none;" title="点击复制">${item.product_name}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
@@ -2369,7 +2369,7 @@ async function saveManualProductId(productName, buttonElement) {
         const trElement = buttonElement.closest('tr');
         if (tdElement) {
             const safeId = (productId || '').replace(/"/g, '&quot;');
-            tdElement.innerHTML = `${productId} <button class="js-copy-btn" data-copy="${safeId}" onclick="window._copyFromBtn(this)" style="background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--text-muted);" title="复制"><i data-lucide="clipboard-list"></i></button>`;
+            tdElement.innerHTML = `<span class="js-click-copy" data-copy="${safeId}" style="cursor:pointer; user-select:none;" title="点击复制ID">${productId}</span>`;
             if (window.lucide) window.lucide.createIcons();
             bindRankingCopyButtons(tdElement);
         }
@@ -2448,18 +2448,16 @@ function copyToClipboard(text) {
 }
 
 function bindRankingCopyButtons(root = document) {
-    if (!root?.querySelectorAll) return;
-
-    root.querySelectorAll('.js-copy-btn').forEach(btn => {
-        if (btn.dataset.copyBound === 'true') return;
-
-        btn.dataset.copyBound = 'true';
-        btn.removeAttribute('onclick');
-        btn.addEventListener('click', function() {
-            window._copyFromBtn(this);
-        });
-    });
+    // 不再需要单独绑定，保留以兼容旧调用
 }
+
+// 事件委托：投品结果内容區域内，点击 .js-click-copy 直接复制
+document.addEventListener('click', function(e) {
+    const target = e.target.closest('.js-click-copy');
+    if (!target) return;
+    const text = target.dataset.copy || '';
+    copyToClipboard(text);
+});
 
 // 供按钮 onclick 直接调用，从 data-copy 属性读取要复制的内容
 window._copyFromBtn = function(btn) {
