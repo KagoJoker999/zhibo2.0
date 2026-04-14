@@ -48,9 +48,6 @@ function getInventoryAnalysisHTML() {
                     <h2><i data-lucide="package-search"></i> 库存判断</h2>
                     <p>库存周转率 &amp; SKU 动销/滞销率计算与追踪</p>
                 </div>
-                <button type="button" class="btn btn-danger ia-clear-btn" id="iaClearBtn">
-                    <i data-lucide="trash-2"></i> 一键清空数据
-                </button>
             </div>
 
             <!-- ===== 模块一：库存周转率 ===== -->
@@ -64,15 +61,17 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-formula-box">
-                            <div class="ia-formula-title">填写说明</div>
-                            <div class="ia-formula-content ia-note-content">
-                                <!-- 待填写说明内容 -->
+                            <div class="ia-formula-title">计算公式</div>
+                            <div class="ia-formula-content">
+                                月度库存周转率 = <span class="ia-fraction"><span class="ia-numerator">当月商品销售总成本</span><span class="ia-denominator">(月初库存总金额 + 月末库存总金额) ÷ 2</span></span>
                             </div>
                         </div>
 
                         <div class="ia-field">
-                            <label for="iaSalesCost">当月商品销售总成本</label>
-                            <div class="ia-source-tag">ERP 报表-销售主体分析-查询池：近一个月销售成本  数值为「销售成本」</div>
+                            <div class="ia-field-label-row">
+                                <label for="iaSalesCost">当月商品销售总成本</label>
+                                <div class="ia-source-tag">ERP 报表-销售主体分析-查询池：近一个月销售成本&nbsp;&nbsp;数值为「销售成本」</div>
+                            </div>
                             <div class="ia-input-box">
                                 <input type="number" id="iaSalesCost" placeholder="0.00" min="0" step="0.01">
                                 <span class="ia-suffix">元</span>
@@ -80,8 +79,10 @@ function getInventoryAnalysisHTML() {
                         </div>
 
                         <div class="ia-field">
-                            <label for="iaOpeningStock">月初库存总金额</label>
-                            <div class="ia-source-tag">ERP 报表-商品库存结构分析-查询池：库存总金额（成本）  数值为「主仓实际库存金额」</div>
+                            <div class="ia-field-label-row">
+                                <label for="iaOpeningStock">月初库存总金额</label>
+                                <div class="ia-source-tag">ERP 报表-商品库存结构分析-查询池：库存总金额（成本）&nbsp;&nbsp;数值为「主仓实际库存金额」</div>
+                            </div>
                             <div class="ia-input-box">
                                 <input type="number" id="iaOpeningStock" placeholder="0.00" min="0" step="0.01">
                                 <span class="ia-suffix">元</span>
@@ -90,19 +91,26 @@ function getInventoryAnalysisHTML() {
                         </div>
 
                         <div class="ia-field">
-                            <label for="iaClosingStock">
-                                月末库存总金额
-                                <span class="ia-optional">(可月末填写)</span>
-                            </label>
+                            <div class="ia-field-label-row">
+                                <label for="iaClosingStock">
+                                    月末库存总金额
+                                    <span class="ia-optional">(可月末填写)</span>
+                                </label>
+                            </div>
                             <div class="ia-input-box">
                                 <input type="number" id="iaClosingStock" placeholder="月末再填写" min="0" step="0.01">
                                 <span class="ia-suffix">元</span>
                             </div>
                         </div>
 
-                        <button type="button" class="btn btn-primary ia-submit-btn" id="iaTurnoverSave">
-                            <i data-lucide="save"></i> 计算并保存
-                        </button>
+                        <div style="display:flex;gap:10px;">
+                            <button type="button" class="btn btn-primary ia-submit-btn" id="iaTurnoverSave" style="flex:1;">
+                                <i data-lucide="save"></i> 计算并保存
+                            </button>
+                            <button type="button" class="btn btn-secondary ia-submit-btn" id="iaTurnoverCancelEdit" style="display:none;flex:1;background:#f2f3f5;color:#4e5969;border:1px solid #e5e6eb;">
+                                <i data-lucide="x-circle"></i> 取消续填
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 右：结果 -->
@@ -115,9 +123,14 @@ function getInventoryAnalysisHTML() {
                         </div>
 
                         <div class="ia-history-list" id="iaTurnoverHistory">
-                            <div class="ia-history-header">
-                                <i data-lucide="clock"></i> 历史记录
-                                <span class="ia-tip">（数据库：inventory_analysis · record_type = turnover）</span>
+                            <div class="ia-history-header" style="justify-content:space-between;display:flex;">
+                                <div>
+                                    <i data-lucide="clock"></i> 历史记录
+                                    <span class="ia-tip">（数据库：inventory_analysis，可点击续填）</span>
+                                </div>
+                                <button type="button" class="ia-bulk-del-btn" id="iaTurnoverBulkDel" title="清空所有周转率记录">
+                                    <i data-lucide="trash-2"></i> 批量删除
+                                </button>
                             </div>
                             <div class="ia-history-body" id="iaTurnoverHistoryBody">
                                 <div class="ia-loading"><i data-lucide="loader-2"></i> 加载中...</div>
@@ -157,15 +170,19 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-formula-box">
-                            <div class="ia-formula-title">填写说明</div>
-                            <div class="ia-formula-content ia-note-content">
-                                <!-- 待填写说明内容 -->
+                            <div class="ia-formula-title">计算公式</div>
+                            <div class="ia-formula-content">
+                                动销率 = <span class="ia-fraction"><span class="ia-numerator">当月有销量的 SKU 总数</span><span class="ia-denominator">当月店铺总 SKU 数</span></span> × 100%
+                                <br>
+                                <span style="margin-top:0.5rem;display:block;">滞销率 = 100% − 动销率</span>
                             </div>
                         </div>
 
                         <div class="ia-field">
-                            <label for="iaActiveSku">当前有销售量的 SKU 总数</label>
-                            <div class="ia-source-tag">ERP 商品及库存管理  筛选池：有销量SKU数 &gt; 5  数值为「条目数」</div>
+                            <div class="ia-field-label-row">
+                                <label for="iaActiveSku">当前有销售量的 SKU 总数</label>
+                                <div class="ia-source-tag">ERP 商品及库存管理&nbsp;&nbsp;筛选池：有销量SKU数 &gt; 5&nbsp;&nbsp;数值为「条目数」</div>
+                            </div>
                             <div class="ia-input-box">
                                 <input type="number" id="iaActiveSku" placeholder="0" min="0" step="1">
                                 <span class="ia-suffix">个</span>
@@ -173,8 +190,10 @@ function getInventoryAnalysisHTML() {
                         </div>
 
                         <div class="ia-field">
-                            <label for="iaTotalSku">当前店铺总 SKU 数</label>
-                            <div class="ia-source-tag">ERP 商品及库存管理  筛选池：有效SKU数 &gt; 5  数值为「条目数」</div>
+                            <div class="ia-field-label-row">
+                                <label for="iaTotalSku">当前店铺总 SKU 数</label>
+                                <div class="ia-source-tag">ERP 商品及库存管理&nbsp;&nbsp;筛选池：有效SKU数 &gt; 5&nbsp;&nbsp;数值为「条目数」</div>
+                            </div>
                             <div class="ia-input-box">
                                 <input type="number" id="iaTotalSku" placeholder="0" min="1" step="1">
                                 <span class="ia-suffix">个</span>
@@ -196,9 +215,14 @@ function getInventoryAnalysisHTML() {
                         </div>
 
                         <div class="ia-history-list" id="iaSkuHistory">
-                            <div class="ia-history-header">
-                                <i data-lucide="clock"></i> 历史记录
-                                <span class="ia-tip">（数据库：inventory_analysis · record_type = sku_rate）</span>
+                            <div class="ia-history-header" style="justify-content:space-between;display:flex;">
+                                <div>
+                                    <i data-lucide="clock"></i> 历史记录
+                                    <span class="ia-tip">（数据库：inventory_analysis）</span>
+                                </div>
+                                <button type="button" class="ia-bulk-del-btn" id="iaSkuBulkDel" title="清空所有SKU记录">
+                                    <i data-lucide="trash-2"></i> 批量删除
+                                </button>
                             </div>
                             <div class="ia-history-body" id="iaSkuHistoryBody">
                                 <div class="ia-loading"><i data-lucide="loader-2"></i> 加载中...</div>
@@ -607,20 +631,58 @@ function getInventoryAnalysisHTML() {
                 line-height: 1.6;
             }
 
+            /* 字段标题水平排列容器 */
+            .ia-field-label-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 0.4rem;
+                gap: 0.5rem;
+            }
+            .ia-field-label-row label {
+                margin-bottom: 0 !important;
+                white-space: nowrap;
+            }
+            .ia-field-label-row .ia-source-tag { margin-bottom: 0 !important; }
+
             /* 数据来源高亮标签 */
             .ia-source-tag {
-                font-size: 0.72rem;
+                font-size: 0.68rem;
                 font-weight: 500;
                 color: rgba(22, 93, 255, 0.9);
                 background: rgba(22, 93, 255, 0.08);
                 border: 1px solid rgba(22, 93, 255, 0.2);
                 border-radius: 5px;
-                padding: 0.25rem 0.6rem;
-                line-height: 1.5;
+                padding: 0.2rem 0.5rem;
+                line-height: 1.4;
+                text-align: right;
                 margin-bottom: 0.1rem;
             }
 
             /* 历史记录删除按钮 */
+            .ia-bulk-del-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                padding: 0.2rem 0.5rem;
+                font-size: 0.75rem;
+                border: 1px solid rgba(245, 63, 63, 0.3);
+                background: rgba(245, 63, 63, 0.05);
+                color: var(--error-color);
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .ia-bulk-del-btn:hover {
+                background: var(--error-color);
+                color: white;
+            }
+            
+            .ia-bulk-del-btn svg {
+                width: 13px !important;
+                height: 13px !important;
+            }
+
             .ia-del-btn {
                 display: inline-flex;
                 align-items: center;
@@ -675,6 +737,8 @@ function getInventoryAnalysisHTML() {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
+                white-space: nowrap;
+                flex-wrap: nowrap;
             }
 
             .ia-chart-select {
@@ -802,6 +866,30 @@ function initInventoryAnalysisPage() {
     let turnoverChart = null;
     let skuChart = null;
 
+    // 记录目前编辑的周转率项
+    let currentEditingTurnoverId = null;
+    let turnoverHistoryData = [];
+
+    // ── 模块表单重置器 ──────────────────────────
+    function resetTurnoverForm() {
+        currentEditingTurnoverId = null;
+        document.getElementById('iaSalesCost').value = '';
+        document.getElementById('iaOpeningStock').value = '';
+        document.getElementById('iaClosingStock').value = '';
+        const btn = document.getElementById('iaTurnoverSave');
+        if(btn) {
+            btn.innerHTML = '<i data-lucide="save"></i> 计算并保存';
+            btn.style.background = '';
+            btn.style.borderColor = '';
+        }
+        const cancelBtn = document.getElementById('iaTurnoverCancelEdit');
+        if(cancelBtn) cancelBtn.style.display = 'none';
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    // 取消接续编辑
+    document.getElementById('iaTurnoverCancelEdit')?.addEventListener('click', resetTurnoverForm);
+
     // ── 删除单条记录 ──────────────────────────────
     async function deleteRecord(id, reloadFn) {
         if (!window.supabaseClient) return;
@@ -844,8 +932,9 @@ function initInventoryAnalysisPage() {
                     const rate = r.turnover_rate !== null ? Number(r.turnover_rate).toFixed(2) : '--';
                     const hasClosing = r.closing_stock !== null;
                     const colorClass = hasClosing ? 'ia-success' : 'ia-warn';
-                    const tag = hasClosing ? '' : '<span style="font-size:0.7rem;color:var(--warning-color);margin-left:4px;">(未完整)</span>';
-                    return `<div class="ia-history-item" data-id="${r.id}">
+                    const tag = hasClosing ? '' : '<span style="font-size:0.7rem;color:var(--warning-color);margin-left:4px;">(可续填)</span>';
+                    const activeClass = (r.id === currentEditingTurnoverId) ? 'border: 1px solid rgba(0,180,42,0.4); background: rgba(0,180,42,0.03);' : '';
+                    return `<div class="ia-history-item ia-turnover-entry" data-id="${r.id}" style="cursor:pointer; transition:all 0.2s; ${activeClass}" title="点击接续填写该条目数据">
                         <span class="ia-history-date">${r.record_date || r.record_month || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
                             <span class="ia-history-rate ${colorClass}">${rate} 次${tag}</span>
@@ -855,6 +944,34 @@ function initInventoryAnalysisPage() {
                         </span>
                     </div>`;
                 }).join('');
+
+                turnoverHistoryData = data; // 保存下来用于查找
+
+                // 点击进入编辑模式
+                body.querySelectorAll('.ia-turnover-entry').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        if (e.target.closest('.ia-del-btn')) return;
+                        const id = parseInt(item.dataset.id);
+                        const record = turnoverHistoryData.find(x => x.id === id);
+                        if (record) {
+                            currentEditingTurnoverId = id;
+                            document.getElementById('iaSalesCost').value = record.sales_cost !== null ? record.sales_cost : '';
+                            document.getElementById('iaOpeningStock').value = record.opening_stock !== null ? record.opening_stock : '';
+                            document.getElementById('iaClosingStock').value = record.closing_stock !== null ? record.closing_stock : '';
+                            const btn = document.getElementById('iaTurnoverSave');
+                            btn.innerHTML = '<i data-lucide="edit-3"></i> 更新该记录';
+                            btn.style.background = '#00b42a';
+                            btn.style.borderColor = '#00b42a';
+                            document.getElementById('iaTurnoverCancelEdit').style.display = 'inline-flex';
+                            if (window.lucide) window.lucide.createIcons();
+                            
+                            // 高亮显示当前选中的记录
+                            body.querySelectorAll('.ia-turnover-entry').forEach(el => el.style.border = 'none');
+                            item.style.border = '1px solid rgba(0,180,42,0.4)';
+                            item.style.background = 'rgba(0,180,42,0.03)';
+                        }
+                    });
+                });
 
                 // 绑定删除按钮事件
                 body.querySelectorAll('.ia-del-btn[data-type="turnover"]').forEach(btn => {
@@ -1163,13 +1280,24 @@ function initInventoryAnalysisPage() {
                 turnover_rate: turnoverRate
             };
 
-            const { error } = await window.supabaseClient
-                .from('inventory_analysis')
-                .insert(payload);
+            if (currentEditingTurnoverId) {
+                const { error } = await window.supabaseClient
+                    .from('inventory_analysis')
+                    .update(payload)
+                    .eq('id', currentEditingTurnoverId);
 
-            if (error) throw error;
+                if (error) throw error;
+                if (window.showToast) window.showToast('记录已更新', 'success');
+                resetTurnoverForm();
+            } else {
+                const { error } = await window.supabaseClient
+                    .from('inventory_analysis')
+                    .insert(payload);
 
-            if (window.showToast) window.showToast('周转率数据已保存', 'success');
+                if (error) throw error;
+                if (window.showToast) window.showToast('周转率数据已保存', 'success');
+            }
+
             loadTurnoverHistory();
         } catch (e) {
             console.error('保存周转率数据失败:', e);
@@ -1329,6 +1457,37 @@ function initInventoryAnalysisPage() {
         loadTurnoverHistory();
     });
 
+    // ── 批量删除按钮绑定 ───────────────────────────
+    document.getElementById('iaTurnoverBulkDel')?.addEventListener('click', async () => {
+        if (!confirm('提示：此操作将清空“库存周转率”的所有历史记录，确认继续吗？')) return;
+        if (!window.supabaseClient) return;
+        try {
+            const { error } = await window.supabaseClient.from('inventory_analysis').delete().eq('record_type', 'turnover');
+            if (error) throw error;
+            if (window.showToast) window.showToast('周转率记录已清空', 'success');
+            loadTurnoverHistory();
+            if (turnoverChart) { turnoverChart.destroy(); turnoverChart = null; }
+        } catch(e) {
+            console.error('清空失败:', e);
+            if (window.showToast) window.showToast('清空失败', 'error');
+        }
+    });
+
+    document.getElementById('iaSkuBulkDel')?.addEventListener('click', async () => {
+        if (!confirm('提示：此操作将清空“SKU动销/滞销率”的所有历史记录，确认继续吗？')) return;
+        if (!window.supabaseClient) return;
+        try {
+            const { error } = await window.supabaseClient.from('inventory_analysis').delete().eq('record_type', 'sku_rate');
+            if (error) throw error;
+            if (window.showToast) window.showToast('SKU记录已清空', 'success');
+            loadSkuHistory();
+            if (skuChart) { skuChart.destroy(); skuChart = null; }
+        } catch(e) {
+            console.error('清空失败:', e);
+            if (window.showToast) window.showToast('清空失败', 'error');
+        }
+    });
+    
     // ── 初始化加载 ────────────────────────────────
     // 等待 Chart.js 就绪后再渲染
     function waitForChartJs(cb, maxTry = 30) {
