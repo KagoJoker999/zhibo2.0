@@ -97,7 +97,7 @@ function getInventoryAnalysisHTML() {
                                     <span class="ia-optional">(可月末填写)</span>
                                 </label>
                             </div>
-                            <div class="ia-input-box ia-closing-box">
+                            <div class="ia-input-box">
                                 <input type="number" id="iaClosingStock" placeholder="月末再填写" min="0" step="0.01">
                                 <span class="ia-suffix">元</span>
                             </div>
@@ -431,33 +431,12 @@ function getInventoryAnalysisHTML() {
                 border: 1px solid var(--border-color);
                 border-radius: 8px;
                 overflow: hidden;
-                transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+                transition: border-color 0.2s, box-shadow 0.2s;
             }
 
             .ia-input-box:focus-within {
                 border-color: var(--primary-color);
                 box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.15);
-            }
-
-            /* 特殊高亮第三个框：期末库存属于二次补录，予以不同辨识度 */
-            .ia-closing-box {
-                background: rgba(255, 125, 0, 0.03);
-                border-color: rgba(255, 125, 0, 0.15);
-            }
-            .ia-closing-box:focus-within {
-                border-color: rgba(255, 125, 0, 0.5);
-                box-shadow: 0 0 0 2px rgba(255, 125, 0, 0.15);
-                background: rgba(255, 125, 0, 0.05);
-            }
-            .ia-closing-box input {
-                color: #ff7d00;
-            }
-            .ia-closing-box input::placeholder {
-                color: rgba(255, 125, 0, 0.35);
-            }
-            .ia-closing-box .ia-suffix {
-                border-left-color: rgba(255, 125, 0, 0.15);
-                color: rgba(255, 125, 0, 0.7);
             }
 
             .ia-input-box input {
@@ -490,7 +469,9 @@ function getInventoryAnalysisHTML() {
             .ia-field-hint {
                 font-size: 0.78rem;
                 color: var(--warning-color);
-                min-height: 1rem;
+            }
+            .ia-field-hint:empty {
+                display: none;
             }
 
             .ia-submit-btn {
