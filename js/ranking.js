@@ -1516,23 +1516,7 @@ function generateRankingPage() {
                     border: 1px solid var(--border-color);
                     display: block;
                 }
-                .hover-zoom-large {
-                    display: none;
-                    position: absolute;
-                    left: 54px;
-                    top: -72px; /* 垂直居中: -(192/2 - 48/2) */
-                    width: 192px; /* 4倍大小 */
-                    height: 192px;
-                    object-fit: cover;
-                    border-radius: 4px;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-                    z-index: 1000;
-                    border: 1px solid var(--border-color);
-                    background: var(--bg-primary);
-                }
-                .hover-zoom-container:hover .hover-zoom-large {
-                    display: block;
-                }
+
             </style>
             <div class="ranking-top-bar" style="display: flex; align-items: center; gap: 1.5rem; padding: 1rem 1.5rem; background: var(--bg-secondary); margin: 1rem 0; border-radius: var(--border-radius); white-space: nowrap; overflow-x: auto;">
                 <!-- 统计数据（横向排列） -->
@@ -1803,23 +1787,7 @@ function generateRankingCheckPage() {
                     border: 1px solid var(--border-color);
                     display: block;
                 }
-                .hover-zoom-large {
-                    display: none;
-                    position: absolute;
-                    left: 54px;
-                    top: -72px; /* 垂直居中: -(192/2 - 48/2) */
-                    width: 192px; /* 4倍大小 */
-                    height: 192px;
-                    object-fit: cover;
-                    border-radius: 4px;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-                    z-index: 1000;
-                    border: 1px solid var(--border-color);
-                    background: var(--bg-primary);
-                }
-                .hover-zoom-container:hover .hover-zoom-large {
-                    display: block;
-                }
+
             </style>
             
             <!-- 已保存排品结果（从数据库读取） -->
@@ -2285,11 +2253,10 @@ function renderRankingResults(results) {
             const imageUrl = item.image_url || '';
             // 处理图片URL，可能包含多个逗号分隔的URL
             const firstImageUrl = imageUrl ? imageUrl.split(',')[0].trim() : '';
-            // 使用 .hover-zoom-container 和双图结构实现悬浮放大（避免闪烁）
+            // 使用 .hover-zoom-container 结构实现悬浮放大（全局 overlay 接管）
             const imageHtml = firstImageUrl
                 ? `<div class="hover-zoom-container">
                        <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'">
-                       <img src="${firstImageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
                    </div>`
                 : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
             const productCode = item.product_code || '--';
@@ -2554,7 +2521,6 @@ async function loadAndRenderSavedResults() {
                 const imageHtml = firstImageUrl
                     ? `<div class="hover-zoom-container">
                            <img src="${firstImageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>加载失败</span>'">
-                           <img src="${firstImageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
                        </div>`
                     : `<div style="width: 48px; height: 48px; background: var(--bg-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.625rem; border: 1px solid var(--border-color);">无图</div>`;
                 const productCode = item.product_code || '--';

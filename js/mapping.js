@@ -540,7 +540,6 @@ function renderMappingTable(container, data) {
         const imageHtml = imageUrl
             ? `<div class="hover-zoom-container">
                    <img src="${imageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>无图</span>'">
-                   <img src="${imageUrl}" class="hover-zoom-large" referrerpolicy="no-referrer">
                </div>`
             : '<span style="color: var(--text-muted);">无</span>';
         const bgColor = categoryColors[item.ranking_result] || 'transparent';
