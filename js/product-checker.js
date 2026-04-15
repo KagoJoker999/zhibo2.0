@@ -103,6 +103,15 @@ async function startCheck(file) {
         const uploadCodes = new Set();
         // 商品名称 -> 商品ID 的映射（用于生成编辑链接）
         const nameToProductId = new Map();
+        
+        // 阶梯库存列索引（默认 Q 列索引为 16）
+        let stepInventoryColIdx = header.findIndex(h => h.includes('阶梯库存'));
+        if (stepInventoryColIdx === -1) stepInventoryColIdx = 16;
+        
+        // 商品名称 -> 阶梯库存映射
+        const uploadNameToStepInv = new Map();
+        // J列数值 -> 商品名称列表映射
+        const colJValueToNames = new Map();
 
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
@@ -113,6 +122,19 @@ async function startCheck(file) {
             if (!name) continue;
             uploadNames.add(name);
             if (code) uploadCodes.add(code);
+            
+            // 记录阶梯库存
+            uploadNameToStepInv.set(name, String(row[stepInventoryColIdx] ?? '').trim());
+            
+            // 记录 J 列 (索引 9)
+            const colJValue = String(row[9] ?? '').trim();
+            if (colJValue) {
+                if (!colJValueToNames.has(colJValue)) {
+                    colJValueToNames.set(colJValue, []);
+                }
+                colJValueToNames.get(colJValue).push(name);
+            }
+
             // 保存第一个遇到的商品ID
             if (productIdColIdx !== -1 && !nameToProductId.has(name)) {
                 const pid = String(row[productIdColIdx] ?? '').trim();
@@ -190,6 +212,41 @@ async function startCheck(file) {
             }
         }
 
+        // ========== 检查 C：J列重复校验 ==========
+        for (const [val, names] of colJValueToNames.entries()) {
+            if (names.length > 1) {
+                issues.push({
+                    type: 'duplicate',
+                    label: '编码重复',
+                    name: '商品编码异常，有重复。',
+                    productId: '', 
+                    detail: `重复值 "${val}" (相关商品: ${names.join(', ')})`
+                });
+            }
+        }
+
+        // ========== 检查 D：预售阶梯库存校验 ==========
+        for (const item of sourceData) {
+            const isPresale = (item.virtual_category || '').trim() === '可预售';
+            if (!isPresale) continue;
+
+            let productName = (item.product_name || '').trim();
+            productName = cleanProductName(productName); 
+            
+            if (!productName || !uploadNameToStepInv.has(productName)) continue;
+
+            const stepInvValue = uploadNameToStepInv.get(productName);
+            if (stepInvValue !== '500') {
+                issues.push({
+                    type: 'inventory',
+                    label: '库存异常',
+                    name: productName,
+                    productId: nameToProductId.get(productName) || '',
+                    detail: `预售库存填写错误：表内阶梯库存为 "${stepInvValue}"，规定必须填写为 500`
+                });
+            }
+        }
+
         updateProgress('校验完成', 100);
 
         // 3. 显示结果
@@ -226,10 +283,14 @@ function renderCheckerResults(issues, totalCount) {
     // 按类型分组
     const missingItems = issues.filter(i => i.type === 'missing');
     const skuItems = issues.filter(i => i.type === 'sku');
+    const duplicateItems = issues.filter(i => i.type === 'duplicate');
+    const inventoryItems = issues.filter(i => i.type === 'inventory');
 
     const typeColors = {
         missing: { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', icon: '🚫' },
-        sku: { bg: 'rgba(139, 92, 246, 0.1)', border: 'rgba(139, 92, 246, 0.3)', color: '#8b5cf6', icon: '🔗' }
+        sku: { bg: 'rgba(139, 92, 246, 0.1)', border: 'rgba(139, 92, 246, 0.3)', color: '#8b5cf6', icon: '🔗' },
+        duplicate: { bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', icon: '⚠️' },
+        inventory: { bg: 'rgba(236, 72, 153, 0.1)', border: 'rgba(236, 72, 153, 0.3)', color: '#ec4899', icon: '📦' }
     };
 
     let html = `
@@ -262,6 +323,8 @@ function renderCheckerResults(issues, totalCount) {
 
     html += renderGroup(missingItems, '缺失商品', 'missing');
     html += renderGroup(skuItems, 'SKU缺失', 'sku');
+    html += renderGroup(duplicateItems, '编码异常', 'duplicate');
+    html += renderGroup(inventoryItems, '预售异常', 'inventory');
 
     resultsDiv.innerHTML = html;
 }
