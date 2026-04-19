@@ -1580,7 +1580,7 @@ function generateRankingPage() {
                     <button class="btn btn-primary" id="btnSaveResults" disabled style="display: inline-flex; align-items: center; gap: 0.5rem; height: 40px; line-height: 1;">
                         保存结果到数据库 <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: normal; font-family: monospace;">ranking_results</span>
                     </button>
-                    <span class="tag-shadowbot">影刀读取</span>
+                    <span class="tag-shadowbot">报春后可供影刀读取-可空库存开预售</span>
                     <button class="btn btn-secondary" onclick="window.location.hash='#arrangement-check'; window.dispatchEvent(new HashChangeEvent('hashchange'));" style="margin-left: 1rem; height: 40px; line-height: 1;"><i data-lucide="package"></i> 历史排品</button>
                 </div>
             </div>
@@ -1793,7 +1793,7 @@ function generateRankingCheckPage() {
             <!-- 已保存排品结果（从数据库读取） -->
             <div class="upload-block" id="block-saved-ranking-result" style="margin: 1rem 0 1.5rem; min-height: 400px;">
                 <div class="block-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                    <h3 style="margin: 0; font-size: 1rem;" class="flex-center gap-sm"><i data-lucide="package"></i> 已保存排品结果 <span class="db-table-tag">← ranking_results</span> <span class="tag-red">影刀读取</span></h3>
+                    <h3 style="margin: 0; font-size: 1rem;" class="flex-center gap-sm"><i data-lucide="package"></i> 已保存排品结果 <span class="db-table-tag">← ranking_results</span> <span class="tag-red">报春后可供影刀读取-可空库存开预售</span></h3>
                     <button class="btn btn-sm" id="btnRefreshSavedResults" style="font-size: 0.75rem; height: 32px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> 刷新</button>
                 </div>
                 <div class="scrollable-content" id="savedRankingResultContent" style="max-height: 600px; overflow-y: auto;">
