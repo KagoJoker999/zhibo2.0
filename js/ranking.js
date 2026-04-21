@@ -2035,12 +2035,12 @@ async function initRankingPage() {
                 window.AppUtils?.showToast?.(`已保存 ${count} 条结果到数据库`, 'success');
 
                 // 显示经过美化的成功提示框，单行不换行
-                const successIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-                const successMessage = '<div style="display: flex; align-items: center; justify-content: center; white-space: nowrap;"><strong style="color: #10b981; font-size: 1.05em; margin-right: 6px;">保存成功！</strong><span style="color: var(--text-color);">请执行<strong style="color: var(--primary-color);">【排品推送】</strong>，同步给排品人员。</span></div>';
+                const successIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" class="animate-icon" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                const successMessage = '<div style="display: flex; align-items: center; justify-content: center; white-space: nowrap;"><strong style="color: #ffffff; font-size: 1.05em; margin-right: 6px;">保存成功！</strong><span style="color: #ffffff;">先要做<strong style="color: #ffffff;">【福利排品】</strong>，然后再做【排品推送】。</span></div>';
                 
                 window.AppUtils?.showCenterAlert?.(successMessage, successIcon);
 
-                // 3秒后自动跳转到“排品推送”页面
+                // 5秒后自动跳转到“福利排品”页面
                 setTimeout(() => {
                     // 确保先关闭提示框再跳转，或者直接跳转
                     const alertOverlay = document.querySelector('.center-alert-overlay');
@@ -2048,9 +2048,9 @@ async function initRankingPage() {
                         alertOverlay.style.animation = 'fadeIn 0.2s ease reverse';
                         setTimeout(() => alertOverlay.remove(), 200);
                     }
-                    window.location.hash = '#mapping';
+                    window.location.hash = '#welfare-ranking';
                     window.dispatchEvent(new HashChangeEvent('hashchange'));
-                }, 3000);
+                }, 5000);
             } catch (error) {
                 console.error('保存失败:', error);
                 window.AppUtils?.showToast?.('保存失败: ' + error.message, 'error');
