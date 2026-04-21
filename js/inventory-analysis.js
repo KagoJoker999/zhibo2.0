@@ -95,7 +95,7 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaSalesCost">当月商品销售总成本</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 报表-销售主体分析</div>
                                     <div class="ia-source-tag">查询池：近一个月销售成本</div>
                                     <div class="ia-source-tag">数值为「销售成本」</div>
@@ -110,7 +110,7 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaCurrentStock">当前库存总金额</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 报表-商品库存结构分析</div>
                                     <div class="ia-source-tag">查询池：库存总金额（成本）</div>
                                     <div class="ia-source-tag">数值为「主仓实际库存金额」</div>
@@ -202,9 +202,9 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaActiveSku">当前有销售量的 SKU 总数</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
-                                    <div class="ia-source-tag">筛选池：有销量 SKU 数量</div>
+                                    <div class="ia-source-tag">筛选池：有销量SKU数 &gt; 5</div>
                                     <div class="ia-source-tag">数值为「条目数」</div>
                                 </div>
                             </div>
@@ -217,9 +217,9 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaTotalSku">当前店铺总 SKU 数</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
-                                    <div class="ia-source-tag">筛选池：可售 SKU 数量</div>
+                                    <div class="ia-source-tag">筛选池：有效SKU数 &gt; 5</div>
                                     <div class="ia-source-tag">数值为「条目数」</div>
                                 </div>
                             </div>
@@ -307,9 +307,9 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaSaleableSku">可售 SKU 数量</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
-                                    <div class="ia-source-tag">筛选池：可售 SKU 数量</div>
+                                    <div class="ia-source-tag">筛选池：有效SKU数 > 5</div>
                                     <div class="ia-source-tag">数值为「条目数」</div>
                                 </div>
                             </div>
@@ -322,9 +322,9 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaInactiveSku">滞销 SKU 数量</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
-                                    <div class="ia-source-tag">筛选池：滞销 SKU 数量</div>
+                                    <div class="ia-source-tag">筛选池：滞销SKU数</div>
                                     <div class="ia-source-tag">数值为「条目数」</div>
                                 </div>
                             </div>
@@ -412,7 +412,7 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaSaleableQty">可用数（总）</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
                                     <div class="ia-source-tag">筛选池：可售 SKU 数量</div>
                                     <div class="ia-source-tag">数值为「可用数合计」</div>
@@ -427,7 +427,7 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-field">
                             <div class="ia-field-label-row">
                                 <label for="iaInactiveQty">滞销可用数</label>
-                                <div class="ia-source-tags">
+                                <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
                                     <div class="ia-source-tag">筛选池：滞销 SKU 数量</div>
                                     <div class="ia-source-tag">数值为「可用数合计」</div>
@@ -931,14 +931,13 @@ function getInventoryAnalysisHTML() {
                 margin-bottom: 0 !important;
                 white-space: nowrap;
             }
-            .ia-field-label-row .ia-source-tags { 
-                margin-bottom: 0 !important; 
+            .ia-field-label-row .ia-source-tag { margin-bottom: 0 !important; }
+            .ia-source-tags-group {
                 display: flex;
+                gap: 0.3rem;
                 flex-wrap: wrap;
-                gap: 0.35rem;
                 justify-content: flex-end;
             }
-            .ia-field-label-row .ia-source-tag { margin-bottom: 0 !important; }
 
             /* 数据来源高亮标签 */
             .ia-source-tag {
