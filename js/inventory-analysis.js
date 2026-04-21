@@ -21,6 +21,9 @@
  *   saleable_sku_count INTEGER,
  *   inactive_sku_count INTEGER,
  *   inactive_saleable_rate NUMERIC,
+ *   saleable_qty INTEGER,
+ *   inactive_qty INTEGER,
+ *   inactive_qty_rate NUMERIC,
  *   created_at TIMESTAMPTZ DEFAULT now()
  * );
  *
@@ -28,6 +31,9 @@
  * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS saleable_sku_count INTEGER;
  * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_sku_count INTEGER;
  * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_saleable_rate NUMERIC;
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS saleable_qty INTEGER;
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_qty INTEGER;
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_qty_rate NUMERIC;
  */
 
 // ========================================
@@ -345,6 +351,96 @@ function getInventoryAnalysisHTML() {
                     </div>
                     <div class="ia-chart-container">
                         <canvas id="iaSkuStockChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 模块四：滞销/可用数 统计 ===== -->
+            <div class="ia-card">
+                <div class="ia-card-header">
+                    <span class="ia-card-title"><i data-lucide="archive-x"></i> 滞销/可用数 统计</span>
+                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实库存压力</span>
+                </div>
+
+                <div class="ia-two-col">
+                    <!-- 左：输入 -->
+                    <div class="ia-input-panel">
+                        <div class="ia-formula-box">
+                            <div class="ia-formula-title">计算公式</div>
+                            <div class="ia-formula-content">
+                                滞销可用数占比 = <span class="ia-fraction"><span class="ia-numerator">滞销可用数</span><span class="ia-denominator">可用数（总）</span></span> × 100%
+                            </div>
+                        </div>
+
+                        <div class="ia-field">
+                            <div class="ia-field-label-row">
+                                <label for="iaSaleableQty">可用数（总）</label>
+                                <div class="ia-source-tag">ERP 商品及库存管理&nbsp;&nbsp;筛选池：有效SKU数 > 5&nbsp;&nbsp;数值为「可用数之和」</div>
+                            </div>
+                            <div class="ia-input-box">
+                                <input type="number" id="iaSaleableQty" placeholder="0" min="1" step="1">
+                                <span class="ia-suffix">件</span>
+                            </div>
+                        </div>
+
+                        <div class="ia-field">
+                            <div class="ia-field-label-row">
+                                <label for="iaInactiveQty">滞销可用数</label>
+                                <div class="ia-source-tag">ERP 商品及库存管理&nbsp;&nbsp;筛选池：滞销SKU数&nbsp;&nbsp;数值为「可用数之和」</div>
+                            </div>
+                            <div class="ia-input-box">
+                                <input type="number" id="iaInactiveQty" placeholder="0" min="0" step="1">
+                                <span class="ia-suffix">件</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary ia-submit-btn" id="iaQtyStockSave">
+                            <i data-lucide="save"></i> 计算并保存
+                        </button>
+                    </div>
+
+                    <!-- 右：结果 -->
+                    <div class="ia-result-panel">
+                        <div class="ia-result-card" id="iaQtyStockResult">
+                            <div class="ia-result-empty">
+                                <i data-lucide="bar-chart-2"></i>
+                                <p>请填写左侧数据后计算</p>
+                            </div>
+                        </div>
+
+                        <div class="ia-history-list" id="iaQtyStockHistory">
+                            <div class="ia-history-header" style="justify-content:space-between;display:flex;">
+                                <div>
+                                    <i data-lucide="clock"></i> 历史记录
+                                    <span class="ia-tip">（数据库：inventory_analysis）</span>
+                                </div>
+                                <button type="button" class="ia-bulk-del-btn" id="iaQtyStockBulkDel" title="清空所有滞销/可用数记录">
+                                    <i data-lucide="trash-2"></i> 批量删除
+                                </button>
+                            </div>
+                            <div class="ia-history-body" id="iaQtyStockHistoryBody">
+                                <div class="ia-loading"><i data-lucide="loader-2"></i> 加载中...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 滞销可用数占比曲线图 -->
+                <div class="ia-chart-wrap">
+                    <div class="ia-chart-title">
+                        <span><i data-lucide="trending-down"></i> 滞销可用数占比历史趋势</span>
+                        <div class="ia-chart-controls">
+                            <select id="iaQtyStockChartLimit" class="ia-chart-select">
+                                <option value="10" selected>最近 10 条</option>
+                                <option value="30">最近 30 条</option>
+                            </select>
+                            <button type="button" class="ia-chart-refresh-btn" id="iaQtyStockChartRefresh">
+                                <i data-lucide="refresh-cw"></i> 刷新图表
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ia-chart-container">
+                        <canvas id="iaQtyStockChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -972,6 +1068,7 @@ function initInventoryAnalysisPage() {
     let turnoverChart = null;
     let skuChart = null;
     let skuStockChart = null;
+    let qtyStockChart = null;
 
     // 记录目前编辑的周转率项
     let currentEditingTurnoverId = null;
@@ -1796,6 +1893,195 @@ function initInventoryAnalysisPage() {
         }
     });
 
+    // ── 模块四：滞销/可用数 统计 ─────────────────────
+    let qtyStockChartLimit = 10;
+
+    async function loadQtyStockHistory() {
+        const body = document.getElementById('iaQtyStockHistoryBody');
+        if (!body) return;
+        if (!window.supabaseClient) {
+            body.innerHTML = '<div class="ia-empty-tip">未连接数据库</div>';
+            return;
+        }
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('inventory_analysis')
+                .select('*')
+                .eq('record_type', 'qty_stock')
+                .order('record_date', { ascending: false })
+                .limit(30);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                body.innerHTML = '<div class="ia-empty-tip">暂无历史数据</div>';
+            } else {
+                body.innerHTML = data.map(r => {
+                    const rate = r.inactive_qty_rate !== null ? Number(r.inactive_qty_rate).toFixed(1) : '--';
+                    const rateNum = r.inactive_qty_rate !== null ? Number(r.inactive_qty_rate) : null;
+                    const colorClass = rateNum === null ? '' : rateNum <= 20 ? 'ia-success' : rateNum <= 40 ? 'ia-warn' : 'ia-error';
+                    return `<div class="ia-history-item" data-id="${r.id}">
+                        <span class="ia-history-date">${r.record_date || '--'}</span>
+                        <span style="display:flex;align-items:center;gap:0.5rem;">
+                            <span>
+                                <span style="color:var(--text-muted);font-size:0.78rem;">${r.inactive_qty ?? '--'}/${r.saleable_qty ?? '--'} 件</span>
+                                <span style="margin:0 4px;color:var(--text-muted);">·</span>
+                                <span class="ia-history-rate ${colorClass}">${rate}%</span>
+                            </span>
+                            <button type="button" class="ia-del-btn" data-id="${r.id}" data-type="qty_stock" title="删除此记录">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                            </button>
+                        </span>
+                    </div>`;
+                }).join('');
+
+                body.querySelectorAll('.ia-del-btn[data-type="qty_stock"]').forEach(btn => {
+                    btn.addEventListener('click', () => deleteRecord(btn.dataset.id, loadQtyStockHistory));
+                });
+            }
+
+            renderQtyStockChart(data || [], qtyStockChartLimit);
+        } catch (e) {
+            console.error('加载可用数统计历史失败:', e);
+            body.innerHTML = '<div class="ia-empty-tip">加载失败</div>';
+        }
+    }
+
+    function renderQtyStockChart(data, limit) {
+        const canvas = document.getElementById('iaQtyStockChart');
+        if (!canvas) return;
+
+        const sorted = [...data]
+            .sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''))
+            .slice(-(limit || 10));
+
+        const labels = sorted.map(r => r.record_date || '--');
+        const rates = sorted.map(r => r.inactive_qty_rate !== null ? Number(r.inactive_qty_rate) : null);
+
+        if (qtyStockChart) {
+            qtyStockChart.destroy();
+            qtyStockChart = null;
+        }
+
+        if (sorted.length === 0) {
+            canvas.parentElement.innerHTML = '<div class="ia-empty-tip" style="padding:2rem;">暂无图表数据</div>';
+            return;
+        }
+
+        qtyStockChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: '滞销可用数占比（%）',
+                    data: rates,
+                    borderColor: 'rgba(245, 63, 63, 0.9)',
+                    backgroundColor: 'rgba(245, 63, 63, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(245, 63, 63, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: getChartOptions('%')
+        });
+    }
+
+    document.getElementById('iaQtyStockSave')?.addEventListener('click', async () => {
+        const saleableQty = parseInt(document.getElementById('iaSaleableQty')?.value);
+        const inactiveQty = parseInt(document.getElementById('iaInactiveQty')?.value);
+
+        if (isNaN(saleableQty) || saleableQty <= 0) {
+            if (window.showToast) window.showToast('请填写可用数（需大于 0）', 'warning');
+            return;
+        }
+        if (isNaN(inactiveQty) || inactiveQty < 0) {
+            if (window.showToast) window.showToast('请填写滞销可用数', 'warning');
+            return;
+        }
+        if (inactiveQty > saleableQty) {
+            if (window.showToast) window.showToast('滞销可用数不能大于可用数总量', 'warning');
+            return;
+        }
+
+        const inactiveQtyRate = (inactiveQty / saleableQty) * 100;
+
+        const resultEl = document.getElementById('iaQtyStockResult');
+        if (resultEl) {
+            const today = new Date();
+            const rateColor = inactiveQtyRate <= 20 ? 'ia-success' : inactiveQtyRate <= 40 ? 'ia-warn' : 'ia-error';
+            resultEl.innerHTML = `<div class="ia-result-content">
+                <div class="ia-result-row">
+                    <span class="ia-result-label">可用数（总）</span>
+                    <span class="ia-result-value">${saleableQty} 件</span>
+                </div>
+                <div class="ia-result-row">
+                    <span class="ia-result-label">滞销可用数</span>
+                    <span class="ia-result-value">${inactiveQty} 件</span>
+                </div>
+                <div class="ia-result-row">
+                    <span class="ia-result-label">滞销可用数占比</span>
+                    <span class="ia-result-value ia-highlight ${rateColor}">${inactiveQtyRate.toFixed(1)}%</span>
+                </div>
+                <div class="ia-result-row">
+                    <span class="ia-result-label">计算时间</span>
+                    <span class="ia-result-value" style="font-size:0.82rem;">${today.toLocaleString('zh-CN')}</span>
+                </div>
+            </div>`;
+        }
+
+        if (!window.supabaseClient) {
+            if (window.showToast) window.showToast('未连接数据库，仅显示计算结果', 'warning');
+            return;
+        }
+
+        try {
+            const today = new Date();
+            const recordDate = today.toISOString().split('T')[0];
+            const { error } = await window.supabaseClient
+                .from('inventory_analysis')
+                .insert({
+                    record_type: 'qty_stock',
+                    record_date: recordDate,
+                    saleable_qty: saleableQty,
+                    inactive_qty: inactiveQty,
+                    inactive_qty_rate: inactiveQtyRate
+                });
+            if (error) throw error;
+            if (window.showToast) window.showToast('滞销/可用数数据已保存', 'success');
+            loadQtyStockHistory();
+        } catch (e) {
+            console.error('保存可用数数据失败:', e);
+            if (window.showToast) window.showToast('保存失败：' + (e.message || e), 'error');
+        }
+    });
+
+    document.getElementById('iaQtyStockChartLimit')?.addEventListener('change', (e) => {
+        qtyStockChartLimit = parseInt(e.target.value) || 10;
+        loadQtyStockHistory();
+    });
+
+    document.getElementById('iaQtyStockChartRefresh')?.addEventListener('click', () => {
+        loadQtyStockHistory();
+    });
+
+    document.getElementById('iaQtyStockBulkDel')?.addEventListener('click', async () => {
+        if (!confirm('提示：此操作将清空「滞销/可用数统计」的所有历史记录，确认继续吗？')) return;
+        if (!window.supabaseClient) return;
+        try {
+            const { error } = await window.supabaseClient.from('inventory_analysis').delete().eq('record_type', 'qty_stock');
+            if (error) throw error;
+            if (window.showToast) window.showToast('滞销/可用数记录已清空', 'success');
+            loadQtyStockHistory();
+            if (qtyStockChart) { qtyStockChart.destroy(); qtyStockChart = null; }
+        } catch(e) {
+            console.error('清空失败:', e);
+            if (window.showToast) window.showToast('清空失败', 'error');
+        }
+    });
+
     // ── 初始化加载 ────────────────────────────────
     // 等待 Chart.js 就绪后再渲染
     function waitForChartJs(cb, maxTry = 30) {
@@ -1808,6 +2094,7 @@ function initInventoryAnalysisPage() {
         loadTurnoverHistory();
         loadSkuHistory();
         loadSkuStockHistory();
+        loadQtyStockHistory();
     });
 }
 
