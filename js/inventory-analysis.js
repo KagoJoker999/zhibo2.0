@@ -163,7 +163,7 @@ function getInventoryAnalysisHTML() {
             <div class="ia-card">
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="tag"></i> SKU 动销率 / 滞销率计算</span>
-                    <span class="ia-card-badge ia-badge-orange">随时可算</span>
+                    <span class="ia-card-badge ia-badge-orange">随时可算 建议小号开播前后均计算一次</span>
                 </div>
 
                 <div class="ia-two-col">
