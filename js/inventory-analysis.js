@@ -70,7 +70,7 @@ function getInventoryAnalysisHTML() {
             <div class="ia-card">
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="refresh-ccw"></i> 库存周转率计算</span>
-                    <span class="ia-card-badge">每月一次</span>
+                    <span class="ia-card-badge">随时可算（建议每周一次）</span>
                     <span class="ia-card-badge ia-badge-orange">反映整体资金的流动性与营运效率</span>
                 </div>
 
