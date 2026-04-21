@@ -78,9 +78,9 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-threshold-bar">
-                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
-                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
-                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <span class="ia-card-badge ia-badge-green">“＜10天”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“10-15天”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞15天”危险值</span>
                             <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
                         </div>
                         <div class="ia-formula-box" style="display: none;">
@@ -177,9 +177,9 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-threshold-bar">
-                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
-                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
-                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <span class="ia-card-badge ia-badge-green">“滞销率＜10%”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“滞销率10%-10%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“滞销率＞10%”危险值</span>
                             <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
                         </div>
                         <div class="ia-formula-box" style="display: none;">
@@ -276,9 +276,9 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-threshold-bar">
-                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
-                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
-                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <span class="ia-card-badge ia-badge-green">“＜15%”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“15%-30%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞30%”危险值</span>
                             <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
                         </div>
                         <div class="ia-formula-box" style="display: none;">
