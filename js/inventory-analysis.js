@@ -348,7 +348,7 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="pie-chart"></i> 滞销/可售 可用数 统计</span>
                     <span class="ia-card-badge">随时可算（建议每周一次）</span>
-                    <span class="ia-card-badge ia-badge-orange">反映真实的选品能力、资产损失风险与仓储空间压力（深度的压货量）</span>
+                    <span class="ia-card-badge ia-badge-orange">反映新品上货库存深度、备货深度、选品精准度及定价准确度。数值越高越不好。【“＜10%”正常值】【“10%-15%”预警值】【“＞15%”为危险值】</span>
                 </div>
 
                 <div class="ia-two-col">
