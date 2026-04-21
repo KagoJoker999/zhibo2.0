@@ -257,16 +257,23 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="bar-chart-3"></i> 滞销/可售 SKU 统计</span>
                     <span class="ia-card-badge">随时可算（建议每周一次）</span>
-                    <span class="ia-card-badge ia-badge-orange">反映新品上货库存深度、备货深度、选品精准度及定价准确度。数值越高越不好。【“＜15%”正常值】【“15%-30%”预警值】【“＞30%”为危险值】</span>
+                    <span class="ia-card-badge ia-badge-orange">反映新品上货库存深度、备货深度、选品精准度及定价准确度。数值越高越不好。</span>
                 </div>
 
                 <div class="ia-two-col">
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-formula-box">
-                            <div class="ia-formula-title">计算公式</div>
-                            <div class="ia-formula-content">
-                                滞销 SKU 占比 = <span class="ia-fraction"><span class="ia-numerator">滞销 SKU 数量</span><span class="ia-denominator">可售 SKU 数量</span></span> × 100%
+                            <div class="ia-formula-left">
+                                <div class="ia-formula-title">计算公式</div>
+                                <div class="ia-formula-content">
+                                    滞销 SKU 占比 = <span class="ia-fraction"><span class="ia-numerator">滞销 SKU 数量</span><span class="ia-denominator">可售 SKU 数量</span></span> × 100%
+                                </div>
+                            </div>
+                            <div class="ia-formula-right">
+                                <span class="ia-card-badge ia-badge-green">“＜15%”正常值</span>
+                                <span class="ia-card-badge ia-badge-orange">“15%-30%”预警值</span>
+                                <span class="ia-card-badge ia-badge-red">“＞30%”为危险值</span>
                             </div>
                         </div>
 
@@ -348,16 +355,23 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="pie-chart"></i> 滞销/可售 可用数 统计</span>
                     <span class="ia-card-badge">随时可算（建议每周一次）</span>
-                    <span class="ia-card-badge ia-badge-orange">反映新品上货库存深度、备货深度、选品精准度及定价准确度。数值越高越不好。【“＜15%”正常值】【“15%-30%”预警值】【“＞30%”为危险值】</span>
+                    <span class="ia-card-badge ia-badge-orange">反映新品上货库存深度、备货深度、选品精准度及定价准确度。数值越高越不好。</span>
                 </div>
 
                 <div class="ia-two-col">
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-formula-box">
-                            <div class="ia-formula-title">计算公式</div>
-                            <div class="ia-formula-content">
-                                滞销可用数占比 = <span class="ia-fraction"><span class="ia-numerator">滞销可用数</span><span class="ia-denominator">可用数（总）</span></span> × 100%
+                            <div class="ia-formula-left">
+                                <div class="ia-formula-title">计算公式</div>
+                                <div class="ia-formula-content">
+                                    滞销可用数占比 = <span class="ia-fraction"><span class="ia-numerator">滞销可用数</span><span class="ia-denominator">可用数（总）</span></span> × 100%
+                                </div>
+                            </div>
+                            <div class="ia-formula-right">
+                                <span class="ia-card-badge ia-badge-green">“＜15%”正常值</span>
+                                <span class="ia-card-badge ia-badge-orange">“15%-30%”预警值</span>
+                                <span class="ia-card-badge ia-badge-red">“＞30%”为危险值</span>
                             </div>
                         </div>
 
@@ -530,6 +544,12 @@ function getInventoryAnalysisHTML() {
                 border-color: rgba(245, 63, 63, 0.3);
             }
 
+            .ia-badge-green {
+                background: rgba(0, 180, 42, 0.1);
+                color: #00b42a;
+                border-color: rgba(0, 180, 42, 0.3);
+            }
+
             /* 双栏布局 */
             .ia-two-col {
                 display: grid;
@@ -551,6 +571,21 @@ function getInventoryAnalysisHTML() {
                 border: 1px solid var(--border-color);
                 border-radius: 8px;
                 padding: 1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .ia-formula-left {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .ia-formula-right {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-end;
             }
 
             .ia-formula-title {
