@@ -11,9 +11,9 @@
  *   record_date DATE NOT NULL,
  *   record_month TEXT,
  *   sales_cost NUMERIC,
- *   opening_stock NUMERIC,
- *   closing_stock NUMERIC,
+ *   current_stock NUMERIC,        -- 当前库存总金额（取代原月初/月末双输入）
  *   turnover_rate NUMERIC,
+ *   turnover_days INTEGER,         -- 周转天数 = round(当前库存 / 销售成本 * 30)
  *   active_sku_count INTEGER,
  *   total_sku_count INTEGER,
  *   active_rate NUMERIC,
@@ -28,6 +28,8 @@
  * );
  *
  * -- 若表已存在，执行以下语句新增字段：
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS current_stock NUMERIC;
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS turnover_days INTEGER;
  * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS saleable_sku_count INTEGER;
  * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_sku_count INTEGER;
  * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_saleable_rate NUMERIC;
@@ -78,7 +80,9 @@ function getInventoryAnalysisHTML() {
                         <div class="ia-formula-box">
                             <div class="ia-formula-title">计算公式</div>
                             <div class="ia-formula-content">
-                                月度库存周转率 = <span class="ia-fraction"><span class="ia-numerator">当月商品销售总成本</span><span class="ia-denominator">(月初库存总金额 + 月末库存总金额) ÷ 2</span></span>
+                                月度库存周转率 = <span class="ia-fraction"><span class="ia-numerator">当月商品销售总成本</span><span class="ia-denominator">当前库存总金额</span></span>
+                                <br style="margin:0.4rem 0;">
+                                <span style="font-size:0.85em;">周转天数 = <span class="ia-fraction" style="font-size:1em;"><span class="ia-numerator">当前库存总金额</span><span class="ia-denominator">当月商品销售总成本</span></span> × 30 （四舍五入）</span>
                             </div>
                         </div>
 
@@ -95,37 +99,18 @@ function getInventoryAnalysisHTML() {
 
                         <div class="ia-field">
                             <div class="ia-field-label-row">
-                                <label for="iaOpeningStock">月初库存总金额</label>
+                                <label for="iaCurrentStock">当前库存总金额</label>
                                 <div class="ia-source-tag">ERP 报表-商品库存结构分析-查询池：库存总金额（成本）&nbsp;&nbsp;数值为「主仓实际库存金额」</div>
                             </div>
                             <div class="ia-input-box">
-                                <input type="number" id="iaOpeningStock" placeholder="0.00" min="0" step="0.01">
-                                <span class="ia-suffix">元</span>
-                            </div>
-                            <div class="ia-field-hint" id="iaClosingHint"></div>
-                        </div>
-
-                        <div class="ia-field">
-                            <div class="ia-field-label-row">
-                                <label for="iaClosingStock">
-                                    月末库存总金额
-                                </label>
-                                <div class="ia-source-tag">ERP 报表-商品库存结构分析-查询池：库存总金额（成本）&nbsp;&nbsp;数值为「主仓实际库存金额」</div>
-                            </div>
-                            <div class="ia-input-box">
-                                <input type="number" id="iaClosingStock" placeholder="月末再填写" min="0" step="0.01">
+                                <input type="number" id="iaCurrentStock" placeholder="0.00" min="0" step="0.01">
                                 <span class="ia-suffix">元</span>
                             </div>
                         </div>
 
-                        <div style="display:flex;gap:10px;">
-                            <button type="button" class="btn btn-primary ia-submit-btn" id="iaTurnoverSave" style="flex:1;">
-                                <i data-lucide="save"></i> 计算并保存
-                            </button>
-                            <button type="button" class="btn btn-secondary ia-submit-btn" id="iaTurnoverCancelEdit" style="display:none;flex:1;background:#f2f3f5;color:#4e5969;border:1px solid #e5e6eb;">
-                                <i data-lucide="x-circle"></i> 取消续填
-                            </button>
-                        </div>
+                        <button type="button" class="btn btn-primary ia-submit-btn" id="iaTurnoverSave">
+                            <i data-lucide="save"></i> 计算并保存
+                        </button>
                     </div>
 
                     <!-- 右：结果 -->
@@ -141,7 +126,7 @@ function getInventoryAnalysisHTML() {
                             <div class="ia-history-header" style="justify-content:space-between;display:flex;">
                                 <div>
                                     <i data-lucide="clock"></i> 历史记录
-                                    <span class="ia-tip">（数据库：inventory_analysis，可点击续填）</span>
+                                    <span class="ia-tip">（数据库：inventory_analysis）</span>
                                 </div>
                                 <button type="button" class="ia-bulk-del-btn" id="iaTurnoverBulkDel" title="清空所有周转率记录">
                                     <i data-lucide="trash-2"></i> 批量删除
@@ -1081,22 +1066,18 @@ function initInventoryAnalysisPage() {
     // ── 模块表单重置器 ──────────────────────────
     function resetTurnoverForm() {
         currentEditingTurnoverId = null;
-        document.getElementById('iaSalesCost').value = '';
-        document.getElementById('iaOpeningStock').value = '';
-        document.getElementById('iaClosingStock').value = '';
+        const sc = document.getElementById('iaSalesCost');
+        const cs = document.getElementById('iaCurrentStock');
+        if (sc) sc.value = '';
+        if (cs) cs.value = '';
         const btn = document.getElementById('iaTurnoverSave');
-        if(btn) {
+        if (btn) {
             btn.innerHTML = '<i data-lucide="save"></i> 计算并保存';
             btn.style.background = '';
             btn.style.borderColor = '';
         }
-        const cancelBtn = document.getElementById('iaTurnoverCancelEdit');
-        if(cancelBtn) cancelBtn.style.display = 'none';
         if (window.lucide) window.lucide.createIcons();
     }
-
-    // 取消接续编辑
-    document.getElementById('iaTurnoverCancelEdit')?.addEventListener('click', resetTurnoverForm);
 
     // ── 删除单条记录 ──────────────────────────────
     async function deleteRecord(id, reloadFn) {
@@ -1138,14 +1119,13 @@ function initInventoryAnalysisPage() {
             } else {
                 body.innerHTML = data.map(r => {
                     const rate = r.turnover_rate !== null ? Number(r.turnover_rate).toFixed(2) : '--';
-                    const hasClosing = r.closing_stock !== null;
-                    const colorClass = hasClosing ? 'ia-success' : 'ia-warn';
-                    const tag = hasClosing ? '' : '<span style="font-size:0.7rem;color:var(--warning-color);margin-left:4px;">(可续填)</span>';
-                    const activeClass = (r.id === currentEditingTurnoverId) ? 'border: 1px solid rgba(0,180,42,0.4); background: rgba(0,180,42,0.03);' : '';
-                    return `<div class="ia-history-item ia-turnover-entry" data-id="${r.id}" style="cursor:pointer; transition:all 0.2s; ${activeClass}" title="点击接续填写该条目数据">
+                    const days = r.turnover_days !== null ? r.turnover_days : '--';
+                    const rateColor = r.turnover_rate !== null && r.turnover_rate >= 2 ? 'ia-success' : 'ia-warn';
+                    return `<div class="ia-history-item" data-id="${r.id}">
                         <span class="ia-history-date">${r.record_date || r.record_month || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
-                            <span class="ia-history-rate ${colorClass}">${rate}%${tag}</span>
+                            <span class="ia-history-rate ${rateColor}">${rate}%</span>
+                            <span style="font-size:0.78rem;color:var(--text-muted);">${days !== '--' ? days + '天' : ''}</span>
                             <button type="button" class="ia-del-btn" data-id="${r.id}" data-type="turnover" title="删除此记录">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                             </button>
@@ -1153,33 +1133,7 @@ function initInventoryAnalysisPage() {
                     </div>`;
                 }).join('');
 
-                turnoverHistoryData = data; // 保存下来用于查找
-
-                // 点击进入编辑模式
-                body.querySelectorAll('.ia-turnover-entry').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        if (e.target.closest('.ia-del-btn')) return;
-                        const id = parseInt(item.dataset.id);
-                        const record = turnoverHistoryData.find(x => x.id === id);
-                        if (record) {
-                            currentEditingTurnoverId = id;
-                            document.getElementById('iaSalesCost').value = record.sales_cost !== null ? record.sales_cost : '';
-                            document.getElementById('iaOpeningStock').value = record.opening_stock !== null ? record.opening_stock : '';
-                            document.getElementById('iaClosingStock').value = record.closing_stock !== null ? record.closing_stock : '';
-                            const btn = document.getElementById('iaTurnoverSave');
-                            btn.innerHTML = '<i data-lucide="edit-3"></i> 更新该记录';
-                            btn.style.background = '#00b42a';
-                            btn.style.borderColor = '#00b42a';
-                            document.getElementById('iaTurnoverCancelEdit').style.display = 'inline-flex';
-                            if (window.lucide) window.lucide.createIcons();
-                            
-                            // 高亮显示当前选中的记录
-                            body.querySelectorAll('.ia-turnover-entry').forEach(el => el.style.border = 'none');
-                            item.style.border = '1px solid rgba(0,180,42,0.4)';
-                            item.style.background = 'rgba(0,180,42,0.03)';
-                        }
-                    });
-                });
+                turnoverHistoryData = data;
 
                 // 绑定删除按钮事件
                 body.querySelectorAll('.ia-del-btn[data-type="turnover"]').forEach(btn => {
@@ -1256,7 +1210,6 @@ function initInventoryAnalysisPage() {
         const canvas = document.getElementById('iaTurnoverChart');
         if (!canvas) return;
 
-        // 过滤出有完整数据（有周转率）的记录，升序后取最近 limit 条
         const valid = data
             .filter(r => r.turnover_rate !== null)
             .sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''))
@@ -1264,6 +1217,7 @@ function initInventoryAnalysisPage() {
 
         const labels = valid.map(r => r.record_date || r.record_month || '--');
         const rates = valid.map(r => Number(r.turnover_rate));
+        const days = valid.map(r => r.turnover_days !== null ? Number(r.turnover_days) : null);
 
         if (turnoverChart) {
             turnoverChart.destroy();
@@ -1279,20 +1233,92 @@ function initInventoryAnalysisPage() {
             type: 'line',
             data: {
                 labels,
-                datasets: [{
-                    label: '月度库存周转率（%）',
-                    data: rates,
-                    borderColor: 'rgba(22, 93, 255, 0.9)',
-                    backgroundColor: 'rgba(22, 93, 255, 0.1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(22, 93, 255, 1)',
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    fill: true,
-                    tension: 0.3
-                }]
+                datasets: [
+                    {
+                        label: '库存周转率（%）',
+                        data: rates,
+                        borderColor: 'rgba(22, 93, 255, 0.9)',
+                        backgroundColor: 'rgba(22, 93, 255, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(22, 93, 255, 1)',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'yRate'
+                    },
+                    {
+                        label: '周转天数（天）',
+                        data: days,
+                        borderColor: 'rgba(255, 125, 0, 0.9)',
+                        backgroundColor: 'rgba(255, 125, 0, 0.0)',
+                        borderWidth: 2,
+                        borderDash: [4, 4],
+                        pointBackgroundColor: 'rgba(255, 125, 0, 1)',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'yDays'
+                    }
+                ]
             },
-            options: getChartOptions('%')
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(255,255,255,0.65)',
+                            font: { size: 12 },
+                            boxWidth: 14
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(23, 23, 26, 0.95)',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        titleColor: 'rgba(255,255,255,0.85)',
+                        bodyColor: 'rgba(255,255,255,0.7)',
+                        callbacks: {
+                            label: ctx => {
+                                const v = ctx.parsed.y;
+                                if (ctx.datasetIndex === 0) return ` 周转率: ${v !== null ? v.toFixed(2) + '%' : '--'}`;
+                                return ` 周转天数: ${v !== null ? v + ' 天' : '--'}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 11 } }
+                    },
+                    yRate: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: {
+                            color: 'rgba(22, 93, 255, 0.8)',
+                            font: { size: 11 },
+                            callback: v => v + '%'
+                        },
+                        title: { display: true, text: '周转率 (%)', color: 'rgba(22,93,255,0.7)', font: { size: 11 } }
+                    },
+                    yDays: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            color: 'rgba(255, 125, 0, 0.8)',
+                            font: { size: 11 },
+                            callback: v => v + '天'
+                        },
+                        title: { display: true, text: '周转天数 (天)', color: 'rgba(255,125,0,0.7)', font: { size: 11 } }
+                    }
+                }
+            }
         });
     }
 
@@ -1398,74 +1424,46 @@ function initInventoryAnalysisPage() {
     // ── 周转率保存 ────────────────────────────────
     document.getElementById('iaTurnoverSave')?.addEventListener('click', async () => {
         const salesCost = parseFloat(document.getElementById('iaSalesCost')?.value);
-        const openingStock = parseFloat(document.getElementById('iaOpeningStock')?.value);
-        const closingStockRaw = document.getElementById('iaClosingStock')?.value;
-        const closingStock = closingStockRaw !== '' ? parseFloat(closingStockRaw) : null;
+        const currentStock = parseFloat(document.getElementById('iaCurrentStock')?.value);
 
-        if (isNaN(salesCost) || isNaN(openingStock)) {
-            if (window.showToast) window.showToast('请填写当月销售总成本和月初库存金额', 'warning');
+        if (isNaN(salesCost) || salesCost <= 0 || isNaN(currentStock) || currentStock < 0) {
+            if (window.showToast) window.showToast('请正确填写当月销售总成本和当前库存总金额', 'warning');
             return;
         }
 
-        // 计算周转率（需要月末数据）
-        let turnoverRate = null;
-        if (closingStock !== null && !isNaN(closingStock)) {
-            const avgStock = (openingStock + closingStock) / 2;
-            if (avgStock > 0) {
-                turnoverRate = (salesCost / avgStock) * 100;
-            }
-        }
+        // 计算周转率：当月销售成本 / 当前库存总金额 * 100
+        const turnoverRate = (salesCost / currentStock) * 100;
+        // 计算周转天数：当前库存总金额 / 当月销售成本 * 30，四舍五入
+        const turnoverDays = Math.round((currentStock / salesCost) * 30);
 
         // 显示结果
         const resultEl = document.getElementById('iaTurnoverResult');
         if (resultEl) {
             const today = new Date();
-            // 月末回填时间 = 下个月的同一天
-            const nextMonthSameDay = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
-            const nextMonthStr = `${nextMonthSameDay.getFullYear()}-${String(nextMonthSameDay.getMonth() + 1).padStart(2, '0')}-${String(nextMonthSameDay.getDate()).padStart(2, '0')}`;
-
+            const rateColor = turnoverRate >= 200 ? 'ia-success' : turnoverRate >= 100 ? 'ia-warn' : 'ia-error';
+            const daysColor = turnoverDays <= 15 ? 'ia-success' : turnoverDays <= 30 ? 'ia-warn' : 'ia-error';
             resultEl.innerHTML = `<div class="ia-result-content">
                 <div class="ia-result-row">
                     <span class="ia-result-label">当月销售总成本</span>
                     <span class="ia-result-value">¥ ${salesCost.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div class="ia-result-row">
-                    <span class="ia-result-label">月初库存金额</span>
-                    <span class="ia-result-value">¥ ${openingStock.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</span>
-                </div>
-                ${closingStock !== null ? `
-                <div class="ia-result-row">
-                    <span class="ia-result-label">月末库存金额</span>
-                    <span class="ia-result-value">¥ ${closingStock.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</span>
+                    <span class="ia-result-label">当前库存总金额</span>
+                    <span class="ia-result-value">¥ ${currentStock.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div class="ia-result-row">
                     <span class="ia-result-label">月度库存周转率</span>
-                    <span class="ia-result-value ia-highlight">${turnoverRate !== null ? turnoverRate.toFixed(2) + '%' : '--'}</span>
-                </div>` : `
-                <div class="ia-result-row">
-                    <span class="ia-result-label">月末库存金额</span>
-                    <span class="ia-result-value ia-warn">待月末填写</span>
+                    <span class="ia-result-value ia-highlight ${rateColor}">${turnoverRate.toFixed(2)}%</span>
                 </div>
                 <div class="ia-result-row">
-                    <span class="ia-result-label">月末回填提醒</span>
-                    <span class="ia-result-value ia-warn" style="font-size:0.85rem;">请于 ${nextMonthStr} 前回来填写月末数据</span>
-                </div>`}
+                    <span class="ia-result-label">库存周转天数</span>
+                    <span class="ia-result-value ia-highlight ${daysColor}">${turnoverDays} 天</span>
+                </div>
                 <div class="ia-result-row">
-                    <span class="ia-result-label">填写日期</span>
+                    <span class="ia-result-label">计算日期</span>
                     <span class="ia-result-value" style="font-size:0.85rem;">${today.toLocaleDateString('zh-CN')}</span>
                 </div>
             </div>`;
-        }
-
-        // 月末提醒提示
-        if (closingStock === null) {
-            const hint = document.getElementById('iaClosingHint');
-            if (hint) {
-                const t = new Date();
-                const nextSameDay = new Date(t.getFullYear(), t.getMonth() + 1, t.getDate());
-                const nextStr = `${nextSameDay.getFullYear()}-${String(nextSameDay.getMonth() + 1).padStart(2, '0')}-${String(nextSameDay.getDate()).padStart(2, '0')}`;
-                hint.textContent = `⚠ 请于 ${nextStr} 前回来填写月末库存金额`;
-            }
         }
 
         // 保存到 Supabase
@@ -1484,29 +1482,18 @@ function initInventoryAnalysisPage() {
                 record_date: recordDate,
                 record_month: recordMonth,
                 sales_cost: salesCost,
-                opening_stock: openingStock,
-                closing_stock: closingStock,
-                turnover_rate: turnoverRate
+                current_stock: currentStock,
+                turnover_rate: turnoverRate,
+                turnover_days: turnoverDays
             };
 
-            if (currentEditingTurnoverId) {
-                const { error } = await window.supabaseClient
-                    .from('inventory_analysis')
-                    .update(payload)
-                    .eq('id', currentEditingTurnoverId);
+            const { error } = await window.supabaseClient
+                .from('inventory_analysis')
+                .insert(payload);
 
-                if (error) throw error;
-                if (window.showToast) window.showToast('记录已更新', 'success');
-                resetTurnoverForm();
-            } else {
-                const { error } = await window.supabaseClient
-                    .from('inventory_analysis')
-                    .insert(payload);
-
-                if (error) throw error;
-                if (window.showToast) window.showToast('周转率数据已保存', 'success');
-            }
-
+            if (error) throw error;
+            if (window.showToast) window.showToast('周转率数据已保存', 'success');
+            resetTurnoverForm();
             loadTurnoverHistory();
         } catch (e) {
             console.error('保存周转率数据失败:', e);
