@@ -2228,6 +2228,7 @@ function renderRankingResults(results) {
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 300px;">商品名称</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 160px;">商品ID</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 70px;">可用数</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
                             </tr>
                         </thead>
@@ -2279,6 +2280,7 @@ function renderRankingResults(results) {
                 ? 'border-bottom: 1px solid var(--border-color); background: rgba(239, 68, 68, 0.15);'
                 : 'border-bottom: 1px solid var(--border-color);';
 
+            const availableQty = item.available_qty != null ? item.available_qty : '--';
             return `
                                     <tr style="${rowStyle}">
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
@@ -2286,6 +2288,7 @@ function renderRankingResults(results) {
                                          <td class="js-click-copy" data-copy="${item.product_name.replace(/"/g, '&quot;')}" style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; user-select: none;" title="点击复制">${item.product_name}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; text-align: center; font-variant-numeric: tabular-nums; color: var(--text-secondary);">${availableQty}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
                                             <button class="btn-delete-item" onclick="removeRankingItem('${category}', '${item.product_name.replace(/'/g, "\\'")}')" title="从此分类删除" style="background: none; border: none; cursor: pointer; color: var(--error-color); font-size: 1rem; padding: 0.25rem;">✕</button>
                                         </td>
