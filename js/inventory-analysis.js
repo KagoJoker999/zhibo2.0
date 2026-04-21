@@ -309,7 +309,7 @@ function getInventoryAnalysisHTML() {
                                 <label for="iaSaleableSku">可售 SKU 数量</label>
                                 <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 商品及库存管理</div>
-                                    <div class="ia-source-tag">筛选池：有效SKU数 > 5</div>
+                                    <div class="ia-source-tag">筛选池：可售 SKU 数量</div>
                                     <div class="ia-source-tag">数值为「条目数」</div>
                                 </div>
                             </div>
