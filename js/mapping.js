@@ -573,6 +573,8 @@ function generateMappingHistoryPage() {
                 <p>显示上一次保存的对照结果</p>
             </div>
             
+            <div id="historyCopyButtonsContainer" style="padding: 0 1.5rem;"></div>
+            
             <div class="history-info p-section">
                 <span id="historyGeneratedTime" class="uploaded-stats"></span>
             </div>
@@ -586,6 +588,174 @@ function generateMappingHistoryPage() {
             </div>
         </div>
     `;
+}
+
+function renderHistoryTable(container, data) {
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="placeholder-content" style="min-height: 150px; padding: 2rem 0;"><p>暂无数据</p></div>';
+        return;
+    }
+
+    const categoryColors = {
+        '1.评分品A': 'rgba(139, 69, 19, 0.15)',
+        '2.佩戴品': 'rgba(0, 128, 128, 0.15)',
+        '3.周边品': 'rgba(128, 0, 128, 0.15)',
+        '4.评分品B': 'rgba(184, 134, 11, 0.15)',
+        '5.库存品': 'rgba(85, 107, 47, 0.15)',
+        '新品': 'rgba(70, 130, 180, 0.15)',
+        '福利品': 'rgba(236,72,153, 0.15)'
+    };
+
+    const html = `
+        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+            <thead>
+                <tr style="background: var(--bg-secondary);">
+                    <th style="padding: 0.75rem; text-align: center; width: 60px;">图片</th>
+                    <th style="padding: 0.75rem; text-align: left;">商品名称</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 120px;">商品 ID</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 100px;">分类</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 80px;">序号</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 100px;">仓位</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 100px;">样品仓位</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 70px;">可用数</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 80px;">实际库存</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(item => {
+        const imageUrl = item.image_url ? item.image_url.split(',')[0].trim() : '';
+        const imageHtml = imageUrl
+            ? `<div class="hover-zoom-container">
+                   <img src="${imageUrl}" class="hover-zoom-thumb" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=\\'color: var(--text-muted); font-size: 0.625rem;\\'>无图</span>'">
+               </div>`
+            : '<span style="color: var(--text-muted);">无</span>';
+        const bgColor = categoryColors[item.ranking_result] || 'transparent';
+        return `
+                        <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};">
+                            <td style="padding: 0.5rem; text-align: center;">${imageHtml}</td>
+                            <td style="padding: 0.5rem;">${item.product_name || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center; font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);">${item.product_id || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${item.ranking_result || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${item.sample_number || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${item.warehouse || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center; color: var(--primary-color);">${item.sample_warehouse || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${item.available_qty || 0}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${item.actual_stock || 0}</td>
+                        </tr>
+                    `;
+    }).join('')}
+            </tbody>
+        </table>
+    `;
+    container.innerHTML = html;
+}
+
+function renderHistoryCopyButtons(data) {
+    const btnContainer = document.getElementById('historyCopyButtonsContainer');
+    if (!btnContainer) return;
+
+    // 分离非福利品和福利品
+    const normalItems = data.filter(item => !(item.ranking_result || '').includes('福利'));
+    const welfareItems = data.filter(item => (item.ranking_result || '').includes('福利'));
+
+    const BATCH_SIZE = 30;
+    const totalBatches = Math.ceil(normalItems.length / BATCH_SIZE);
+
+    let buttonsHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">';
+    buttonsHtml += '<span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 0.25rem;">📋 批量复制链接:</span>';
+
+    // 生成常规商品批次复制按钮
+    for (let i = 0; i < totalBatches; i++) {
+        const start = i * BATCH_SIZE;
+        const end = Math.min(start + BATCH_SIZE, normalItems.length);
+        buttonsHtml += `<button class="btn btn-outline history-copy-batch-btn" data-batch-start="${start}" data-batch-end="${end}" 
+            style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border: 1px solid var(--primary-color); color: var(--primary-color); border-radius: 6px; cursor: pointer; background: transparent; transition: all 0.2s;"
+            onmouseover="this.style.background='var(--primary-color)'; this.style.color='white';"
+            onmouseout="this.style.background='transparent'; this.style.color='var(--primary-color)';">
+            第${i + 1}组 (${start + 1}-${end})
+        </button>`;
+    }
+
+    // 福利品复制按钮
+    if (welfareItems.length > 0) {
+        buttonsHtml += `<button class="btn history-copy-welfare-btn" 
+            style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border: 1px solid #ec4899; color: #ec4899; border-radius: 6px; cursor: pointer; background: transparent; transition: all 0.2s; margin-left: 0.5rem;"
+            onmouseover="this.style.background='#ec4899'; this.style.color='white';"
+            onmouseout="this.style.background='transparent'; this.style.color='#ec4899';">
+            🎁 福利品 ID (${welfareItems.length}个)
+        </button>`;
+    }
+
+    buttonsHtml += '</div>';
+    btnContainer.innerHTML = buttonsHtml;
+
+    // 商品链接模板
+    const buildProductLink = (productId) => {
+        return `https://fxg.jinritemai.com/ffa/g/create?product_id=${productId}&cid=33607&entrance=edit&btm_ppre=a2427.b76571.c902327.d871297&btm_pre=a2427.b08003.c938398.d63429&btm_show_id=167dfc4b-7e4e-484c-af8c-1348d5ad3a48`;
+    };
+
+    // 绑定批次复制按钮事件
+    btnContainer.querySelectorAll('.history-copy-batch-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const start = parseInt(btn.dataset.batchStart);
+            const end = parseInt(btn.dataset.batchEnd);
+            const batchItems = normalItems.slice(start, end);
+            const links = batchItems
+                .filter(item => item.product_id)
+                .map(item => buildProductLink(item.product_id))
+                .join('\n');
+            if (!links) {
+                window.AppUtils?.showToast?.('该组商品无有效商品 ID', 'warning');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(links);
+                btn.textContent = '✅ 已复制';
+                btn.style.background = 'var(--success-color)';
+                btn.style.color = 'white';
+                btn.style.borderColor = 'var(--success-color)';
+                window.AppUtils?.showToast?.(`已复制 ${batchItems.filter(i => i.product_id).length} 个商品链接`, 'success');
+                setTimeout(() => {
+                    const idx = Math.floor(start / BATCH_SIZE);
+                    btn.textContent = `第${idx + 1}组 (${start + 1}-${end})`;
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--primary-color)';
+                    btn.style.borderColor = 'var(--primary-color)';
+                }, 2000);
+            } catch (e) {
+                window.AppUtils?.showToast?.('复制失败: ' + e.message, 'error');
+            }
+        });
+    });
+
+    // 绑定福利品复制按钮事件
+    const welfareBtn = btnContainer.querySelector('.history-copy-welfare-btn');
+    if (welfareBtn) {
+        welfareBtn.addEventListener('click', async () => {
+            const ids = welfareItems
+                .filter(item => item.product_id)
+                .map(item => item.product_id)
+                .join('\n');
+            if (!ids) {
+                window.AppUtils?.showToast?.('福利品无有效商品 ID', 'warning');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(ids);
+                welfareBtn.textContent = '✅ 已复制';
+                welfareBtn.style.background = '#ec4899';
+                welfareBtn.style.color = 'white';
+                window.AppUtils?.showToast?.(`已复制 ${welfareItems.filter(i => i.product_id).length} 个福利品 ID`, 'success');
+                setTimeout(() => {
+                    welfareBtn.textContent = `🎁 福利品 ID (${welfareItems.length}个)`;
+                    welfareBtn.style.background = 'transparent';
+                    welfareBtn.style.color = '#ec4899';
+                }, 2000);
+            } catch (e) {
+                window.AppUtils?.showToast?.('复制失败: ' + e.message, 'error');
+            }
+        });
+    }
 }
 
 async function initMappingHistoryPage() {
@@ -613,7 +783,12 @@ async function initMappingHistoryPage() {
         } else {
             timeSpan.textContent = '';
         }
-        renderMappingTable(container, data);
+
+        // 生成复制按钮
+        renderHistoryCopyButtons(data);
+
+        // 渲染带商品ID列的表格
+        renderHistoryTable(container, data);
     } catch (error) {
         console.error(error);
         container.innerHTML = `<div class="placeholder-content"><p style="color: var(--error-color);">加载失败</p></div>`;
