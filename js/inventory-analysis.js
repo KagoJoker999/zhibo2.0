@@ -18,8 +18,16 @@
  *   total_sku_count INTEGER,
  *   active_rate NUMERIC,
  *   inactive_rate NUMERIC,
+ *   saleable_sku_count INTEGER,
+ *   inactive_sku_count INTEGER,
+ *   inactive_saleable_rate NUMERIC,
  *   created_at TIMESTAMPTZ DEFAULT now()
  * );
+ *
+ * -- 若表已存在，执行以下语句新增字段：
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS saleable_sku_count INTEGER;
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_sku_count INTEGER;
+ * ALTER TABLE inventory_analysis ADD COLUMN IF NOT EXISTS inactive_saleable_rate NUMERIC;
  */
 
 // ========================================
@@ -251,6 +259,96 @@ function getInventoryAnalysisHTML() {
                 </div>
             </div>
 
+            <!-- ===== 模块三：滞销/可售 SKU 统计 ===== -->
+            <div class="ia-card">
+                <div class="ia-card-header">
+                    <span class="ia-card-title"><i data-lucide="bar-chart-3"></i> 滞销/可售 SKU 统计</span>
+                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实滞销压力</span>
+                </div>
+
+                <div class="ia-two-col">
+                    <!-- 左：输入 -->
+                    <div class="ia-input-panel">
+                        <div class="ia-formula-box">
+                            <div class="ia-formula-title">计算公式</div>
+                            <div class="ia-formula-content">
+                                滞销 SKU 占比 = <span class="ia-fraction"><span class="ia-numerator">滞销 SKU 数量</span><span class="ia-denominator">可售 SKU 数量</span></span> × 100%
+                            </div>
+                        </div>
+
+                        <div class="ia-field">
+                            <div class="ia-field-label-row">
+                                <label for="iaSaleableSku">可售 SKU 数量</label>
+                                <div class="ia-source-tag">ERP 商品及库存管理&nbsp;&nbsp;筛选池：有效SKU数 > 5&nbsp;&nbsp;数值为「条目数」</div>
+                            </div>
+                            <div class="ia-input-box">
+                                <input type="number" id="iaSaleableSku" placeholder="0" min="1" step="1">
+                                <span class="ia-suffix">个</span>
+                            </div>
+                        </div>
+
+                        <div class="ia-field">
+                            <div class="ia-field-label-row">
+                                <label for="iaInactiveSku">滞销 SKU 数量</label>
+                                <div class="ia-source-tag">ERP 商品及库存管理&nbsp;&nbsp;筛选池：滞销SKU数&nbsp;&nbsp;数值为「条目数」</div>
+                            </div>
+                            <div class="ia-input-box">
+                                <input type="number" id="iaInactiveSku" placeholder="0" min="0" step="1">
+                                <span class="ia-suffix">个</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary ia-submit-btn" id="iaSkuStockSave">
+                            <i data-lucide="save"></i> 计算并保存
+                        </button>
+                    </div>
+
+                    <!-- 右：结果 -->
+                    <div class="ia-result-panel">
+                        <div class="ia-result-card" id="iaSkuStockResult">
+                            <div class="ia-result-empty">
+                                <i data-lucide="bar-chart-2"></i>
+                                <p>请填写左侧数据后计算</p>
+                            </div>
+                        </div>
+
+                        <div class="ia-history-list" id="iaSkuStockHistory">
+                            <div class="ia-history-header" style="justify-content:space-between;display:flex;">
+                                <div>
+                                    <i data-lucide="clock"></i> 历史记录
+                                    <span class="ia-tip">（数据库：inventory_analysis）</span>
+                                </div>
+                                <button type="button" class="ia-bulk-del-btn" id="iaSkuStockBulkDel" title="清空所有滞销/可售SKU记录">
+                                    <i data-lucide="trash-2"></i> 批量删除
+                                </button>
+                            </div>
+                            <div class="ia-history-body" id="iaSkuStockHistoryBody">
+                                <div class="ia-loading"><i data-lucide="loader-2"></i> 加载中...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 滞销占比曲线图 -->
+                <div class="ia-chart-wrap">
+                    <div class="ia-chart-title">
+                        <span><i data-lucide="trending-down"></i> 滞销 SKU 占比历史趋势</span>
+                        <div class="ia-chart-controls">
+                            <select id="iaSkuStockChartLimit" class="ia-chart-select">
+                                <option value="10" selected>最近 10 条</option>
+                                <option value="30">最近 30 条</option>
+                            </select>
+                            <button type="button" class="ia-chart-refresh-btn" id="iaSkuStockChartRefresh">
+                                <i data-lucide="refresh-cw"></i> 刷新图表
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ia-chart-container">
+                        <canvas id="iaSkuStockChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- ===== 清空确认弹窗 ===== -->
@@ -339,6 +437,12 @@ function getInventoryAnalysisHTML() {
                 background: rgba(255, 125, 0, 0.1);
                 color: var(--warning-color);
                 border-color: rgba(255, 125, 0, 0.3);
+            }
+
+            .ia-badge-red {
+                background: rgba(245, 63, 63, 0.1);
+                color: var(--error-color);
+                border-color: rgba(245, 63, 63, 0.3);
             }
 
             /* 双栏布局 */
@@ -867,6 +971,7 @@ function initInventoryAnalysisPage() {
     // Chart.js 实例缓存
     let turnoverChart = null;
     let skuChart = null;
+    let skuStockChart = null;
 
     // 记录目前编辑的周转率项
     let currentEditingTurnoverId = null;
@@ -1491,6 +1596,206 @@ function initInventoryAnalysisPage() {
         }
     });
     
+    // ── 模块三：滞销/可售 SKU 统计 ─────────────────
+    let skuStockChartLimit = 10;
+
+    async function loadSkuStockHistory() {
+        const body = document.getElementById('iaSkuStockHistoryBody');
+        if (!body) return;
+        if (!window.supabaseClient) {
+            body.innerHTML = '<div class="ia-empty-tip">未连接数据库</div>';
+            return;
+        }
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('inventory_analysis')
+                .select('*')
+                .eq('record_type', 'sku_stock')
+                .order('record_date', { ascending: false })
+                .limit(30);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                body.innerHTML = '<div class="ia-empty-tip">暂无历史数据</div>';
+            } else {
+                body.innerHTML = data.map(r => {
+                    const rate = r.inactive_saleable_rate !== null ? Number(r.inactive_saleable_rate).toFixed(1) : '--';
+                    const rateNum = r.inactive_saleable_rate !== null ? Number(r.inactive_saleable_rate) : null;
+                    const colorClass = rateNum === null ? '' : rateNum <= 20 ? 'ia-success' : rateNum <= 40 ? 'ia-warn' : 'ia-error';
+                    return `<div class="ia-history-item" data-id="${r.id}">
+                        <span class="ia-history-date">${r.record_date || '--'}</span>
+                        <span style="display:flex;align-items:center;gap:0.5rem;">
+                            <span>
+                                <span style="color:var(--text-muted);font-size:0.78rem;">${r.inactive_sku_count ?? '--'}/${r.saleable_sku_count ?? '--'} 个</span>
+                                <span style="margin:0 4px;color:var(--text-muted);">·</span>
+                                <span class="ia-history-rate ${colorClass}">${rate}%</span>
+                            </span>
+                            <button type="button" class="ia-del-btn" data-id="${r.id}" data-type="sku_stock" title="删除此记录">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                            </button>
+                        </span>
+                    </div>`;
+                }).join('');
+
+                // 绑定删除按钮事件
+                body.querySelectorAll('.ia-del-btn[data-type="sku_stock"]').forEach(btn => {
+                    btn.addEventListener('click', () => deleteRecord(btn.dataset.id, loadSkuStockHistory));
+                });
+            }
+
+            renderSkuStockChart(data || [], skuStockChartLimit);
+        } catch (e) {
+            console.error('加载滞销SKU统计历史失败:', e);
+            body.innerHTML = '<div class="ia-empty-tip">加载失败</div>';
+        }
+    }
+
+    // ── 模块三：渲染趋势图 ──────────────────────────
+    function renderSkuStockChart(data, limit) {
+        const canvas = document.getElementById('iaSkuStockChart');
+        if (!canvas) return;
+
+        const sorted = [...data]
+            .sort((a, b) => (a.record_date || '').localeCompare(b.record_date || ''))
+            .slice(-(limit || 10));
+
+        const labels = sorted.map(r => r.record_date || '--');
+        const rates = sorted.map(r => r.inactive_saleable_rate !== null ? Number(r.inactive_saleable_rate) : null);
+
+        if (skuStockChart) {
+            skuStockChart.destroy();
+            skuStockChart = null;
+        }
+
+        if (sorted.length === 0) {
+            canvas.parentElement.innerHTML = '<div class="ia-empty-tip" style="padding:2rem;">暂无图表数据</div>';
+            return;
+        }
+
+        skuStockChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: '滞销 SKU 占比（%）',
+                    data: rates,
+                    borderColor: 'rgba(245, 63, 63, 0.9)',
+                    backgroundColor: 'rgba(245, 63, 63, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(245, 63, 63, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: getChartOptions('%')
+        });
+    }
+
+    // ── 模块三：计算并保存 ──────────────────────────
+    document.getElementById('iaSkuStockSave')?.addEventListener('click', async () => {
+        const saleableSku = parseInt(document.getElementById('iaSaleableSku')?.value);
+        const inactiveSku = parseInt(document.getElementById('iaInactiveSku')?.value);
+
+        if (isNaN(saleableSku) || saleableSku <= 0) {
+            if (window.showToast) window.showToast('请填写可售 SKU 数量（需大于 0）', 'warning');
+            return;
+        }
+        if (isNaN(inactiveSku) || inactiveSku < 0) {
+            if (window.showToast) window.showToast('请填写滞销 SKU 数量', 'warning');
+            return;
+        }
+        if (inactiveSku > saleableSku) {
+            if (window.showToast) window.showToast('滞销 SKU 数不能大于可售 SKU 数', 'warning');
+            return;
+        }
+
+        const inactiveSaleableRate = (inactiveSku / saleableSku) * 100;
+
+        // 显示结果
+        const resultEl = document.getElementById('iaSkuStockResult');
+        if (resultEl) {
+            const today = new Date();
+            const rateColor = inactiveSaleableRate <= 20 ? 'ia-success' : inactiveSaleableRate <= 40 ? 'ia-warn' : 'ia-error';
+
+            resultEl.innerHTML = `<div class="ia-result-content">
+                <div class="ia-result-row">
+                    <span class="ia-result-label">可售 SKU 数量</span>
+                    <span class="ia-result-value">${saleableSku} 个</span>
+                </div>
+                <div class="ia-result-row">
+                    <span class="ia-result-label">滞销 SKU 数量</span>
+                    <span class="ia-result-value">${inactiveSku} 个</span>
+                </div>
+                <div class="ia-result-row">
+                    <span class="ia-result-label">滞销 SKU 占比</span>
+                    <span class="ia-result-value ia-highlight ${rateColor}">${inactiveSaleableRate.toFixed(1)}%</span>
+                </div>
+                <div class="ia-result-row">
+                    <span class="ia-result-label">计算时间</span>
+                    <span class="ia-result-value" style="font-size:0.82rem;">${today.toLocaleString('zh-CN')}</span>
+                </div>
+            </div>`;
+        }
+
+        // 保存到 Supabase
+        if (!window.supabaseClient) {
+            if (window.showToast) window.showToast('未连接数据库，仅显示计算结果', 'warning');
+            return;
+        }
+
+        try {
+            const today = new Date();
+            const recordDate = today.toISOString().split('T')[0];
+
+            const { error } = await window.supabaseClient
+                .from('inventory_analysis')
+                .insert({
+                    record_type: 'sku_stock',
+                    record_date: recordDate,
+                    saleable_sku_count: saleableSku,
+                    inactive_sku_count: inactiveSku,
+                    inactive_saleable_rate: inactiveSaleableRate
+                });
+
+            if (error) throw error;
+
+            if (window.showToast) window.showToast('滞销/可售 SKU 数据已保存', 'success');
+            loadSkuStockHistory();
+        } catch (e) {
+            console.error('保存滞销SKU数据失败:', e);
+            if (window.showToast) window.showToast('保存失败：' + (e.message || e), 'error');
+        }
+    });
+
+    // ── 模块三：图表刷新 & 条数切换 ─────────────────
+    document.getElementById('iaSkuStockChartLimit')?.addEventListener('change', (e) => {
+        skuStockChartLimit = parseInt(e.target.value) || 10;
+        loadSkuStockHistory();
+    });
+
+    document.getElementById('iaSkuStockChartRefresh')?.addEventListener('click', () => {
+        loadSkuStockHistory();
+    });
+
+    // ── 模块三：批量删除 ────────────────────────────
+    document.getElementById('iaSkuStockBulkDel')?.addEventListener('click', async () => {
+        if (!confirm('提示：此操作将清空"滞销/可售SKU统计"的所有历史记录，确认继续吗？')) return;
+        if (!window.supabaseClient) return;
+        try {
+            const { error } = await window.supabaseClient.from('inventory_analysis').delete().eq('record_type', 'sku_stock');
+            if (error) throw error;
+            if (window.showToast) window.showToast('滞销/可售SKU记录已清空', 'success');
+            loadSkuStockHistory();
+            if (skuStockChart) { skuStockChart.destroy(); skuStockChart = null; }
+        } catch(e) {
+            console.error('清空失败:', e);
+            if (window.showToast) window.showToast('清空失败', 'error');
+        }
+    });
+
     // ── 初始化加载 ────────────────────────────────
     // 等待 Chart.js 就绪后再渲染
     function waitForChartJs(cb, maxTry = 30) {
@@ -1502,5 +1807,7 @@ function initInventoryAnalysisPage() {
     waitForChartJs(() => {
         loadTurnoverHistory();
         loadSkuHistory();
+        loadSkuStockHistory();
     });
 }
+
