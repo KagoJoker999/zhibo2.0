@@ -69,6 +69,7 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="refresh-ccw"></i> 库存周转率计算</span>
                     <span class="ia-card-badge">每月一次</span>
+                    <span class="ia-card-badge ia-badge-orange">反映整体资金的流动性与营运效率</span>
                 </div>
 
                 <div class="ia-two-col">
@@ -177,7 +178,8 @@ function getInventoryAnalysisHTML() {
             <div class="ia-card">
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="tag"></i> SKU 动销率 / 滞销率计算</span>
-                    <span class="ia-card-badge ia-badge-orange">随时可算 建议小号开播前后均计算一次</span>
+                    <span class="ia-card-badge">随时可算（建议小号开播前后均计算一次）</span>
+                    <span class="ia-card-badge ia-badge-orange">反映选品精准度与直播间带货能力</span>
                 </div>
 
                 <div class="ia-two-col">
@@ -269,7 +271,8 @@ function getInventoryAnalysisHTML() {
             <div class="ia-card">
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="bar-chart-3"></i> 滞销/可售 SKU 统计</span>
-                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实滞销SKU压力</span>
+                    <span class="ia-card-badge">随时可算（建议每周一次）</span>
+                    <span class="ia-card-badge ia-badge-orange">反映库存的结构性压力（宽度的健康度）</span>
                 </div>
 
                 <div class="ia-two-col">
@@ -359,7 +362,8 @@ function getInventoryAnalysisHTML() {
             <div class="ia-card">
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="pie-chart"></i> 滞销/可售 可用数 统计</span>
-                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实滞销可用数压力</span>
+                    <span class="ia-card-badge">随时可算（建议每周一次）</span>
+                    <span class="ia-card-badge ia-badge-orange">反映真实的选品能力、资产损失风险与仓储空间压力（深度的压货量）</span>
                 </div>
 
                 <div class="ia-two-col">
