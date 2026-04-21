@@ -271,9 +271,9 @@ function getInventoryAnalysisHTML() {
                                 </div>
                             </div>
                             <div class="ia-formula-right">
-                                <span class="ia-card-badge ia-badge-green">“＜15%”正常值</span>
-                                <span class="ia-card-badge ia-badge-orange">“15%-30%”预警值</span>
-                                <span class="ia-card-badge ia-badge-red">“＞30%”为危险值</span>
+                                <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
+                                <span class="ia-card-badge ia-badge-orange">“10%-15%”预警值</span>
+                                <span class="ia-card-badge ia-badge-red">“＞15%”为危险值</span>
                             </div>
                         </div>
 
@@ -369,9 +369,9 @@ function getInventoryAnalysisHTML() {
                                 </div>
                             </div>
                             <div class="ia-formula-right">
-                                <span class="ia-card-badge ia-badge-green">“＜15%”正常值</span>
-                                <span class="ia-card-badge ia-badge-orange">“15%-30%”预警值</span>
-                                <span class="ia-card-badge ia-badge-red">“＞30%”为危险值</span>
+                                <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
+                                <span class="ia-card-badge ia-badge-orange">“10%-15%”预警值</span>
+                                <span class="ia-card-badge ia-badge-red">“＞15%”为危险值</span>
                             </div>
                         </div>
 
