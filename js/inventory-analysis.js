@@ -78,9 +78,9 @@ function getInventoryAnalysisHTML() {
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
                         <div class="ia-threshold-bar">
-                            <span class="ia-card-badge ia-badge-green">“＜10天”正常值</span>
-                            <span class="ia-card-badge ia-badge-orange">“10天-20天”预警值</span>
-                            <span class="ia-card-badge ia-badge-red">“＞20天”危险值</span>
+                            <span class="ia-card-badge ia-badge-green">“＜15天”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“15天-30天”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞30天”危险值</span>
                             <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
                         </div>
                         <div class="ia-formula-box" style="display: none;">
@@ -178,8 +178,8 @@ function getInventoryAnalysisHTML() {
                     <div class="ia-input-panel">
                         <div class="ia-threshold-bar">
                             <span class="ia-card-badge ia-badge-green">“滞销SKU＜20%”正常值</span>
-                            <span class="ia-card-badge ia-badge-orange">“20%-30%”预警值</span>
-                            <span class="ia-card-badge ia-badge-red">“＞30%”危险值</span>
+                            <span class="ia-card-badge ia-badge-orange">“滞销SKU20%-30%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“滞销SKU＞30%”危险值</span>
                             <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
                         </div>
                         <div class="ia-formula-box" style="display: none;">
