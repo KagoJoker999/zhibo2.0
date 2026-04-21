@@ -269,7 +269,7 @@ function getInventoryAnalysisHTML() {
             <div class="ia-card">
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="bar-chart-3"></i> 滞销/可售 SKU 统计</span>
-                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实滞销压力</span>
+                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实滞销SKU压力</span>
                 </div>
 
                 <div class="ia-two-col">
@@ -358,8 +358,8 @@ function getInventoryAnalysisHTML() {
             <!-- ===== 模块四：滞销/可用数 统计 ===== -->
             <div class="ia-card">
                 <div class="ia-card-header">
-                    <span class="ia-card-title"><i data-lucide="archive-x"></i> 滞销/可用数 统计</span>
-                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实库存压力</span>
+                    <span class="ia-card-title"><i data-lucide="pie-chart"></i> 滞销/可售 可用数 统计</span>
+                    <span class="ia-card-badge ia-badge-red">随时可查 反映真实滞销可用数压力</span>
                 </div>
 
                 <div class="ia-two-col">
