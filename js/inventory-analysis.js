@@ -943,9 +943,9 @@ function getInventoryAnalysisHTML() {
             .ia-source-tag {
                 font-size: 0.68rem;
                 font-weight: 500;
-                color: rgba(22, 93, 255, 0.9);
-                background: rgba(22, 93, 255, 0.08);
-                border: 1px solid rgba(22, 93, 255, 0.2);
+                color: #ffffff;
+                background: #165DFF;
+                border: 1px solid #165DFF;
                 border-radius: 5px;
                 padding: 0.2rem 0.5rem;
                 line-height: 1.4;
