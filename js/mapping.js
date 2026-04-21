@@ -682,7 +682,7 @@ function renderHistoryCopyButtons(data) {
             style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border: 1px solid #ec4899; color: #ec4899; border-radius: 6px; cursor: pointer; background: transparent; transition: all 0.2s; margin-left: 0.5rem;"
             onmouseover="this.style.background='#ec4899'; this.style.color='white';"
             onmouseout="this.style.background='transparent'; this.style.color='#ec4899';">
-            🎁 福利品 ID (${welfareItems.length}个)
+            🎁 福利品名称 (${welfareItems.length}个)
         </button>`;
     }
 
@@ -732,22 +732,22 @@ function renderHistoryCopyButtons(data) {
     const welfareBtn = btnContainer.querySelector('.history-copy-welfare-btn');
     if (welfareBtn) {
         welfareBtn.addEventListener('click', async () => {
-            const ids = welfareItems
-                .filter(item => item.product_id)
-                .map(item => item.product_id)
-                .join('\n');
-            if (!ids) {
-                window.AppUtils?.showToast?.('福利品无有效商品 ID', 'warning');
+            const names = welfareItems
+                .filter(item => item.product_name)
+                .map(item => item.product_name)
+                .join('，');
+            if (!names) {
+                window.AppUtils?.showToast?.('福利品无有效商品名称', 'warning');
                 return;
             }
             try {
-                await navigator.clipboard.writeText(ids);
+                await navigator.clipboard.writeText(names);
                 welfareBtn.textContent = '✅ 已复制';
                 welfareBtn.style.background = '#ec4899';
                 welfareBtn.style.color = 'white';
-                window.AppUtils?.showToast?.(`已复制 ${welfareItems.filter(i => i.product_id).length} 个福利品 ID`, 'success');
+                window.AppUtils?.showToast?.(`已复制 ${welfareItems.filter(i => i.product_name).length} 个福利品名称`, 'success');
                 setTimeout(() => {
-                    welfareBtn.textContent = `🎁 福利品 ID (${welfareItems.length}个)`;
+                    welfareBtn.textContent = `🎁 福利品名称 (${welfareItems.length}个)`;
                     welfareBtn.style.background = 'transparent';
                     welfareBtn.style.color = '#ec4899';
                 }, 2000);
