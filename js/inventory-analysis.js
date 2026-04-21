@@ -257,7 +257,7 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-card-header">
                     <span class="ia-card-title"><i data-lucide="bar-chart-3"></i> 滞销/可售 SKU 统计</span>
                     <span class="ia-card-badge">随时可算（建议每周一次）</span>
-                    <span class="ia-card-badge ia-badge-orange">反映库存的结构性压力（宽度的健康度）</span>
+                    <span class="ia-card-badge ia-badge-orange">反映新品上货库存深度、备货深度、选品精准度及定价准确度。数值越高越不好。【“＜10%”正常值】【“10%-15%”预警值】【“＞15%”为危险值】</span>
                 </div>
 
                 <div class="ia-two-col">
