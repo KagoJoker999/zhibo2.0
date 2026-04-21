@@ -691,7 +691,7 @@ function renderHistoryCopyButtons(data) {
 
     // 商品链接模板
     const buildProductLink = (productId) => {
-        return `https://fxg.jinritemai.com/ffa/g/create?product_id=${productId}&cid=33607&entrance=edit&btm_ppre=a2427.b76571.c902327.d871297&btm_pre=a2427.b08003.c938398.d63429&btm_show_id=167dfc4b-7e4e-484c-af8c-1348d5ad3a48`;
+        return `https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=${productId}&origin_type=604`;
     };
 
     // 绑定批次复制按钮事件
