@@ -243,45 +243,10 @@ async function updateDbUsage() {
 // 暴露给全局，方便其他模块调用刷新
 window.updateDbUsage = updateDbUsage;
 
-// 查询是否有未填充月末库存的周转率记录，更新导航栏提醒
+// 查询是否有未填充月末库存的周转率记录，更新导航栏提醒（该功能随着模块一的单输入重构已弃用）
 async function updateInventoryReminder() {
     const reminderEl = document.getElementById('inventoryReminder');
-    const dateSpan = document.getElementById('inventoryReminderDate');
-    if (!reminderEl || !dateSpan || !window.supabaseClient) return;
-
-    try {
-        const { data, error } = await window.supabaseClient
-            .from('inventory_analysis')
-            .select('*')
-            .eq('record_type', 'turnover')
-            .is('closing_stock', null)  // 专门查询未填写月末库存的项
-            .order('record_date', { ascending: false })
-            .limit(1);
-
-        if (error) throw error;
-
-        // 如果存在最近一条未填写的记录
-        if (data && data.length > 0 && data[0].record_date) {
-            const parts = data[0].record_date.split('-');
-            if (parts.length === 3) {
-                const year = parseInt(parts[0]);
-                const month = parseInt(parts[1]) - 1; // 0-based
-                const day = parseInt(parts[2]);
-                
-                // 计算下个月的同一天
-                const targetDate = new Date(year, month + 1, day);
-                const targetStr = `${Math.floor(targetDate.getFullYear())}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
-                
-                dateSpan.textContent = targetStr;
-                reminderEl.style.display = 'inline-flex';
-                return;
-            }
-        }
-        
-        // 否则隐藏提醒
-        reminderEl.style.display = 'none';
-    } catch (e) {
-        console.error('获取库存提醒失败:', e);
+    if (reminderEl) {
         reminderEl.style.display = 'none';
     }
 }
