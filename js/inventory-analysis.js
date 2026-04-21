@@ -1182,11 +1182,12 @@ function initInventoryAnalysisPage() {
             if (!data || data.length === 0) {
                 body.innerHTML = '<div class="ia-empty-tip">暂无历史数据</div>';
             } else {
-                body.innerHTML = data.map(r => {
+                let html = data.map((r, index) => {
                     const rate = r.turnover_rate !== null ? Number(r.turnover_rate).toFixed(2) : '--';
                     const days = r.turnover_days !== null ? r.turnover_days : '--';
                     const rateColor = r.turnover_rate !== null && r.turnover_rate >= 2 ? 'ia-success' : 'ia-warn';
-                    return `<div class="ia-history-item" data-id="${r.id}">
+                    const isHidden = index >= 2 ? 'style="display:none;" class="ia-history-extra"' : '';
+                    return `<div class="ia-history-item" data-id="${r.id}" ${isHidden}>
                         <span class="ia-history-date">${r.record_date || r.record_month || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
                             <span class="ia-history-rate ${rateColor}">${rate}%</span>
@@ -1197,6 +1198,23 @@ function initInventoryAnalysisPage() {
                         </span>
                     </div>`;
                 }).join('');
+                if (data.length > 2) {
+                    html += `<div style="text-align:center; padding-top:0.5rem; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.05);">
+                        <button type="button" class="ia-formula-toggle-btn" style="margin:0 auto; display:inline-block;" onclick="
+                            const extras = this.parentElement.parentElement.querySelectorAll('.ia-history-extra');
+                            if (this.classList.contains('expanded')) {
+                                extras.forEach(el => el.style.display='none');
+                                this.classList.remove('expanded');
+                                this.innerHTML='点击查看更多';
+                            } else {
+                                extras.forEach(el => el.style.display='flex');
+                                this.classList.add('expanded');
+                                this.innerHTML='收起全部记录';
+                            }
+                        ">点击查看更多</button>
+                    </div>`;
+                }
+                body.innerHTML = html;
 
                 turnoverHistoryData = data;
 
@@ -1239,10 +1257,11 @@ function initInventoryAnalysisPage() {
             if (!data || data.length === 0) {
                 body.innerHTML = '<div class="ia-empty-tip">暂无历史数据</div>';
             } else {
-                body.innerHTML = data.map(r => {
+                let html = data.map((r, index) => {
                     const active = r.active_rate !== null ? Number(r.active_rate).toFixed(1) : '--';
                     const inactive = r.inactive_rate !== null ? Number(r.inactive_rate).toFixed(1) : '--';
-                    return `<div class="ia-history-item" data-id="${r.id}">
+                    const isHidden = index >= 2 ? 'style="display:none;" class="ia-history-extra"' : '';
+                    return `<div class="ia-history-item" data-id="${r.id}" ${isHidden}>
                         <span class="ia-history-date">${r.record_date || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
                             <span>
@@ -1256,6 +1275,23 @@ function initInventoryAnalysisPage() {
                         </span>
                     </div>`;
                 }).join('');
+                if (data.length > 2) {
+                    html += `<div style="text-align:center; padding-top:0.5rem; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.05);">
+                        <button type="button" class="ia-formula-toggle-btn" style="margin:0 auto; display:inline-block;" onclick="
+                            const extras = this.parentElement.parentElement.querySelectorAll('.ia-history-extra');
+                            if (this.classList.contains('expanded')) {
+                                extras.forEach(el => el.style.display='none');
+                                this.classList.remove('expanded');
+                                this.innerHTML='点击查看更多';
+                            } else {
+                                extras.forEach(el => el.style.display='flex');
+                                this.classList.add('expanded');
+                                this.innerHTML='收起全部记录';
+                            }
+                        ">点击查看更多</button>
+                    </div>`;
+                }
+                body.innerHTML = html;
 
                 // 绑定删除按钮事件
                 body.querySelectorAll('.ia-del-btn[data-type="sku"]').forEach(btn => {
@@ -1772,11 +1808,12 @@ function initInventoryAnalysisPage() {
             if (!data || data.length === 0) {
                 body.innerHTML = '<div class="ia-empty-tip">暂无历史数据</div>';
             } else {
-                body.innerHTML = data.map(r => {
+                let html = data.map((r, index) => {
                     const rate = r.inactive_saleable_rate !== null ? Number(r.inactive_saleable_rate).toFixed(1) : '--';
                     const rateNum = r.inactive_saleable_rate !== null ? Number(r.inactive_saleable_rate) : null;
                     const colorClass = rateNum === null ? '' : rateNum <= 20 ? 'ia-success' : rateNum <= 40 ? 'ia-warn' : 'ia-error';
-                    return `<div class="ia-history-item" data-id="${r.id}">
+                    const isHidden = index >= 2 ? 'style="display:none;" class="ia-history-extra"' : '';
+                    return `<div class="ia-history-item" data-id="${r.id}" ${isHidden}>
                         <span class="ia-history-date">${r.record_date || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
                             <span>
@@ -1790,6 +1827,23 @@ function initInventoryAnalysisPage() {
                         </span>
                     </div>`;
                 }).join('');
+                if (data.length > 2) {
+                    html += `<div style="text-align:center; padding-top:0.5rem; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.05);">
+                        <button type="button" class="ia-formula-toggle-btn" style="margin:0 auto; display:inline-block;" onclick="
+                            const extras = this.parentElement.parentElement.querySelectorAll('.ia-history-extra');
+                            if (this.classList.contains('expanded')) {
+                                extras.forEach(el => el.style.display='none');
+                                this.classList.remove('expanded');
+                                this.innerHTML='点击查看更多';
+                            } else {
+                                extras.forEach(el => el.style.display='flex');
+                                this.classList.add('expanded');
+                                this.innerHTML='收起全部记录';
+                            }
+                        ">点击查看更多</button>
+                    </div>`;
+                }
+                body.innerHTML = html;
 
                 // 绑定删除按钮事件
                 body.querySelectorAll('.ia-del-btn[data-type="sku_stock"]').forEach(btn => {
@@ -1972,11 +2026,12 @@ function initInventoryAnalysisPage() {
             if (!data || data.length === 0) {
                 body.innerHTML = '<div class="ia-empty-tip">暂无历史数据</div>';
             } else {
-                body.innerHTML = data.map(r => {
+                let html = data.map((r, index) => {
                     const rate = r.inactive_qty_rate !== null ? Number(r.inactive_qty_rate).toFixed(1) : '--';
                     const rateNum = r.inactive_qty_rate !== null ? Number(r.inactive_qty_rate) : null;
                     const colorClass = rateNum === null ? '' : rateNum <= 20 ? 'ia-success' : rateNum <= 40 ? 'ia-warn' : 'ia-error';
-                    return `<div class="ia-history-item" data-id="${r.id}">
+                    const isHidden = index >= 2 ? 'style="display:none;" class="ia-history-extra"' : '';
+                    return `<div class="ia-history-item" data-id="${r.id}" ${isHidden}>
                         <span class="ia-history-date">${r.record_date || '--'}</span>
                         <span style="display:flex;align-items:center;gap:0.5rem;">
                             <span>
@@ -1990,6 +2045,23 @@ function initInventoryAnalysisPage() {
                         </span>
                     </div>`;
                 }).join('');
+                if (data.length > 2) {
+                    html += `<div style="text-align:center; padding-top:0.5rem; margin-top:0.5rem; border-top:1px solid rgba(255,255,255,0.05);">
+                        <button type="button" class="ia-formula-toggle-btn" style="margin:0 auto; display:inline-block;" onclick="
+                            const extras = this.parentElement.parentElement.querySelectorAll('.ia-history-extra');
+                            if (this.classList.contains('expanded')) {
+                                extras.forEach(el => el.style.display='none');
+                                this.classList.remove('expanded');
+                                this.innerHTML='点击查看更多';
+                            } else {
+                                extras.forEach(el => el.style.display='flex');
+                                this.classList.add('expanded');
+                                this.innerHTML='收起全部记录';
+                            }
+                        ">点击查看更多</button>
+                    </div>`;
+                }
+                body.innerHTML = html;
 
                 body.querySelectorAll('.ia-del-btn[data-type="qty_stock"]').forEach(btn => {
                     btn.addEventListener('click', () => deleteRecord(btn.dataset.id, loadQtyStockHistory));
