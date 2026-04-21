@@ -77,7 +77,13 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-two-col">
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
-                        <div class="ia-formula-box">
+                        <div class="ia-threshold-bar">
+                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
+                        </div>
+                        <div class="ia-formula-box" style="display: none;">
                             <div class="ia-formula-title">计算公式</div>
                             <div class="ia-formula-content">
                                 月度库存周转率 = <span class="ia-fraction"><span class="ia-numerator">当月商品销售总成本</span><span class="ia-denominator">当前库存总金额</span></span>
@@ -170,7 +176,13 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-two-col">
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
-                        <div class="ia-formula-box">
+                        <div class="ia-threshold-bar">
+                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
+                        </div>
+                        <div class="ia-formula-box" style="display: none;">
                             <div class="ia-formula-title">计算公式</div>
                             <div class="ia-formula-content">
                                 动销率 = <span class="ia-fraction"><span class="ia-numerator">当月有销量的 SKU 总数</span><span class="ia-denominator">当月店铺总 SKU 数</span></span> × 100%
@@ -263,17 +275,16 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-two-col">
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
-                        <div class="ia-formula-box">
-                            <div class="ia-formula-left">
-                                <div class="ia-formula-title">计算公式</div>
-                                <div class="ia-formula-content">
-                                    滞销 SKU 占比 = <span class="ia-fraction"><span class="ia-numerator">滞销 SKU 数量</span><span class="ia-denominator">可售 SKU 数量</span></span> × 100%
-                                </div>
-                            </div>
-                            <div class="ia-formula-right">
-                                <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
-                                <span class="ia-card-badge ia-badge-orange">“10%-15%”预警值</span>
-                                <span class="ia-card-badge ia-badge-red">“＞15%”为危险值</span>
+                        <div class="ia-threshold-bar">
+                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
+                        </div>
+                        <div class="ia-formula-box" style="display: none;">
+                            <div class="ia-formula-title">计算公式</div>
+                            <div class="ia-formula-content">
+                                滞销 SKU 占比 = <span class="ia-fraction"><span class="ia-numerator">滞销 SKU 数量</span><span class="ia-denominator">可售 SKU 数量</span></span> × 100%
                             </div>
                         </div>
 
@@ -361,17 +372,16 @@ function getInventoryAnalysisHTML() {
                 <div class="ia-two-col">
                     <!-- 左：输入 -->
                     <div class="ia-input-panel">
-                        <div class="ia-formula-box">
-                            <div class="ia-formula-left">
-                                <div class="ia-formula-title">计算公式</div>
-                                <div class="ia-formula-content">
-                                    滞销可用数占比 = <span class="ia-fraction"><span class="ia-numerator">滞销可用数</span><span class="ia-denominator">可用数（总）</span></span> × 100%
-                                </div>
-                            </div>
-                            <div class="ia-formula-right">
-                                <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
-                                <span class="ia-card-badge ia-badge-orange">“10%-15%”预警值</span>
-                                <span class="ia-card-badge ia-badge-red">“＞15%”为危险值</span>
+                        <div class="ia-threshold-bar">
+                            <span class="ia-card-badge ia-badge-green">“＜10%”正常值</span>
+                            <span class="ia-card-badge ia-badge-orange">“10%-10%”预警值</span>
+                            <span class="ia-card-badge ia-badge-red">“＞10%”危险值</span>
+                            <button type="button" class="ia-formula-toggle-btn" onclick="const box = this.parentElement.nextElementSibling; if(box.style.display==='none'){box.style.display='block'; this.innerHTML='隐藏公式';} else {box.style.display='none'; this.innerHTML='查看公式';}">查看公式</button>
+                        </div>
+                        <div class="ia-formula-box" style="display: none;">
+                            <div class="ia-formula-title">计算公式</div>
+                            <div class="ia-formula-content">
+                                滞销可用数占比 = <span class="ia-fraction"><span class="ia-numerator">滞销可用数</span><span class="ia-denominator">可用数（总）</span></span> × 100%
                             </div>
                         </div>
 
@@ -565,27 +575,47 @@ function getInventoryAnalysisHTML() {
                 gap: 1rem;
             }
 
+            /* 阈值栏 */
+            .ia-threshold-bar {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr auto;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+                align-items: center;
+            }
+
+            .ia-threshold-bar .ia-card-badge {
+                justify-content: center;
+                display: flex;
+            }
+
+            .ia-formula-toggle-btn {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                color: var(--text-secondary);
+                padding: 0.35rem 0.75rem;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.75rem;
+                font-weight: 500;
+                transition: all 0.2s;
+                text-align: center;
+                margin-left: auto;
+            }
+
+            .ia-formula-toggle-btn:hover {
+                background: rgba(22, 93, 255, 0.05);
+                color: var(--primary-color);
+                border-color: rgba(22, 93, 255, 0.2);
+            }
+
             /* 公式展示框 */
             .ia-formula-box {
                 background: rgba(255, 255, 255, 0.03);
                 border: 1px solid var(--border-color);
                 border-radius: 8px;
                 padding: 1rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .ia-formula-left {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .ia-formula-right {
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-                align-items: flex-end;
+                margin-bottom: 1rem;
             }
 
             .ia-formula-title {
@@ -1698,7 +1728,7 @@ function initInventoryAnalysisPage() {
             if (window.showToast) window.showToast('周转率记录已清空', 'success');
             loadTurnoverHistory();
             if (turnoverChart) { turnoverChart.destroy(); turnoverChart = null; }
-        } catch(e) {
+        } catch (e) {
             console.error('清空失败:', e);
             if (window.showToast) window.showToast('清空失败', 'error');
         }
@@ -1713,12 +1743,12 @@ function initInventoryAnalysisPage() {
             if (window.showToast) window.showToast('SKU记录已清空', 'success');
             loadSkuHistory();
             if (skuChart) { skuChart.destroy(); skuChart = null; }
-        } catch(e) {
+        } catch (e) {
             console.error('清空失败:', e);
             if (window.showToast) window.showToast('清空失败', 'error');
         }
     });
-    
+
     // ── 模块三：滞销/可售 SKU 统计 ─────────────────
     let skuStockChartLimit = 10;
 
@@ -1913,7 +1943,7 @@ function initInventoryAnalysisPage() {
             if (window.showToast) window.showToast('滞销/可售SKU记录已清空', 'success');
             loadSkuStockHistory();
             if (skuStockChart) { skuStockChart.destroy(); skuStockChart = null; }
-        } catch(e) {
+        } catch (e) {
             console.error('清空失败:', e);
             if (window.showToast) window.showToast('清空失败', 'error');
         }
@@ -2102,7 +2132,7 @@ function initInventoryAnalysisPage() {
             if (window.showToast) window.showToast('滞销/可用数记录已清空', 'success');
             loadQtyStockHistory();
             if (qtyStockChart) { qtyStockChart.destroy(); qtyStockChart = null; }
-        } catch(e) {
+        } catch (e) {
             console.error('清空失败:', e);
             if (window.showToast) window.showToast('清空失败', 'error');
         }
