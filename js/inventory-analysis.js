@@ -98,7 +98,7 @@ function getInventoryAnalysisHTML() {
                                 <div class="ia-source-tags-group">
                                     <div class="ia-source-tag">ERP 报表-销售主体分析</div>
                                     <div class="ia-source-tag">查询池：近一个月销售成本</div>
-                                    <div class="ia-source-tag">数值为「销售成本」</div>
+                                    <div class="ia-source-tag">数值为「净销售成本」</div>
                                 </div>
                             </div>
                             <div class="ia-input-box">
