@@ -1577,7 +1577,7 @@ function initNumberingRulesLogic() {
             saveBtn.disabled = true;
             saveBtn.textContent = '保存中...';
             await saveNumberingRules(rules);
-            window.AppUtils?.showToast?.('规则保存成功', 'success');
+            window.AppUtils?.showToast?.('需要重新上传新品才可在排品中应用新的序号分配规则', 'success');
         } catch (e) {
             window.AppUtils?.showToast?.('保存失败: ' + e.message, 'error');
         } finally {
