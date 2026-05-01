@@ -1590,13 +1590,7 @@ function initNumberingRulesLogic() {
         let output = [];
         const sortedRules = [...rules].sort((a, b) => a.range_start - b.range_start);
 
-        const previewRange = [];
-        for (let i = 1; i <= 20; i++) previewRange.push(i);
-        previewRange.push('...');
-        for (let i = 40; i <= 45; i++) previewRange.push(i);
-
-        previewRange.forEach(i => {
-            if (i === '...') { output.push('------'); return; }
+        for (let i = 1; i <= 100; i++) {
             let num = '';
             let r = sortedRules.find(ru => i >= ru.range_start && i <= ru.range_end);
             if (r) {
@@ -1607,7 +1601,7 @@ function initNumberingRulesLogic() {
                 num = 'N/A';
             }
             output.push(`第 ${i} 个 -> ${num}`);
-        });
+        }
 
         previewText.textContent = output.join('\n');
     });
