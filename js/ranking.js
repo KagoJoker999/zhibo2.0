@@ -1597,16 +1597,16 @@ function generateRankingSettingsPage() {
             </div>
             
             <!-- 方案管理栏 -->
-            <div class="scheme-manager-bar" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:var(--bg-secondary); border-radius:var(--border-radius); margin-bottom:1rem; flex-wrap:wrap;">
-                <span style="font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">📑 排品方案</span>
-                <select id="schemeSelector" class="input" style="min-width:160px; padding:0.4rem 0.6rem; font-size:0.85rem;">
+            <div class="scheme-manager-bar" style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 1rem; background:var(--bg-secondary); border-radius:var(--border-radius); margin-bottom:1rem;">
+                <span style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; flex-shrink:0;">📑 排品方案</span>
+                <select id="schemeSelector" class="input" style="flex:1; min-width:0; padding:0.35rem 0.6rem; font-size:0.85rem;">
                     <option>加载中...</option>
                 </select>
-                <div style="display:flex; gap:0.4rem;">
-                    <button class="btn btn-sm btn-primary" id="btnNewScheme" title="新建方案">+ 新建</button>
-                    <button class="btn btn-sm btn-secondary" id="btnCopyScheme" title="复制当前方案">📋 复制</button>
-                    <button class="btn btn-sm btn-secondary" id="btnRenameScheme" title="重命名方案">✏️ 重命名</button>
-                    <button class="btn btn-sm btn-secondary" id="btnDeleteScheme" title="删除方案" style="color:#ef4444;">🗑️ 删除</button>
+                <div style="display:flex; gap:0.3rem; flex-shrink:0;">
+                    <button class="btn btn-sm btn-primary" id="btnNewScheme" title="新建方案" style="padding:0.35rem 0.7rem; font-size:0.8rem;">+ 新建</button>
+                    <button class="btn btn-sm btn-secondary" id="btnCopyScheme" title="复制当前方案" style="padding:0.35rem 0.7rem; font-size:0.8rem;">📋 复制</button>
+                    <button class="btn btn-sm btn-secondary" id="btnRenameScheme" title="重命名方案" style="padding:0.35rem 0.7rem; font-size:0.8rem;">✏️ 重命名</button>
+                    <button class="btn btn-sm btn-secondary" id="btnDeleteScheme" title="删除方案" style="padding:0.35rem 0.6rem; font-size:0.8rem; color:#ef4444;">🗑️</button>
                 </div>
             </div>
             
