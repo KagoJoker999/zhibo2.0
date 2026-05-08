@@ -1604,6 +1604,7 @@ function generateRankingSettingsPage() {
                 </select>
                 <div style="display:flex; gap:0.4rem;">
                     <button class="btn btn-sm btn-primary" id="btnNewScheme" title="新建方案">+ 新建</button>
+                    <button class="btn btn-sm btn-secondary" id="btnCopyScheme" title="复制当前方案">📋 复制</button>
                     <button class="btn btn-sm btn-secondary" id="btnRenameScheme" title="重命名方案">✏️ 重命名</button>
                     <button class="btn btn-sm btn-secondary" id="btnDeleteScheme" title="删除方案" style="color:#ef4444;">🗑️ 删除</button>
                 </div>
@@ -2614,6 +2615,7 @@ async function initRankingSettings() {
 
     const schemeSelector = document.getElementById('schemeSelector');
     const btnNewScheme = document.getElementById('btnNewScheme');
+    const btnCopyScheme = document.getElementById('btnCopyScheme');
     const btnRenameScheme = document.getElementById('btnRenameScheme');
     const btnDeleteScheme = document.getElementById('btnDeleteScheme');
 
@@ -2704,6 +2706,27 @@ async function initRankingSettings() {
             switchScheme(currentSchemeName);
             saveRankingSchemes(schemes);
             window.AppUtils?.showToast?.('方案已删除', 'success');
+        });
+    }
+
+    if (btnCopyScheme) {
+        btnCopyScheme.addEventListener('click', () => {
+            // 自动生成副本名称，避免重名
+            let baseName = `${currentSchemeName} (副本)`;
+            let copyName = baseName;
+            let counter = 2;
+            while (schemes.方案列表[copyName]) {
+                copyName = `${baseName} ${counter}`;
+                counter++;
+            }
+            schemes.方案列表[copyName] = JSON.parse(JSON.stringify(config));
+            currentSchemeName = copyName;
+            schemes.当前方案 = copyName;
+            config = getSchemeConfig(schemes, copyName);
+            populateSchemeSelector();
+            switchScheme(copyName);
+            saveRankingSchemes(schemes);
+            window.AppUtils?.showToast?.(`已复制方案: ${copyName}`, 'success');
         });
     }
 
