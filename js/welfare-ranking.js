@@ -58,6 +58,7 @@ async function initWelfareRanking() {
     const clearBtn = document.getElementById('btnClearWelfareData');
 
     let currentData = [];
+    let isSaving = false;
 
     // 加载来源数据
     async function loadData() {
@@ -150,7 +151,7 @@ async function initWelfareRanking() {
 
     function checkSaveButtonState() {
         const checkboxes = document.querySelectorAll('.welfare-checkbox:checked');
-        saveBtn.disabled = checkboxes.length === 0;
+        saveBtn.disabled = isSaving || checkboxes.length === 0;
     }
 
     // 刷新数据
@@ -187,12 +188,16 @@ async function initWelfareRanking() {
 
     // 保存选中项
     saveBtn.addEventListener('click', async () => {
+        if (isSaving) return;
+
         const checkedBoxes = Array.from(document.querySelectorAll('.welfare-checkbox:checked'));
         if (checkedBoxes.length === 0) return;
 
         const selectedRecords = checkedBoxes.map(cb => currentData[cb.dataset.idx]);
 
         try {
+            isSaving = true;
+            saveBtn.disabled = true;
             AppUtils.showLoading('正在保存选中的商品...');
 
             // 1. 先清空
@@ -234,6 +239,8 @@ async function initWelfareRanking() {
             console.error('保存报错:', error);
             AppUtils.showToast('保存失败: ' + error.message, 'error');
         } finally {
+            isSaving = false;
+            checkSaveButtonState();
             AppUtils.hideLoading();
         }
     });
