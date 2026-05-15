@@ -1683,12 +1683,12 @@ function initNewProductLinks() {
                     <span style="font-size:0.85rem; color:var(--text-muted);"><i data-lucide="clock" style="width:13px;height:13px;"></i> 最后更新：${lastTimeStr}</span>
                     <span style="font-size:0.85rem; color:var(--text-muted);">|</span>
                     <span style="font-size:0.85rem; color:var(--text-muted);"><i data-lucide="package" style="width:13px;height:13px;"></i> 共 ${data.length} 个商品ID</span>
-                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-left:auto;">
+                    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-left:auto;">
                         ${groups.map((group, idx) => {
                             const start = idx * groupSize + 1;
                             const end = start + group.length - 1;
-                            return `<button class="btn btn-sm btn-secondary copy-group-btn" data-group-idx="${idx}" style="font-size:0.8rem;">
-                                <i data-lucide="copy" style="width:12px;height:12px;"></i> 复制第 ${start}-${end} 条
+                            return `<button class="btn btn-primary copy-group-btn" data-group-idx="${idx}" style="font-size:0.9rem; padding: 0.5rem 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <i data-lucide="copy" style="width:14px;height:14px;margin-right:4px;"></i> 复制第 ${start}-${end} 条
                             </button>`;
                         }).join('')}
                     </div>
