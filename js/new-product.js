@@ -1612,7 +1612,7 @@ function initNumberingRulesLogic() {
 // ========================================
 function generateNewProductLinksPage() {
     return `
-        <div class="new-product-links-page" style="padding: 1.5rem;">
+        <div class="new-product-links-page">
             <div class="data-table-section">
                 <div class="data-table-header">
                     <h3><i data-lucide="link-2"></i> 新品链接 <span class="db-table-tag">← new_product_links</span> <span id="linksLastUpdate" class="refresh-time"></span> <span id="linksCountInfo" class="record-count"></span></h3>
