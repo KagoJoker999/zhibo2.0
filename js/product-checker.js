@@ -112,6 +112,8 @@ async function startCheck(file) {
         const uploadNameToStepInv = new Map();
         // J列数值 -> 商品名称列表映射
         const colJValueToNames = new Map();
+        // A列商品ID集合（去重）
+        const productIdSet = new Set();
 
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
@@ -140,6 +142,10 @@ async function startCheck(file) {
                 const pid = String(row[productIdColIdx] ?? '').trim();
                 if (pid) nameToProductId.set(name, pid);
             }
+
+            // 收集 A 列（索引 0）商品ID，去重
+            const colAValue = String(row[0] ?? '').trim();
+            if (colAValue) productIdSet.add(colAValue);
         }
 
         // 2. 加载新品表格（源数据）
@@ -252,6 +258,14 @@ async function startCheck(file) {
         // 3. 显示结果
         renderCheckerResults(issues, sourceData.length);
 
+        // 4. 将 A 列商品ID 全量写入 new_product_links 表
+        const productIds = Array.from(productIdSet);
+        if (productIds.length > 0) {
+            saveProductIdsToNewProductLinks(productIds).catch(e => {
+                console.warn('写入商品链接表失败（非致命）:', e);
+            });
+        }
+
     } catch (err) {
         console.error('商品检查失败:', err);
         statusText.textContent = '校验失败';
@@ -358,6 +372,41 @@ function cleanProductName(name) {
         return name.substring(idx);
     }
     return name;
+}
+
+// ========================================
+// 写入商品ID到 new_product_links 表
+// 每次全量覆盖（先清空再插入）
+// 数据库表: new_product_links
+// ========================================
+async function saveProductIdsToNewProductLinks(productIds) {
+    console.log(`[新品链接] 开始写入 ${productIds.length} 条商品ID...`);
+
+    // 1. 清空旧数据
+    const { error: deleteError } = await window.supabaseClient
+        .from('new_product_links')
+        .delete()
+        .gte('id', 0);
+
+    if (deleteError) throw new Error('清空旧数据失败: ' + deleteError.message);
+
+    // 2. 分批插入（每批 500 条）
+    const batchSize = 500;
+    for (let i = 0; i < productIds.length; i += batchSize) {
+        const batch = productIds.slice(i, i + batchSize).map(pid => ({ product_id: pid }));
+        const { error: insertError } = await window.supabaseClient
+            .from('new_product_links')
+            .insert(batch);
+        if (insertError) throw new Error('写入商品ID失败: ' + insertError.message);
+    }
+
+    console.log(`[新品链接] 写入完成，共 ${productIds.length} 条`);
+    window.AppUtils?.showToast?.(`商品链接已更新，共 ${productIds.length} 个商品ID`, 'success');
+
+    // 3. 如果当前停留在「新品链接」分页，自动刷新
+    if (window._refreshNewProductLinks) {
+        window._refreshNewProductLinks();
+    }
 }
 
 // 暴露到全局

@@ -50,6 +50,7 @@ const PageConfig = {
     'new-product-download': { title: '新品数据下载', icon: '<i data-lucide="sparkles"></i>' },
     'new-product-settings': { title: '新品处理设置', icon: '<i data-lucide="sparkles"></i>' },
     'new-product-rules': { title: '新品序号分配', icon: '🔢' },
+    'new-product-links': { title: '新品链接', icon: '<i data-lucide="link-2"></i>' },
     'welfare-ranking': { title: '福利排品', icon: '<i data-lucide="gift"></i>' },
     'coupon': { title: '发券品处理', icon: '<i data-lucide="ticket"></i>' },
     'coupon-upload': { title: '发券品数据上传', icon: '<i data-lucide="ticket"></i>' },

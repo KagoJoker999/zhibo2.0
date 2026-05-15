@@ -1608,6 +1608,153 @@ function initNumberingRulesLogic() {
 }
 
 // ========================================
+// 新品链接分页 - 页面生成
+// ========================================
+function generateNewProductLinksPage() {
+    return `
+        <div class="new-product-links-page" style="padding: 1.5rem;">
+            <div class="data-table-section">
+                <div class="data-table-header">
+                    <h3><i data-lucide="link-2"></i> 新品链接 <span class="db-table-tag">← new_product_links</span> <span id="linksLastUpdate" class="refresh-time"></span> <span id="linksCountInfo" class="record-count"></span></h3>
+                    <div class="header-buttons">
+                        <button class="btn btn-primary btn-sm" id="refreshLinksBtn" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; min-width: auto; flex-shrink: 0;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i></button>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 1rem;">[每次商品检查并上传表格后自动全量更新] 商品链接格式：https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=商品ID&origin_type=604</p>
+                <div id="linksTableContainer" class="data-table-container">
+                    <p class="text-muted">点击刷新加载数据</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ========================================
+// 新品链接分页 - 初始化
+// ========================================
+function initNewProductLinks() {
+    const refreshBtn = document.getElementById('refreshLinksBtn');
+    const container = document.getElementById('linksTableContainer');
+    const lastUpdateEl = document.getElementById('linksLastUpdate');
+    const countInfoEl = document.getElementById('linksCountInfo');
+
+    // 注册全局刷新回调（商品检查写入完成后会调用）
+    window._refreshNewProductLinks = loadLinksData;
+
+    refreshBtn?.addEventListener('click', loadLinksData);
+
+    async function loadLinksData() {
+        container.innerHTML = '<p class="text-muted">加载中...</p>';
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('new_product_links')
+                .select('product_id, product_link, created_at')
+                .order('id', { ascending: true });
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="text-muted">暂无数据，请先执行「商品检查」并上传表格</p>';
+                if (lastUpdateEl) lastUpdateEl.textContent = '';
+                if (countInfoEl) countInfoEl.textContent = '';
+                return;
+            }
+
+            // 更新计数和时间
+            const now = new Date();
+            if (lastUpdateEl) lastUpdateEl.textContent = `(刷新于 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')})`;
+            if (countInfoEl) countInfoEl.textContent = `共 ${data.length} 个商品`;
+
+            // 最后更新时间（取数据库时间）
+            const lastTime = data[0]?.created_at;
+            const lastTimeStr = lastTime ? new Date(lastTime).toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '-';
+
+            // 构建分组复制按钮（每 30 个一组）
+            const groupSize = 30;
+            const groups = [];
+            for (let i = 0; i < data.length; i += groupSize) {
+                groups.push(data.slice(i, i + groupSize));
+            }
+
+            // 生成页面 HTML
+            let html = `
+                <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; padding:0.75rem 1rem; background:var(--bg-secondary); border-radius:var(--border-radius-sm);">
+                    <span style="font-size:0.85rem; color:var(--text-muted);"><i data-lucide="clock" style="width:13px;height:13px;"></i> 最后更新：${lastTimeStr}</span>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">|</span>
+                    <span style="font-size:0.85rem; color:var(--text-muted);"><i data-lucide="package" style="width:13px;height:13px;"></i> 共 ${data.length} 个商品ID</span>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-left:auto;">
+                        ${groups.map((group, idx) => {
+                            const start = idx * groupSize + 1;
+                            const end = start + group.length - 1;
+                            return `<button class="btn btn-sm btn-secondary copy-group-btn" data-group-idx="${idx}" style="font-size:0.8rem;">
+                                <i data-lucide="copy" style="width:12px;height:12px;"></i> 复制第 ${start}-${end} 条
+                            </button>`;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">序号</th>
+                                <th>商品ID</th>
+                                <th>商品链接</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map((row, idx) => `
+                                <tr>
+                                    <td style="color:var(--text-muted);font-size:0.85rem;">${idx + 1}</td>
+                                    <td style="font-family:monospace;font-size:0.85rem;">${row.product_id}</td>
+                                    <td style="font-size:0.8rem;">
+                                        <a href="${row.product_link}" target="_blank" class="checker-link" style="word-break:break-all;">${row.product_link}</a>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            if (window.lucide) window.lucide.createIcons();
+
+            // 绑定分组复制按钮
+            container.querySelectorAll('.copy-group-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const idx = parseInt(btn.dataset.groupIdx);
+                    const group = groups[idx];
+                    const links = group.map(row => row.product_link).join('\n');
+                    try {
+                        await navigator.clipboard.writeText(links);
+                        const origHTML = btn.innerHTML;
+                        btn.innerHTML = `<i data-lucide="check" style="width:12px;height:12px;"></i> 已复制`;
+                        btn.style.background = 'var(--success-color)';
+                        btn.style.color = 'white';
+                        if (window.lucide) window.lucide.createIcons();
+                        setTimeout(() => {
+                            btn.innerHTML = origHTML;
+                            btn.style.background = '';
+                            btn.style.color = '';
+                            if (window.lucide) window.lucide.createIcons();
+                        }, 2000);
+                    } catch (e) {
+                        window.AppUtils?.showToast?.('复制失败，请手动复制', 'error');
+                    }
+                });
+            });
+
+        } catch (err) {
+            container.innerHTML = `<p class="error">加载失败: ${err.message}</p>`;
+        }
+    }
+
+    // 初始加载
+    loadLinksData();
+}
+
+// ========================================
 // 导出加载函数
 // ========================================
 window.loadNewProductPage = function (pageId) {
@@ -1627,6 +1774,12 @@ window.loadNewProductPage = function (pageId) {
         return {
             html: generateNewProductRulesPage(),
             init: initNewProductRules
+        };
+    }
+    if (pageId === 'new-product-links') {
+        return {
+            html: generateNewProductLinksPage(),
+            init: initNewProductLinks
         };
     }
     return null;
