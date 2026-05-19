@@ -350,6 +350,7 @@ function generateUploadBlock(key, config) {
     const mappingRows = config.mapping.map(m =>
         `<tr><td>${m.source}</td><td>→</td><td>${m.target}</td></tr>`
     ).join('');
+    const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
 
     return `
         <div class="upload-block" id="block-${key}">
@@ -361,7 +362,22 @@ function generateUploadBlock(key, config) {
                 <div class="upload-zone-icon">📁</div>
                 <p>拖拽文件到此处，或点击选择</p>
                 <p class="upload-hint">.xlsx, .xls, .csv</p>
-                <input type="file" id="fileInput-${key}" accept=".xlsx,.xls,.csv" style="display:none">
+            </div>
+
+            <div class="automation-upload-entry" data-upload-key="${key}">
+                <label class="automation-upload-label" for="fileInput-${key}">
+                    <i data-lucide="bot"></i>
+                    自动化上传入口
+                </label>
+                <input
+                    type="file"
+                    id="fileInput-${key}"
+                    class="automation-file-input"
+                    accept=".xlsx,.xls,.csv"
+                    data-automation-upload="${key}"
+                    aria-label="${plainTitle} 自动化上传入口"
+                >
+                <div class="automation-upload-hint">影刀可直接定位此文件控件并设置文件路径</div>
             </div>
             
             <div class="toggle-group" id="modeToggle-${key}">
@@ -474,6 +490,7 @@ function initUploadBlock(key, config) {
         selectedFile = file;
         uploadZone.innerHTML = `<div class="upload-zone-icon"><i data-lucide="check-circle"></i></div><p><strong>${file.name}</strong></p>`;
         uploadBtn.disabled = false;
+        if (window.lucide) window.lucide.createIcons();
     }
 
     uploadBtn.addEventListener('click', async () => {

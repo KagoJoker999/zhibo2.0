@@ -1090,6 +1090,57 @@ select:focus {
     font-size: 0.875rem;
 }
 
+.automation-upload-entry {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+}
+
+.automation-upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.automation-upload-label svg {
+    width: 15px;
+    height: 15px;
+}
+
+.automation-file-input {
+    width: 100%;
+    min-height: 36px;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+}
+
+.automation-file-input::file-selector-button {
+    min-height: 34px;
+    margin-right: 0.75rem;
+    padding: 0 0.875rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.automation-file-input::file-selector-button:hover {
+    border-color: var(--primary-color);
+}
+
+.automation-upload-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
 /* Toggle 分段切换器 */
 .toggle-group {
     display: flex;
