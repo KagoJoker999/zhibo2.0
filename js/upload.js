@@ -496,10 +496,9 @@ function initUploadBlock(key, config) {
     uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
 
-        // 库存上传前需要确认
+        // 库存上传前提示
         if (key === 'inventory') {
-            const confirmed = confirm('请确认已是清空样品仓后数据。');
-            if (!confirmed) return;
+            window.AppUtils?.showToast?.('请确认已是清空样品仓后数据', 'warning');
         }
 
         const modeValue = document.querySelector(`input[name="mode-${key}"]`).value;
