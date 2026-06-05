@@ -232,16 +232,20 @@ const UploadConfigs = {
         title: '<i data-lucide="tag"></i> ID上传',
         tableName: 'product_id_data',
         processor: processProductIdData,
+        customMode: 'productId',
         rules: [
             '商品名称：保留「字符后部分',
             '商品ID：去除"ID:"前缀',
-            '按商品名称去重，保留首条'
+            '表格解析时按商品名称去重，保留首条',
+            '上传前选择店铺：1号至5号',
+            '上传时按商品ID去重，重复商品ID不上传'
         ],
         mapping: [
             { source: 'A列 商品ID', target: 'product_id' },
             { source: 'B列 商品名称', target: 'product_name' },
             { source: 'E列 三级分类', target: 'store_category' },
-            { source: 'N列 商品价格', target: 'product_price' }
+            { source: 'N列 商品价格', target: 'product_price' },
+            { source: '上传前选择', target: '店铺' }
         ]
     }
 };
@@ -320,7 +324,7 @@ async function showUploadHistoryModal(uploadType, title) {
                             <td class="file-name">${row.file_name}</td>
                             <td>${formatHistoryTime(row.created_at)}</td>
                             <td><span class="record-count">${row.record_count}</span></td>
-                            <td>${row.upload_mode === 'full' ? '更新全部' : '补充上传'}</td>
+                            <td>${formatUploadMode(row.upload_mode)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -343,6 +347,14 @@ function formatHistoryTime(isoString) {
     });
 }
 
+function formatUploadMode(mode) {
+    if (mode === 'full') return '更新全部';
+    if (mode === 'incremental') return '补充上传';
+    if (mode === 'upload') return '上传';
+    if (mode === 'clear') return '清空表格';
+    return mode || '-';
+}
+
 // ========================================
 // 生成单个上传区块
 // ========================================
@@ -351,6 +363,33 @@ function generateUploadBlock(key, config) {
         `<tr><td>${m.source}</td><td>→</td><td>${m.target}</td></tr>`
     ).join('');
     const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
+    const isProductIdUpload = config.customMode === 'productId';
+    const modeControls = isProductIdUpload ? `
+            <div class="product-id-shop-selector">
+                <label for="shopSelect-${key}">店铺</label>
+                <select id="shopSelect-${key}" class="form-select">
+                    <option value="1">1号</option>
+                    <option value="2">2号</option>
+                    <option value="3">3号</option>
+                    <option value="4">4号</option>
+                    <option value="5">5号</option>
+                </select>
+            </div>
+        ` : `
+            <div class="toggle-group" id="modeToggle-${key}">
+                <button type="button" class="toggle-btn active" data-value="full">更新全部</button>
+                <button type="button" class="toggle-btn" data-value="incremental">补充上传</button>
+                <input type="hidden" name="mode-${key}" value="full">
+            </div>
+        `;
+    const actionButtons = isProductIdUpload ? `
+                <button class="btn btn-danger" id="clearBtn-${key}">清空表格</button>
+                <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>上传</button>
+                <button class="btn btn-secondary btn-history" id="historyBtn-${key}"><i data-lucide="history"></i> 查看历史</button>
+        ` : `
+                <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
+                <button class="btn btn-secondary btn-history" id="historyBtn-${key}"><i data-lucide="history"></i> 查看历史</button>
+        `;
 
     return `
         <div class="upload-block" id="block-${key}">
@@ -380,11 +419,7 @@ function generateUploadBlock(key, config) {
                 <div class="automation-upload-hint">影刀可直接定位此文件控件并设置文件路径</div>
             </div>
             
-            <div class="toggle-group" id="modeToggle-${key}">
-                <button type="button" class="toggle-btn active" data-value="full">更新全部</button>
-                <button type="button" class="toggle-btn" data-value="incremental">补充上传</button>
-                <input type="hidden" name="mode-${key}" value="full">
-            </div>
+            ${modeControls}
             
             <div class="upload-status" id="status-${key}" style="display:none">
                 <div class="status-text" id="statusText-${key}">准备中...</div>
@@ -393,8 +428,7 @@ function generateUploadBlock(key, config) {
             </div>
             
             <div class="upload-actions-row">
-                <button class="btn btn-primary btn-upload" id="uploadBtn-${key}" disabled>开始上传</button>
-                <button class="btn btn-secondary btn-history" id="historyBtn-${key}"><i data-lucide="history"></i> 查看历史</button>
+                ${actionButtons}
             </div>
             
             <div class="last-upload-time" id="lastUploadTime-${key}"></div>
@@ -445,7 +479,10 @@ function initUploadBlock(key, config) {
     const progressBar = document.getElementById(`progress-${key}`);
     const statusDetail = document.getElementById(`statusDetail-${key}`);
     const toggleGroup = document.getElementById(`modeToggle-${key}`);
-    const modeInput = toggleGroup.querySelector('input[type="hidden"]');
+    const modeInput = toggleGroup?.querySelector('input[type="hidden"]');
+    const clearBtn = document.getElementById(`clearBtn-${key}`);
+    const shopSelect = document.getElementById(`shopSelect-${key}`);
+    const isProductIdUpload = config.customMode === 'productId';
 
     let selectedFile = null;
     const lastUploadTimeDiv = document.getElementById(`lastUploadTime-${key}`);
@@ -461,7 +498,7 @@ function initUploadBlock(key, config) {
         updateLastUploadTime(savedTime);
     }
 
-    toggleGroup.querySelectorAll('.toggle-btn').forEach(btn => {
+    toggleGroup?.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             toggleGroup.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -493,6 +530,28 @@ function initUploadBlock(key, config) {
         if (window.lucide) window.lucide.createIcons();
     }
 
+    clearBtn?.addEventListener('click', async () => {
+        try {
+            statusDiv.style.display = 'block';
+            clearBtn.disabled = true;
+            uploadBtn.disabled = true;
+            updateStatus('清空表格...', 60);
+            await clearTable(config.tableName);
+            updateStatus('清空完成！', 100);
+            statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 已清空 ${config.tableName}</span>`;
+            await saveUploadHistory(key, '手动清空', 0, 'clear');
+            window.AppUtils?.showToast?.('ID表格已清空', 'success');
+        } catch (error) {
+            console.error('清空表格失败:', error);
+            statusText.textContent = '清空失败';
+            statusDetail.innerHTML = `<span class="error"><i data-lucide="x-circle"></i> ${error.message}</span>`;
+            window.AppUtils?.showToast?.('清空失败: ' + error.message, 'error');
+        } finally {
+            clearBtn.disabled = false;
+            uploadBtn.disabled = !selectedFile;
+        }
+    });
+
     uploadBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
 
@@ -501,7 +560,7 @@ function initUploadBlock(key, config) {
             window.AppUtils?.showToast?.('请确认已是清空样品仓后数据', 'warning');
         }
 
-        const modeValue = document.querySelector(`input[name="mode-${key}"]`).value;
+        const modeValue = isProductIdUpload ? 'upload' : document.querySelector(`input[name="mode-${key}"]`).value;
         const isFullMode = modeValue === 'full';
         console.log(`<i data-lucide="clipboard-list"></i> 上传模式: ${modeValue}, isFullMode: ${isFullMode}`);
         try {
@@ -513,6 +572,34 @@ function initUploadBlock(key, config) {
             const records = config.processor(data);
             updateStatus(`已处理 ${records.length} 条`, 50);
             if (records.length === 0) throw new Error('无有效数据');
+
+            if (isProductIdUpload) {
+                const shopValue = shopSelect?.value || '1';
+                records.forEach(record => {
+                    record['店铺'] = shopValue;
+                });
+
+                updateStatus('检查重复商品ID...', 60);
+                const dedupeResult = await filterNewProductIdRecords(config.tableName, records);
+                updateStatus('上传中...', 75);
+
+                if (dedupeResult.newRecords.length > 0) {
+                    await uploadData(config.tableName, dedupeResult.newRecords);
+                }
+
+                updateStatus('完成！', 100);
+                statusDetail.innerHTML = `<span class="success"><i data-lucide="check-circle"></i> 新增 ${dedupeResult.newRecords.length} 条，重复 ${dedupeResult.duplicateCount} 条</span>`;
+                const now = new Date();
+                const timeStr = now.toLocaleString('zh-CN', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+                localStorage.setItem(`lastUpload_${key}`, timeStr);
+                updateLastUploadTime(timeStr);
+                await saveUploadHistory(key, selectedFile.name, dedupeResult.newRecords.length, modeValue);
+                window.AppUtils?.showToast?.(`ID上传完成：新增 ${dedupeResult.newRecords.length} 条，重复 ${dedupeResult.duplicateCount} 条`, 'success');
+                return;
+            }
 
             // 特殊处理库存上传逻辑，基于福利二字拆分
             let tableToRecords = [];
@@ -625,6 +712,54 @@ async function uploadData(tableName, records) {
         const { error } = await window.supabaseClient.from(tableName).insert(records.slice(i, i + batchSize));
         if (error) throw new Error('上传失败: ' + error.message);
     }
+}
+
+async function loadExistingProductIdSet(tableName) {
+    const existingIds = new Set();
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        const { data, error } = await window.supabaseClient
+            .from(tableName)
+            .select('product_id')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) throw new Error('查询已有商品ID失败: ' + error.message);
+
+        (data || []).forEach(item => {
+            const id = String(item.product_id ?? '').trim();
+            if (id) existingIds.add(id);
+        });
+
+        if (!data || data.length < pageSize) {
+            hasMore = false;
+        } else {
+            page++;
+        }
+    }
+
+    return existingIds;
+}
+
+async function filterNewProductIdRecords(tableName, records) {
+    const existingIds = await loadExistingProductIdSet(tableName);
+    const seenInCurrentFile = new Set();
+    const newRecords = [];
+    let duplicateCount = 0;
+
+    records.forEach(record => {
+        const productId = String(record.product_id ?? '').trim();
+        if (productId && (existingIds.has(productId) || seenInCurrentFile.has(productId))) {
+            duplicateCount++;
+            return;
+        }
+        if (productId) seenInCurrentFile.add(productId);
+        newRecords.push(record);
+    });
+
+    return { newRecords, duplicateCount };
 }
 
 // ========================================

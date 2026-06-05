@@ -1173,6 +1173,27 @@ select:focus {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.product-id-shop-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    padding: 0.75rem;
+}
+
+.product-id-shop-selector label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.product-id-shop-selector .form-select {
+    height: 40px;
+    padding: 0 0.75rem;
+}
+
 /* 上传按钮统一高度 */
 .upload-block .btn-upload {
     min-height: 44px;
