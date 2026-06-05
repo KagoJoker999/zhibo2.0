@@ -1174,24 +1174,48 @@ select:focus {
 }
 
 .product-id-shop-selector {
-    display: flex;
-    align-items: center;
+    display: grid;
     gap: 0.75rem;
     background: var(--bg-tertiary);
     border-radius: var(--border-radius-sm);
     padding: 0.75rem;
 }
 
-.product-id-shop-selector label {
+.product-id-shop-label {
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
-    white-space: nowrap;
 }
 
-.product-id-shop-selector .form-select {
-    height: 40px;
-    padding: 0 0.75rem;
+.product-id-shop-options {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.shop-option-btn {
+    min-height: 40px;
+    padding: 0.5rem 0.25rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.shop-option-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.shop-option-btn.active {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* 上传按钮统一高度 */

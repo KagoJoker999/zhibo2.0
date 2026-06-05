@@ -366,14 +366,15 @@ function generateUploadBlock(key, config) {
     const isProductIdUpload = config.customMode === 'productId';
     const modeControls = isProductIdUpload ? `
             <div class="product-id-shop-selector">
-                <label for="shopSelect-${key}">店铺</label>
-                <select id="shopSelect-${key}" class="form-select">
-                    <option value="1">1号</option>
-                    <option value="2">2号</option>
-                    <option value="3">3号</option>
-                    <option value="4">4号</option>
-                    <option value="5">5号</option>
-                </select>
+                <div class="product-id-shop-label">店铺</div>
+                <div class="product-id-shop-options" id="shopOptions-${key}">
+                    <button type="button" class="shop-option-btn" data-value="1">1号</button>
+                    <button type="button" class="shop-option-btn" data-value="2">2号</button>
+                    <button type="button" class="shop-option-btn" data-value="3">3号</button>
+                    <button type="button" class="shop-option-btn" data-value="4">4号</button>
+                    <button type="button" class="shop-option-btn" data-value="5">5号</button>
+                    <input type="hidden" id="shopValue-${key}" value="">
+                </div>
             </div>
         ` : `
             <div class="toggle-group" id="modeToggle-${key}">
@@ -481,7 +482,8 @@ function initUploadBlock(key, config) {
     const toggleGroup = document.getElementById(`modeToggle-${key}`);
     const modeInput = toggleGroup?.querySelector('input[type="hidden"]');
     const clearBtn = document.getElementById(`clearBtn-${key}`);
-    const shopSelect = document.getElementById(`shopSelect-${key}`);
+    const shopOptions = document.getElementById(`shopOptions-${key}`);
+    const shopValueInput = document.getElementById(`shopValue-${key}`);
     const isProductIdUpload = config.customMode === 'productId';
 
     let selectedFile = null;
@@ -498,6 +500,14 @@ function initUploadBlock(key, config) {
         updateLastUploadTime(savedTime);
     }
 
+    function updateUploadButtonState() {
+        if (isProductIdUpload) {
+            uploadBtn.disabled = !selectedFile || !shopValueInput?.value;
+        } else {
+            uploadBtn.disabled = !selectedFile;
+        }
+    }
+
     toggleGroup?.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             toggleGroup.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
@@ -509,6 +519,15 @@ function initUploadBlock(key, config) {
     historyBtn?.addEventListener('click', () => {
         const plainTitle = config.title.replace(/<[^>]*>/g, '').trim();
         showUploadHistoryModal(key, plainTitle);
+    });
+
+    shopOptions?.querySelectorAll('.shop-option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            shopOptions.querySelectorAll('.shop-option-btn').forEach(item => item.classList.remove('active'));
+            btn.classList.add('active');
+            shopValueInput.value = btn.dataset.value || '';
+            updateUploadButtonState();
+        });
     });
 
     uploadZone.addEventListener('click', () => fileInput.click());
@@ -526,7 +545,7 @@ function initUploadBlock(key, config) {
     function handleFileSelect(file) {
         selectedFile = file;
         uploadZone.innerHTML = `<div class="upload-zone-icon"><i data-lucide="check-circle"></i></div><p><strong>${file.name}</strong></p>`;
-        uploadBtn.disabled = false;
+        updateUploadButtonState();
         if (window.lucide) window.lucide.createIcons();
     }
 
@@ -548,7 +567,7 @@ function initUploadBlock(key, config) {
             window.AppUtils?.showToast?.('清空失败: ' + error.message, 'error');
         } finally {
             clearBtn.disabled = false;
-            uploadBtn.disabled = !selectedFile;
+            updateUploadButtonState();
         }
     });
 
@@ -574,7 +593,8 @@ function initUploadBlock(key, config) {
             if (records.length === 0) throw new Error('无有效数据');
 
             if (isProductIdUpload) {
-                const shopValue = shopSelect?.value || '1';
+                const shopValue = shopValueInput?.value;
+                if (!shopValue) throw new Error('请先选择店铺');
                 records.forEach(record => {
                     record['店铺'] = shopValue;
                 });
@@ -664,7 +684,7 @@ function initUploadBlock(key, config) {
             statusDetail.innerHTML = `<span class="error"><i data-lucide="x-circle"></i> ${error.message}</span>`;
             window.AppUtils?.showToast?.('上传失败: ' + error.message, 'error');
         } finally {
-            uploadBtn.disabled = false;
+            updateUploadButtonState();
         }
     });
 
