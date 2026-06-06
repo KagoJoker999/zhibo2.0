@@ -47,6 +47,66 @@ async function saveMappingConfig(config) {
     console.log('<i data-lucide="check-circle"></i> [对照配置] 保存成功');
 }
 
+function normalizeShopValue(value) {
+    const str = String(value ?? '').trim();
+    return ['1', '2', '3', '4', '5'].includes(str) ? str : '';
+}
+
+function mergeShopValues(existing, value) {
+    const shops = new Set(String(existing || '').split(',').map(normalizeShopValue).filter(Boolean));
+    const normalized = normalizeShopValue(value);
+    if (normalized) shops.add(normalized);
+    return Array.from(shops).sort((a, b) => Number(a) - Number(b)).join(',');
+}
+
+function renderShopBadge(shopValue) {
+    const shops = String(shopValue || '').split(',').map(normalizeShopValue).filter(Boolean);
+    if (shops.length === 0) return '<span style="color: var(--text-muted);">--</span>';
+    return shops.map(shop => `<span class="shop-badge" data-shop="${shop}">${shop}号</span>`).join('');
+}
+
+async function loadProductShopMapById() {
+    const client = window.supabaseClient;
+    if (!client) return {};
+
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        const { data, error } = await client
+            .from('product_id_data')
+            .select('*')
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) {
+            console.warn('加载商品店铺映射失败:', error.message);
+            return {};
+        }
+
+        if (data && data.length > 0) {
+            allData = allData.concat(data);
+            if (data.length < pageSize) hasMore = false;
+            else page++;
+        } else {
+            hasMore = false;
+        }
+    }
+
+    const shopMap = {};
+    allData.forEach(item => {
+        const productId = String(item.product_id ?? '').trim();
+        if (!productId) return;
+        const shop = normalizeShopValue(item.shop ?? item['店铺']);
+        if (shop) {
+            shopMap[productId] = mergeShopValues(shopMap[productId], shop);
+        }
+    });
+
+    return shopMap;
+}
+
 // ========================================
 // 仓位转换逻辑
 // ========================================
@@ -131,6 +191,7 @@ function mergeAndDeduplicate(rankingData, newProductData) {
         if (productMap.has(name)) {
             const existing = productMap.get(name);
             existing.warehouse = mergeField(existing.warehouse, item.warehouse);
+            existing.shop = mergeShopValues(existing.shop, item.shop);
             existing.available_qty = (existing.available_qty || 0) + (item.available_qty || 0);
             existing.actual_stock = (existing.actual_stock || 0) + (item.actual_stock || 0);
             if (!existing.image_url && item.image_url) existing.image_url = item.image_url;
@@ -138,6 +199,7 @@ function mergeAndDeduplicate(rankingData, newProductData) {
             productMap.set(name, {
                 product_name: name,
                 product_id: item.product_id || '',
+                shop: item.shop || '',
                 ranking_result: item.ranking_result || '',
                 sample_number: item.sample_number || '',
                 image_url: item.image_url || '',
@@ -156,6 +218,7 @@ function mergeAndDeduplicate(rankingData, newProductData) {
         if (productMap.has(name)) {
             const existing = productMap.get(name);
             existing.warehouse = mergeField(existing.warehouse, item.warehouse);
+            existing.shop = mergeShopValues(existing.shop, item.shop);
             existing.available_qty = (existing.available_qty || 0) + (item.available_qty || 0);
             existing.actual_stock = (existing.actual_stock || 0) + (item.actual_stock || 0);
             if (!existing.image_url && item.image_url) existing.image_url = item.image_url;
@@ -167,6 +230,7 @@ function mergeAndDeduplicate(rankingData, newProductData) {
             productMap.set(name, {
                 product_name: name,
                 product_id: item.product_id || '',
+                shop: item.shop || '',
                 ranking_result: item.ranking_result || '新品',  // 默认分类为"新品"
                 sample_number: item.sample_number || '',
                 image_url: item.image_url || '',
@@ -213,8 +277,10 @@ async function saveToHistory(data) {
 
     // 插入新记录
     const now = new Date().toISOString();
+    const shopMapById = await loadProductShopMapById();
     const records = data.map(item => ({
         ...item,
+        shop: shopMapById[String(item.product_id ?? '').trim()] || item.shop || null,
         generated_at: now
     }));
 
@@ -613,6 +679,7 @@ function renderHistoryTable(container, data) {
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">图片</th>
                     <th style="padding: 0.75rem; text-align: left;">商品名称</th>
                     <th style="padding: 0.75rem; text-align: center; width: 120px;">商品 ID</th>
+                    <th style="padding: 0.75rem; text-align: center; width: 80px;">店铺</th>
                     <th style="padding: 0.75rem; text-align: center; width: 100px;">分类</th>
                     <th style="padding: 0.75rem; text-align: center; width: 80px;">序号</th>
                     <th style="padding: 0.75rem; text-align: center; width: 100px;">仓位</th>
@@ -635,6 +702,7 @@ function renderHistoryTable(container, data) {
                             <td style="padding: 0.5rem; text-align: center;">${imageHtml}</td>
                             <td style="padding: 0.5rem;">${item.product_name || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center; font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);">${item.product_id || '--'}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${renderShopBadge(item.shop)}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.ranking_result || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.sample_number || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.warehouse || '--'}</td>
