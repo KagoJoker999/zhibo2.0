@@ -2050,7 +2050,6 @@ async function initRankingPage() {
                         setTimeout(() => alertOverlay.remove(), 200);
                     }
                     window.location.hash = '#welfare-ranking';
-                    window.dispatchEvent(new HashChangeEvent('hashchange'));
                 }, 5000);
             } catch (error) {
                 console.error('保存失败:', error);
