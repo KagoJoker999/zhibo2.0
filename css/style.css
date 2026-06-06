@@ -1258,6 +1258,54 @@ select:focus {
     --shop-accent: #e11d48;
 }
 
+.shop-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 24px;
+    margin: 0 0.125rem;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--shop-badge-border, var(--border-color));
+    background: var(--shop-badge-bg, var(--bg-secondary));
+    color: var(--shop-badge-text, var(--text-secondary));
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.shop-badge[data-shop="1"] {
+    --shop-badge-bg: rgba(37, 99, 235, 0.14);
+    --shop-badge-border: rgba(37, 99, 235, 0.35);
+    --shop-badge-text: #93c5fd;
+}
+
+.shop-badge[data-shop="2"] {
+    --shop-badge-bg: rgba(5, 150, 105, 0.14);
+    --shop-badge-border: rgba(5, 150, 105, 0.35);
+    --shop-badge-text: #6ee7b7;
+}
+
+.shop-badge[data-shop="3"] {
+    --shop-badge-bg: rgba(217, 119, 6, 0.14);
+    --shop-badge-border: rgba(217, 119, 6, 0.35);
+    --shop-badge-text: #fcd34d;
+}
+
+.shop-badge[data-shop="4"] {
+    --shop-badge-bg: rgba(124, 58, 237, 0.14);
+    --shop-badge-border: rgba(124, 58, 237, 0.35);
+    --shop-badge-text: #c4b5fd;
+}
+
+.shop-badge[data-shop="5"] {
+    --shop-badge-bg: rgba(225, 29, 72, 0.14);
+    --shop-badge-border: rgba(225, 29, 72, 0.35);
+    --shop-badge-text: #fda4af;
+}
+
 /* 上传按钮统一高度 */
 .upload-block .btn-upload {
     min-height: 44px;

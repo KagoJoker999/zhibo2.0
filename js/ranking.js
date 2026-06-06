@@ -1444,6 +1444,7 @@ async function saveRankingResults(results) {
     const records = results.map(r => ({
         product_name: r.product_name,
         product_id: cachedProductIds[r.product_name] || r.product_id || '',
+        shop: cachedProductShops[r.product_name] || r.shop || null,
         ranking_result: r.ranking_result,
         sample_number: r.sample_number,
         image_url: r.image_url || null,
@@ -1834,9 +1835,28 @@ let cachedNewProducts = [];   // 新品数据
 let cachedExcluded = [];      // 排除商品列表
 let cachedResults = [];       // 排品结果
 let cachedProductIds = {};    // 商品ID映射 { product_name: product_id }
+let cachedProductShops = {};  // 店铺映射 { product_name: shop }
 let deletedItems = [];        // 已删除的项（用于撤回）
 let categoryExcluded = {};    // 每个分类的排除商品列表 { category: [productName1, productName2] }
 let cachedConfig = null;      // 缓存的配置
+
+function normalizeShopValue(value) {
+    const str = String(value ?? '').trim();
+    return ['1', '2', '3', '4', '5'].includes(str) ? str : '';
+}
+
+function mergeShopValues(existing, value) {
+    const shops = new Set(String(existing || '').split(',').map(normalizeShopValue).filter(Boolean));
+    const normalized = normalizeShopValue(value);
+    if (normalized) shops.add(normalized);
+    return Array.from(shops).sort((a, b) => Number(a) - Number(b)).join(',');
+}
+
+function renderShopBadge(shopValue) {
+    const shops = String(shopValue || '').split(',').map(normalizeShopValue).filter(Boolean);
+    if (shops.length === 0) return '<span style="color: var(--text-muted);">--</span>';
+    return shops.map(shop => `<span class="shop-badge" data-shop="${shop}">${shop}号</span>`).join('');
+}
 
 // 加载商品ID映射
 async function loadProductIdMapping() {
@@ -1851,7 +1871,7 @@ async function loadProductIdMapping() {
     while (hasMore) {
         const { data, error } = await client
             .from('product_id_data')
-            .select('product_name, product_id')
+            .select('*')
             .range(page * pageSize, (page + 1) * pageSize - 1);
 
         if (error) {
@@ -1869,12 +1889,17 @@ async function loadProductIdMapping() {
     }
 
     const mapping = {};
+    const shopMapping = {};
     allData.forEach(item => {
         if (item.product_name) {
             mapping[item.product_name] = item.product_id || '';
+            const shop = normalizeShopValue(item.shop ?? item['店铺']);
+            if (shop) {
+                shopMapping[item.product_name] = mergeShopValues(shopMapping[item.product_name], shop);
+            }
         }
     });
-    return mapping;
+    return { productIds: mapping, productShops: shopMapping };
 }
 
 // 切换新品模式
@@ -1944,7 +1969,8 @@ async function initRankingPage() {
                     loadProductIdMapping()
                 ]);
                 cachedExcluded = excluded;
-                cachedProductIds = productIdMapping;
+                cachedProductIds = productIdMapping.productIds || {};
+                cachedProductShops = productIdMapping.productShops || {};
                 document.getElementById('statExcluded').textContent = cachedExcluded.length;
 
                 // 汇总商品数据（库存 + 评分）
@@ -2193,6 +2219,7 @@ function renderRankingResults(results) {
     const cacheData = {
         results: results,
         productIds: cachedProductIds,
+        productShops: cachedProductShops,
         timestamp: Date.now()
     };
     localStorage.setItem('rankingResultsCache', JSON.stringify(cacheData));
@@ -2240,8 +2267,9 @@ function renderRankingResults(results) {
                             <tr style="background: var(--bg-secondary); color: var(--text-secondary);">
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">图片</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
-                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 300px;">商品名称</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left; width: 260px;">商品名称</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 160px;">商品ID</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">店铺</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 70px;">可用数</th>
                                 <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">操作</th>
@@ -2250,6 +2278,7 @@ function renderRankingResults(results) {
                         <tbody>
                             ${items.map(item => {
             const productId = cachedProductIds[item.product_name];
+            const shopValue = cachedProductShops[item.product_name] || item.shop || '';
             const hasNoId = !productId;
             // 为无ID商品显示输入框和保存按钮，否则显示ID和复制按钮
             const escapedProductName = item.product_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
@@ -2302,6 +2331,7 @@ function renderRankingResults(results) {
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number}</td>
                                          <td class="js-click-copy" data-copy="${item.product_name.replace(/"/g, '&quot;')}" style="padding: 0.75rem 0.5rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; user-select: none;" title="点击复制">${item.product_name}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
+                                        <td style="padding: 0.75rem 0.5rem; text-align: center;">${renderShopBadge(shopValue)}</td>
                                         <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${codeDisplay}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center; font-variant-numeric: tabular-nums; color: var(--text-secondary);">${availableQty}</td>
                                         <td style="padding: 0.75rem 0.5rem; text-align: center;">
@@ -2377,6 +2407,7 @@ async function saveManualProductId(productName, buttonElement) {
         if (cached) {
             try {
                 const cacheData = JSON.parse(cached);
+                if (!cacheData.productIds) cacheData.productIds = {};
                 cacheData.productIds[productName] = productId;
                 localStorage.setItem('rankingResultsCache', JSON.stringify(cacheData));
             } catch (e) { }
@@ -2511,8 +2542,10 @@ async function loadAndRenderSavedResults() {
             return;
         }
 
-        // 加载商品ID映射
-        const savedProductIds = await loadProductIdMapping();
+        // 加载商品ID与店铺映射，兼容历史保存结果缺少字段的情况
+        const savedProductMapping = await loadProductIdMapping();
+        const savedProductIds = savedProductMapping.productIds || {};
+        const savedProductShops = savedProductMapping.productShops || {};
 
         // 按分类分组
         const grouped = {};
@@ -2538,13 +2571,15 @@ async function loadAndRenderSavedResults() {
                                     <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">图片</th>
                                     <th style="padding: 0.75rem 0.5rem; text-align: center; width: 60px;">序号</th>
                                     <th style="padding: 0.75rem 0.5rem; text-align: left; width: 250px;">商品名称</th>
-                                    <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
                                     <th style="padding: 0.75rem 0.5rem; text-align: left; width: 200px;">商品ID</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: center; width: 80px;">店铺</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left; width: 180px;">商品编码</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${items.map(item => {
-                const productId = savedProductIds[item.product_name];
+                const productId = item.product_id || savedProductIds[item.product_name];
+                const shopValue = item.shop || savedProductShops[item.product_name] || '';
                 const idDisplay = productId
                     ? productId
                     : '<span style="color: var(--warning-color);">疑似未上架</span>';
@@ -2566,8 +2601,9 @@ async function loadAndRenderSavedResults() {
                                             <td style="padding: 0.75rem 0.5rem; text-align: center;">${imageHtml}</td>
                                             <td style="padding: 0.75rem 0.5rem; text-align: center; font-weight: 600; color: var(--primary-color); font-size: 1rem;">${item.sample_number || '--'}</td>
                                             <td style="padding: 0.75rem 0.5rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name}">${item.product_name}</td>
-                                            <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${productCode}</td>
                                             <td style="padding: 0.75rem 0.5rem; text-align: left;">${idDisplay}</td>
+                                            <td style="padding: 0.75rem 0.5rem; text-align: center;">${renderShopBadge(shopValue)}</td>
+                                            <td style="padding: 0.75rem 0.5rem; color: var(--text-secondary); text-align: left;">${productCode}</td>
                                         </tr>
                                     `;
             }).join('')}
