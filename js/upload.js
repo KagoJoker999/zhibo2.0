@@ -245,7 +245,7 @@ const UploadConfigs = {
             { source: 'B列 商品名称', target: 'product_name' },
             { source: 'E列 三级分类', target: 'store_category' },
             { source: 'N列 商品价格', target: 'product_price' },
-            { source: '上传前选择', target: '店铺' }
+            { source: '上传前选择', target: 'shop' }
         ]
     }
 };
@@ -596,7 +596,7 @@ function initUploadBlock(key, config) {
                 const shopValue = shopValueInput?.value;
                 if (!shopValue) throw new Error('请先选择店铺');
                 records.forEach(record => {
-                    record['店铺'] = shopValue;
+                    record.shop = shopValue;
                 });
 
                 updateStatus('检查重复商品ID...', 60);

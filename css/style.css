@@ -1196,9 +1196,9 @@ select:focus {
 .shop-option-btn {
     min-height: 40px;
     padding: 0.5rem 0.25rem;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
+    border: 1px solid var(--shop-border, var(--border-color));
+    background: var(--shop-bg, var(--bg-secondary));
+    color: var(--shop-text, var(--text-secondary));
     border-radius: var(--border-radius-sm);
     cursor: pointer;
     font-size: 0.875rem;
@@ -1207,15 +1207,55 @@ select:focus {
 }
 
 .shop-option-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--text-primary);
+    border-color: var(--shop-accent, var(--primary-color));
+    color: var(--shop-hover-text, var(--text-primary));
 }
 
 .shop-option-btn.active {
-    border-color: var(--primary-color);
-    background: var(--primary-color);
+    border-color: var(--shop-accent, var(--primary-color));
+    background: var(--shop-accent, var(--primary-color));
     color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.shop-option-btn[data-value="1"] {
+    --shop-bg: rgba(37, 99, 235, 0.14);
+    --shop-border: rgba(37, 99, 235, 0.35);
+    --shop-text: #93c5fd;
+    --shop-hover-text: #bfdbfe;
+    --shop-accent: #2563eb;
+}
+
+.shop-option-btn[data-value="2"] {
+    --shop-bg: rgba(5, 150, 105, 0.14);
+    --shop-border: rgba(5, 150, 105, 0.35);
+    --shop-text: #6ee7b7;
+    --shop-hover-text: #a7f3d0;
+    --shop-accent: #059669;
+}
+
+.shop-option-btn[data-value="3"] {
+    --shop-bg: rgba(217, 119, 6, 0.14);
+    --shop-border: rgba(217, 119, 6, 0.35);
+    --shop-text: #fcd34d;
+    --shop-hover-text: #fde68a;
+    --shop-accent: #d97706;
+}
+
+.shop-option-btn[data-value="4"] {
+    --shop-bg: rgba(124, 58, 237, 0.14);
+    --shop-border: rgba(124, 58, 237, 0.35);
+    --shop-text: #c4b5fd;
+    --shop-hover-text: #ddd6fe;
+    --shop-accent: #7c3aed;
+}
+
+.shop-option-btn[data-value="5"] {
+    --shop-bg: rgba(225, 29, 72, 0.14);
+    --shop-border: rgba(225, 29, 72, 0.35);
+    --shop-text: #fda4af;
+    --shop-hover-text: #fecdd3;
+    --shop-accent: #e11d48;
 }
 
 /* 上传按钮统一高度 */
