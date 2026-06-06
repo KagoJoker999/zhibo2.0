@@ -677,7 +677,7 @@ function renderHistoryTable(container, data) {
             <thead>
                 <tr style="background: var(--bg-secondary);">
                     <th style="padding: 0.75rem; text-align: center; width: 60px;">图片</th>
-                    <th style="padding: 0.75rem; text-align: left;">商品名称</th>
+                    <th style="padding: 0.75rem; text-align: left; width: 360px;">商品名称</th>
                     <th style="padding: 0.75rem; text-align: center; width: 120px;">商品 ID</th>
                     <th style="padding: 0.75rem; text-align: center; width: 80px;">店铺</th>
                     <th style="padding: 0.75rem; text-align: center; width: 100px;">分类</th>
@@ -700,7 +700,7 @@ function renderHistoryTable(container, data) {
         return `
                         <tr style="border-bottom: 1px solid var(--border-color); background: ${bgColor};">
                             <td style="padding: 0.5rem; text-align: center;">${imageHtml}</td>
-                            <td style="padding: 0.5rem;">${item.product_name || '--'}</td>
+                            <td style="padding: 0.5rem; max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.product_name || ''}">${item.product_name || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center; font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);">${item.product_id || '--'}</td>
                             <td style="padding: 0.5rem; text-align: center;">${renderShopBadge(item.shop)}</td>
                             <td style="padding: 0.5rem; text-align: center;">${item.ranking_result || '--'}</td>
