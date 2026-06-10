@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  base: '/zhibo2.0/',
   build: {
     outDir: 'docs',
     // 生成 sourcemap 方便调试
