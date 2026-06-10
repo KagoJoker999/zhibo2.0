@@ -1,0 +1,1191 @@
+/* ========================================
+   视觉增强层 - Premium Dark Theme
+   ========================================
+   覆盖 legacy.css 的样式变量和组件外观
+   不改变任何布局结构和功能逻辑
+   ======================================== */
+
+/* 现代字体 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ========================================
+   1. 增强型 CSS 变量
+   ======================================== */
+:root {
+    /* 主色调 - 增加渐变变体 */
+    --primary-gradient: linear-gradient(135deg, #165DFF 0%, #4080FF 100%);
+    --primary-glow: 0 0 20px rgba(22, 93, 255, 0.3);
+
+    /* 背景色 - 更精致的层次 */
+    --bg-primary: #0f0f12;
+    --bg-secondary: #18181b;
+    --bg-card: #1c1c20;
+    --bg-elevated: #222226;
+    --bg-hover: rgba(255, 255, 255, 0.04);
+    --bg-active: rgba(255, 255, 255, 0.07);
+
+    /* 边框 - 带微蓝色调 */
+    --border-color: rgba(255, 255, 255, 0.07);
+    --border-subtle: rgba(255, 255, 255, 0.04);
+    --border-focus: rgba(22, 93, 255, 0.5);
+
+    /* 圆角 - 统一加大 */
+    --border-radius: 6px;
+    --border-radius-sm: 4px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+
+    /* 阴影 - 更柔和 */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.45);
+    --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.55);
+
+    /* 过渡 - 更丝滑 */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   2. 全局基础
+   ======================================== */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--bg-primary);
+}
+
+/* 全局选中色 */
+::selection {
+    background: rgba(22, 93, 255, 0.3);
+    color: #fff;
+}
+
+/* 全局滚动条美化 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ========================================
+   3. 侧边栏增强
+   ======================================== */
+.sidebar {
+    background: linear-gradient(180deg, #16161a 0%, #111114 100%);
+    border-right: 1px solid var(--border-subtle);
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-header {
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.nav-menu {
+    padding: 0.5rem 0;
+}
+
+.nav-link {
+    margin: 0.125rem 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--border-radius);
+    font-size: 0.8125rem;
+    font-weight: 450;
+    letter-spacing: 0.01em;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    background: rgba(22, 93, 255, 0.12);
+    color: #6ea8fe;
+    font-weight: 500;
+}
+
+.nav-link.active::before {
+    width: 3px;
+    height: 55%;
+    background: linear-gradient(180deg, #4080FF 0%, #165DFF 100%);
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 8px rgba(22, 93, 255, 0.4);
+}
+
+.nav-icon {
+    opacity: 0.65;
+    transition: opacity var(--transition-fast);
+}
+
+.nav-link:hover .nav-icon,
+.nav-link.active .nav-icon {
+    opacity: 1;
+}
+
+/* 侧边栏底部 */
+.sidebar-footer {
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* 子菜单增强 */
+.nav-submenu a {
+    font-size: 0.8rem;
+    padding: 0.375rem 0.875rem 0.375rem 2.75rem;
+    color: var(--text-muted);
+    border-radius: var(--border-radius-sm);
+}
+
+.nav-submenu a:hover {
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-submenu a.active {
+    color: #6ea8fe;
+    background: rgba(22, 93, 255, 0.08);
+}
+
+/* ========================================
+   4. 顶部栏增强
+   ======================================== */
+.content-header {
+    background: rgba(18, 18, 21, 0.85);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom: 1px solid var(--border-subtle);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.header-title {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: 0.9375rem;
+}
+
+.status-indicator {
+    background: rgba(0, 180, 42, 0.08);
+    border-color: rgba(0, 180, 42, 0.2);
+    font-size: 0.75rem;
+}
+
+.db-usage {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-subtle);
+}
+
+/* 快捷链接增强 */
+.quick-link-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-subtle);
+    font-size: 0.75rem;
+    padding: 0.1875rem 0.625rem;
+    transition: all var(--transition-fast);
+}
+
+.quick-link-chip:hover {
+    background: rgba(22, 93, 255, 0.1);
+    border-color: rgba(22, 93, 255, 0.3);
+    color: #6ea8fe;
+    box-shadow: 0 0 12px rgba(22, 93, 255, 0.15);
+}
+
+/* ========================================
+   5. 卡片增强
+   ======================================== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.card-title {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+/* 设置区块 */
+.settings-section {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    border-radius: var(--border-radius-lg);
+    transition: border-color var(--transition-normal);
+}
+
+.settings-section:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 上传区块 */
+.upload-block {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    border-radius: var(--border-radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.upload-block:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: var(--shadow-md);
+}
+
+/* ========================================
+   6. 按钮增强
+   ======================================== */
+.btn {
+    font-family: 'Inter', inherit;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    box-shadow: 0 2px 8px rgba(22, 93, 255, 0.25);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 4px 15px rgba(22, 93, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(22, 93, 255, 0.2);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #00B42A 0%, #00d632 100%);
+    box-shadow: 0 2px 8px rgba(0, 180, 42, 0.25);
+}
+
+.btn-success:hover {
+    box-shadow: 0 4px 15px rgba(0, 180, 42, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-success:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    border-color: var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn-danger:hover {
+    background: rgba(245, 63, 63, 0.12);
+    border-color: rgba(245, 63, 63, 0.35);
+    transform: translateY(-1px);
+}
+
+/* ========================================
+   7. 统一表格样式 ⭐ 重点
+   ======================================== */
+
+/* ---- 基础表格变量 ---- */
+.data-table,
+.mapping-table,
+.editable-table,
+.product-table,
+.history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+}
+
+/* ---- 统一表头 ---- */
+.data-table th,
+.mapping-table th,
+.editable-table th,
+.product-table th,
+.history-table th {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+/* 表头首尾圆角 */
+.data-table thead tr th:first-child,
+.mapping-table thead tr th:first-child,
+.editable-table thead tr th:first-child,
+.product-table thead tr th:first-child,
+.history-table thead tr th:first-child {
+    border-radius: var(--border-radius) 0 0 0;
+}
+
+.data-table thead tr th:last-child,
+.mapping-table thead tr th:last-child,
+.editable-table thead tr th:last-child,
+.product-table thead tr th:last-child,
+.history-table thead tr th:last-child {
+    border-radius: 0 var(--border-radius) 0 0;
+}
+
+/* ---- 统一单元格 ---- */
+.data-table td,
+.mapping-table td,
+.editable-table td,
+.product-table td,
+.history-table td {
+    padding: 0.625rem 0.875rem;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+    transition: background var(--transition-fast);
+}
+
+/* ---- 统一行悬浮 ---- */
+.data-table tbody tr:hover,
+.mapping-table tbody tr:hover,
+.editable-table tbody tr:hover,
+.product-table tbody tr:hover,
+.history-table tbody tr:hover {
+    background: rgba(22, 93, 255, 0.04);
+}
+
+/* ---- 统一斑马纹（偶数行） ---- */
+.data-table tbody tr:nth-child(even),
+.product-table tbody tr:nth-child(even),
+.history-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.data-table tbody tr:nth-child(even):hover,
+.product-table tbody tr:nth-child(even):hover,
+.history-table tbody tr:nth-child(even):hover {
+    background: rgba(22, 93, 255, 0.04);
+}
+
+/* ---- 表格容器统一 ---- */
+.table-scroll,
+.product-table-container,
+.mapping-table-container {
+    overflow-x: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-subtle);
+}
+
+/* 数据表格区域 */
+.data-table-section {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    border-radius: var(--border-radius-lg);
+}
+
+.data-table-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* ========================================
+   8. 表单元素增强
+   ======================================== */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+textarea,
+select {
+    font-family: 'Inter', inherit;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+.settings-input {
+    border-color: var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.settings-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+.table-input {
+    border-radius: var(--border-radius-sm);
+}
+
+.table-input:focus {
+    box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.12);
+}
+
+/* ========================================
+   9. 上传区域增强
+   ======================================== */
+.upload-zone {
+    border: 1.5px dashed rgba(255, 255, 255, 0.12);
+    border-radius: var(--border-radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all var(--transition-normal);
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--primary-color);
+    background: rgba(22, 93, 255, 0.06);
+    box-shadow: inset 0 0 30px rgba(22, 93, 255, 0.05);
+}
+
+.upload-zone-icon {
+    opacity: 0.5;
+    transition: all var(--transition-normal);
+}
+
+.upload-zone:hover .upload-zone-icon {
+    opacity: 0.8;
+    transform: translateY(-2px);
+}
+
+.checker-dropzone {
+    border: 1.5px dashed rgba(255, 255, 255, 0.12);
+    border-radius: var(--border-radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all var(--transition-normal);
+}
+
+.checker-dropzone:hover,
+.checker-dropzone.dragover {
+    border-color: var(--primary-color);
+    background: rgba(22, 93, 255, 0.06);
+}
+
+/* ========================================
+   10. Toast 增强
+   ======================================== */
+.toast {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* ========================================
+   11. 加载状态增强
+   ======================================== */
+.loading-overlay {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.loading-spinner {
+    border-width: 3px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-top-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(22, 93, 255, 0.15);
+}
+
+/* ========================================
+   12. 欢迎页增强
+   ======================================== */
+.welcome-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 顶部渐变装饰线 */
+.welcome-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-gradient);
+}
+
+.welcome-card h3 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.feature-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.feature-item:hover {
+    background: rgba(22, 93, 255, 0.06);
+    border-color: rgba(22, 93, 255, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   13. 统计数据增强
+   ======================================== */
+.stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.stat-value {
+    background: linear-gradient(135deg, #4080FF, #165DFF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+/* ========================================
+   14. 弹窗增强
+   ======================================== */
+.modal-overlay,
+.ql-modal-overlay,
+.center-alert-overlay {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.upload-history-modal,
+.ql-modal,
+.product-checker-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-header,
+.ql-modal-header {
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ========================================
+   15. 进度条增强
+   ======================================== */
+.progress-bar {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: var(--primary-gradient);
+    border-radius: 999px;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ========================================
+   16. Toggle 分段器增强
+   ======================================== */
+.toggle-group {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 3px;
+}
+
+.toggle-btn {
+    border-radius: calc(var(--border-radius) - 2px);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.toggle-btn.active {
+    background: var(--primary-gradient);
+    box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
+}
+
+.toggle-btn-group {
+    border-radius: var(--border-radius);
+    border-color: var(--border-color);
+    overflow: hidden;
+}
+
+.toggle-btn-group .toggle-btn.active {
+    background: var(--primary-gradient);
+    box-shadow: none;
+}
+
+/* ========================================
+   17. 店铺选择器增强
+   ======================================== */
+.shop-option-btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.shop-option-btn.active {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+/* 数据库表名标签 */
+.db-table-tag {
+    font-size: 0.625rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--border-radius-sm);
+}
+
+/* ========================================
+   18. 折叠面板增强
+   ======================================== */
+.rules-details,
+.mapping-details {
+    border-color: var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.rules-details summary,
+.mapping-details summary {
+    background: rgba(255, 255, 255, 0.03);
+    transition: all var(--transition-fast);
+    font-size: 0.8125rem;
+}
+
+.rules-details summary:hover,
+.mapping-details summary:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   19. 标签/徽章增强
+   ======================================== */
+.shop-badge {
+    border-radius: var(--border-radius-sm);
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+    transition: all var(--transition-fast);
+}
+
+.record-count {
+    border-radius: 999px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+.tag-red {
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+}
+
+.tag-shadowbot {
+    border-radius: var(--border-radius);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(185, 28, 28, 0.85));
+}
+
+/* ========================================
+   20. 数据源卡片增强
+   ======================================== */
+.source-card {
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+}
+
+.source-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+   21. 排品结果项增强
+   ======================================== */
+.result-item {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-subtle);
+    transition: all var(--transition-fast);
+}
+
+.result-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-color);
+}
+
+/* ========================================
+   22. 可排序列表增强
+   ======================================== */
+.sortable-item {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+}
+
+.sortable-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border-color);
+}
+
+.sortable-item.active {
+    border-color: rgba(22, 93, 255, 0.3);
+    background: rgba(22, 93, 255, 0.06);
+}
+
+.formula-item {
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+}
+
+.formula-item:hover {
+    border-color: rgba(22, 93, 255, 0.3);
+    background: rgba(22, 93, 255, 0.04);
+}
+
+/* ========================================
+   23. 设置子区块增强
+   ======================================== */
+.settings-subsection {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* 规则提示框 */
+.rules-box {
+    border-radius: var(--border-radius);
+    background: rgba(22, 93, 255, 0.06);
+    border-left: 3px solid var(--primary-color);
+}
+
+/* 公式框 */
+.formula-box {
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-color);
+}
+
+.formula-box code {
+    font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
+/* ========================================
+   24. 红色警告弹窗增强
+   ======================================== */
+.center-alert {
+    border-radius: var(--border-radius-xl);
+    box-shadow: 0 20px 60px rgba(245, 63, 63, 0.35);
+}
+
+/* ========================================
+   25. 分页增强
+   ======================================== */
+.pagination {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.pagination-btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    min-width: 36px;
+    text-align: center;
+}
+
+.pagination-btn:hover:not([disabled]) {
+    border-color: rgba(22, 93, 255, 0.3);
+    background: rgba(22, 93, 255, 0.08);
+    color: #6ea8fe;
+}
+
+.pagination-btn.active {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
+}
+
+/* ========================================
+   26. 上传操作行增强
+   ======================================== */
+.upload-actions-row {
+    gap: 0.625rem;
+}
+
+.btn-history {
+    border-radius: var(--border-radius);
+}
+
+/* 最后上传时间 */
+.last-upload-time {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.last-upload-info {
+    border-radius: var(--border-radius);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+}
+
+/* ========================================
+   27. 自动上传入口增强
+   ======================================== */
+.automation-upload-entry {
+    border-radius: var(--border-radius);
+    border-color: var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.automation-file-input::file-selector-button {
+    border-radius: var(--border-radius-sm);
+    font-family: 'Inter', inherit;
+    font-weight: 500;
+    font-size: 0.75rem;
+    transition: all var(--transition-fast);
+}
+
+.automation-file-input::file-selector-button:hover {
+    background: rgba(22, 93, 255, 0.1);
+    border-color: var(--primary-color);
+    color: #6ea8fe;
+}
+
+/* ========================================
+   28. 校验结果组增强
+   ======================================== */
+.checker-group-missing,
+.checker-group-presale,
+.checker-group-presaleSpec,
+.checker-group-sku {
+    border-radius: var(--border-radius);
+    padding: 1rem;
+}
+
+.checker-item {
+    border-radius: var(--border-radius-sm);
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.checker-summary {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-subtle);
+}
+
+/* ========================================
+   29. 对照/映射内容增强
+   ======================================== */
+.mapping-display {
+    border-radius: var(--border-radius);
+    border-color: var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.mapping-textarea {
+    border-radius: var(--border-radius);
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+}
+
+.mapping-textarea:focus {
+    box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+/* 设置卡片 */
+.settings-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    border-radius: var(--border-radius-lg);
+}
+
+/* 规则项 */
+.rule-item {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-subtle);
+    transition: all var(--transition-fast);
+}
+
+.rule-item:hover {
+    border-color: var(--border-color);
+}
+
+/* ========================================
+   30. 搜索/过滤栏
+   ======================================== */
+.ql-input {
+    font-family: 'Inter', inherit;
+    border-radius: var(--border-radius);
+}
+
+.ql-input:focus {
+    box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+}
+
+.ql-item {
+    border-radius: var(--border-radius);
+    border: 1px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.ql-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-subtle);
+}
+
+/* ========================================
+   31. 微动画补充
+   ======================================== */
+
+/* 页面内容淡入 */
+.content-body {
+    animation: contentFadeIn 0.3s ease;
+}
+
+@keyframes contentFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 悬浮放大图片增强 */
+#hover-zoom-overlay {
+    border-radius: var(--border-radius-lg);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+.hover-zoom-thumb {
+    border-radius: var(--border-radius);
+    border-color: var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.hover-zoom-container:hover .hover-zoom-thumb {
+    border-color: rgba(22, 93, 255, 0.3);
+    box-shadow: 0 0 12px rgba(22, 93, 255, 0.15);
+}
+
+/* 商品缩略图增强 */
+.thumb-wrapper {
+    border-radius: var(--border-radius);
+    border-color: var(--border-subtle);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.thumb-wrapper:hover {
+    border-color: rgba(22, 93, 255, 0.3);
+}
+
+/* ========================================
+   32. 移动端响应式增强
+   ======================================== */
+@media (max-width: 768px) {
+    .sidebar {
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.open + .main-content::before {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+    .content-header {
+        padding: 0 0.75rem;
+    }
+
+    .menu-toggle {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+}
+
+/* ========================================
+   33. Lucide 图标全局增强
+   ======================================== */
+.lucide, [data-lucide] {
+    stroke-width: 1.75;
+}
+
+/* ========================================
+   34. 仓位更新对话框增强
+   ======================================== */
+.warehouse-dialog-content {
+    border-radius: var(--border-radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-xl);
+}
+
+.warehouse-dropzone {
+    border: 1.5px dashed rgba(255, 255, 255, 0.12);
+    border-radius: var(--border-radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all var(--transition-normal);
+}
+
+.warehouse-dropzone:hover {
+    border-color: var(--primary-color);
+    background: rgba(22, 93, 255, 0.06);
+}
+
+/* ========================================
+   35. 处理步骤增强
+   ======================================== */
+.step-num {
+    background: var(--primary-gradient);
+    box-shadow: 0 2px 6px rgba(22, 93, 255, 0.25);
+}
+
+.process-section {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ========================================
+   36. 发券品相关增强
+   ======================================== */
+.coupon-product-list-section {
+    border-radius: var(--border-radius-lg);
+    border-color: var(--border-color);
+}
+
+.coupon-product-list-section .section-header {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* 未匹配行增强 */
+.product-table .unmatched-row {
+    background: rgba(245, 63, 63, 0.06);
+    border-left: 2px solid rgba(245, 63, 63, 0.4);
+}
+
+.product-table .unmatched-row:hover {
+    background: rgba(245, 63, 63, 0.1);
+}
+
+/* 匹配ID */
+.product-table .id-cell .matched-id {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 0.8125rem;
+}
+
+.product-table .id-cell .id-input {
+    border-radius: var(--border-radius-sm);
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+}
+
+/* ========================================
+   37. 福利品复选框增强
+   ======================================== */
+.welfare-checkbox,
+#welfareSelectAll {
+    accent-color: var(--primary-color);
+    border-radius: var(--border-radius-sm);
+}
+
+/* ========================================
+   38. 排品设置分栏增强
+   ======================================== */
+.settings-split-left {
+    border-radius: var(--border-radius-lg);
+    border-color: var(--border-color);
+    background: var(--bg-card);
+}
+
+.settings-split-right {
+    border-radius: var(--border-radius-lg);
+    border-color: var(--border-color);
+    background: var(--bg-card);
+}

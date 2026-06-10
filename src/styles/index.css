@@ -1,5 +1,8 @@
-/* 导入现有样式（完全保留，不做修改）- 必须在 @tailwind 之前 */
+/* 导入现有样式（完全保留，不做修改） */
 @import './legacy.css';
+
+/* 导入视觉增强层（覆盖 legacy 的外观，不改布局） */
+@import './enhancements.css';
 
 /* Tailwind 基础指令 - 供未来新组件使用 */
 @tailwind base;
